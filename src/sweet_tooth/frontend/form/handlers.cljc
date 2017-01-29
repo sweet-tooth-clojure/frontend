@@ -128,7 +128,7 @@
        ::strh/http (submit-form form-path
                                 data
                                 (:token db)
-                                (merge {:success :delete-item-success}
+                                (merge {:success ::delete-item-success}
                                        form-spec))})))
 
 (reg-event-fx ::undelete-item
@@ -139,5 +139,5 @@
        ::strh/http (submit-form form-path
                                 data
                                 (:token db)
-                                (merge {:success :delete-item-success}
+                                (merge {:success ::delete-item-success}
                                        form-spec))})))

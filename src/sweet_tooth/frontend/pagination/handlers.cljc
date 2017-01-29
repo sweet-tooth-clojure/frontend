@@ -13,11 +13,11 @@
 
 (reg-event-db :merge-page [trim-v] merge-page)
 
-#_(def submit-form-success-page
+(def submit-form-success-page
   (stfh/success-base merge-page))
 
-#_(reg-event-db ::clear-on-success-page
+(reg-event-db ::clear-on-success-page
   [trim-v]
   (fn [db args]
     (-> (submit-form-success-page db args)
-        (clear args))))
+        (stfh/clear args))))
