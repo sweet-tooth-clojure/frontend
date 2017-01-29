@@ -237,5 +237,3 @@
   {:form-state (subscribe [:form-state form-path])
    :ui-state (subscribe [:form-ui-state form-path])
    :input (builder form-path)})
-
-
