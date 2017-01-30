@@ -11,7 +11,7 @@
           db
           page-data))
 
-(reg-event-db :merge-page [trim-v] merge-page)
+(reg-event-db ::merge-page [trim-v] merge-page)
 
 (def submit-form-success-page
   (stfh/success-base merge-page))

@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.form.handlers
-  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v path]]
+  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v]]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.core.handlers :as c]
             [sweet-tooth.frontend.core.utils :as u]
