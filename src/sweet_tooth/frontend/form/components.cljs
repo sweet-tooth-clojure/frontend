@@ -86,11 +86,11 @@
 (defmethod input :checkbox
   [type {:keys [data form-id dk attr-name] :as opts}]
   (let [value (get-in @data [:data attr-name])
-        opts (input-opts opts)]
+        opts (dissoc (input-opts opts) :value)]
     [:input (merge opts
                    {:type "checkbox"
-                    :checked value
-                    :on-change #(handle-change* (not value) dk attr-name)})]))
+                    :on-change #(handle-change* (not value) dk attr-name)
+                    :default-checked (boolean value)})]))
 
 (defn toggle-set-membership
   [s v]
