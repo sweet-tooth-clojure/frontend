@@ -50,11 +50,12 @@
 ;;~~~~~~~~~~~~~~~~~~
 (defn input-opts
   [{:keys [data form-id dk attr-name placeholder] :as opts}]
-  (merge opts
-         {:value (get-in @data [:data attr-name])
-          :id (label-for form-id attr-name)
-          :on-change #(handle-change % dk attr-name)
-          :class (str "input " (name attr-name))}))
+  (-> opts
+      (merge {:value (get-in @data [:data attr-name])
+              :id (label-for form-id attr-name)
+              :on-change #(handle-change % dk attr-name)
+              :class (str "input " (name attr-name))})
+      (dissoc :dk :no-label :attr-name :data)))
 
 (defmulti input (fn [type _] type))
 

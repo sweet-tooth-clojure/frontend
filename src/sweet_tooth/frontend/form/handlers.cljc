@@ -3,7 +3,8 @@
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.core.handlers :as c]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.remote.handlers :as strh]))
+            [sweet-tooth.frontend.remote.handlers :as strh]
+            [taoensso.timbre :as timbre]))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :data :state :ui-state etc
@@ -93,7 +94,7 @@
 (reg-event-db ::submit-form-error
   [trim-v]
   (fn [db [errors form-path form-spec]]
-    (pr "error!" errors form-path)
+    (timbre/info "form error:" errors form-path)
     (-> (assoc-in db (conj form-path :errors) (or errors {:cause :unknown}))
         (assoc-in (conj form-path :state) :sleeping))))
 
