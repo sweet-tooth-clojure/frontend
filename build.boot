@@ -6,7 +6,7 @@
                     [re-frame                    "0.9.1"         :scope "provided"]
                     [adzerk/bootlaces            "0.1.13"        :scope "test"]
                     [adzerk/boot-test            "1.1.1"         :scope "test"]
-                    [cljs-ajax                   "0.5.8"]
+                    [cljs-ajax                   "0.6.0"]
                     [com.rpl/specter             "0.13.2"]
                     [com.andrewmcveigh/cljs-time "0.4.0"]
                     [com.taoensso/timbre         "4.10.0"        :scope "provided"]])

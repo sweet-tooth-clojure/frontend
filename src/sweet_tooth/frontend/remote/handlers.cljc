@@ -19,11 +19,10 @@
     (dispatch (into [handler-key (get-in response [:response :errors])] args))))
 
 (reg-fx ::http
-  (fn [{:keys [method url on-success on-fail data token]}]
-    (method url
-            (cond-> {}
-              data       (assoc :params data)
-              on-success (assoc :handler (ajax-success on-success))
-              on-fail    (assoc :error-handler (ajax-error on-fail))
-              token      (assoc :headers {"Authorization" (str "Token " token)})))))
+  (fn [{:keys [method url on-success on-fail] :as opts}]
+    (let [opts (dissoc opts method url on-fail on-fail)]
+      (method url
+              (cond-> opts
+                on-success (assoc :handler (ajax-success on-success))
+                on-fail    (assoc :error-handler (ajax-error on-fail)))))))
 
