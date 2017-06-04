@@ -226,12 +226,9 @@
   {:on-submit (u/prevent-default #(dispatch [::stfh/submit-form form-path spec]))})
 
 (defn form-errors
+  "Subscription of error messages on the form as a whole"
   [path]
-  (let [errors (subscribe (u/flatv :key (form-path path) :errors))]
-    (fn []
-      (error-messages (-> @errors
-                          (select-keys [:authorization :authentication])
-                          vals)))))
+  (subscribe (u/flatv :key (form-path path) :errors)))
 
 (defn form
   [form-path]

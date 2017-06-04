@@ -28,20 +28,32 @@
       :get    [GET single]
       :delete [DELETE single])))
 
-(defn submit-form [form-path data token
-                   {:keys [success error]
-                    :or {success ::submit-form-success
-                         error ::submit-form-error}
-                    :as form-spec}]
+(def form-states #{nil :submitting :success :sleeping})
+
+(defn submit-form
+  "Returns a config that ajax.core methods can use to send a request.  
+
+  - `success` and `error` are the handlers for request completion.
+  - `form-spec` is a way to pass on whatevs data to the request 
+    completion handler.
+  - the `:request-opts` key of form spec can customize the ajax request"
+  [form-path data
+   {:keys [success error]
+    :or {success ::submit-form-success
+         error ::submit-form-error}
+    :as form-spec}]
   (let [[_ endpoint action] form-path
         [method url] (method-url endpoint action data)]
-    {:method method
-     :url url
-     :data data
-     :on-success [success form-path form-spec]
-     :on-fail [error form-path form-spec]
-     :token token}))
+    (merge
+      {:method method
+       :url url
+       :params data
+       :on-success [success form-path form-spec]
+       :on-fail [error form-path form-spec]}
+      (:request-opts form-spec))))
 
+;; update db to indicate form's submitting, clear old errors
+;; build form request
 (reg-event-fx ::submit-form
   [trim-v]
   (fn [{:keys [db]} [form-path & [form-spec]]]
@@ -51,45 +63,36 @@
      ::strh/http (submit-form (u/flatv :forms form-path)
                               (merge (:data form-spec)
                                      (get-in db (u/flatv :forms form-path :data)))
-                              (:token db)
                               form-spec)}))
 
 (defn success-base
+  "Produces a function that can be used for handling form submission success. 
+  It handles the common behaviors:
+  - updating the form state to :success
+  - populating the form's `:response` key with the returned data
+  - calls callback specified by `callback` in `form-spec`
+  - clears form keys specified by `:clear` in `form-spec`
+  
+  You customize success-base by providing a `db-update` function which
+  will e.g. `merge` or `deep-merge` values from the response."
   [db-update]
   (fn [db args]
-    (let [[data form-path form-spec] args
-          form-state-path (conj form-path :state)
-          form-response-path  (conj form-path :response)]
+    (let [[data form-path form-spec] args]
       (if-let [callback (:callback form-spec)]
         (callback db args))
-      (-> (db-update db args)
-          (assoc-in form-state-path :success)
-          (assoc-in form-response-path data)))))
-
-(defn clear
-  [db [data form-path form-spec]]
-  (-> db
-      (assoc-in (conj form-path :data) {})
-      (assoc-in (conj form-path :errors) {})
-      (assoc-in (conj form-path :ui-state) nil)))
+      (let [updated-db (db-update db args)]
+        (if (= :all (:clear form-spec))
+          (assoc-in updated-db form-path {})
+          (update-in update-in form-path merge
+                     {:state :success :response data}
+                     (zipmap (:clear form-spec) (repeat nil))))))))
 
 (def submit-form-success
   (success-base (fn [db [data]] (u/deep-merge db data))))
 
-(defn clear-on-success
-  [db args]
-  (-> (submit-form-success db args)
-      (clear args)))
-
 (reg-event-db ::submit-form-success
   [trim-v]
   submit-form-success)
-
-(reg-event-db ::clear-on-success
-  [trim-v]
-  clear-on-success)
-
-
 
 (reg-event-db ::submit-form-error
   [trim-v]
@@ -108,7 +111,6 @@
                (assoc-in (conj item-path :errors) nil))
        ::strh/http (submit-form item-path
                                 data
-                                (:token db)
                                 (dissoc item-spec :data))})))
 
 (reg-event-db ::delete-item-success
@@ -118,8 +120,9 @@
       (-> (if (get-in data [:data type id])
             (c/replace-ents db data)
             (update-in db [:data type] dissoc id))
-          (clear-on-success [data form-path form-spec])
-          (clear-on-success [data (assoc form-path 2 :update) form-spec])))))
+          ;; TODO why is this called twice?
+          (submit-form-success [data form-path form-spec])
+          (submit-form-success [data (assoc form-path 2 :update) form-spec])))))
 
 (reg-event-fx ::delete-item
   [trim-v]
@@ -128,7 +131,6 @@
       {:db db 
        ::strh/http (submit-form form-path
                                 data
-                                (:token db)
                                 (merge {:success ::delete-item-success}
                                        form-spec))})))
 
@@ -139,6 +141,5 @@
       {:db db 
        ::strh/http (submit-form form-path
                                 data
-                                (:token db)
                                 (merge {:success ::delete-item-success}
                                        form-spec))})))

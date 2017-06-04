@@ -16,8 +16,7 @@
 (def submit-form-success-page
   (stfh/success-base merge-page))
 
-(reg-event-db ::clear-on-success-page
+(reg-event-db ::submit-form-success-page
   [trim-v]
   (fn [db args]
-    (-> (submit-form-success-page db args)
-        (stfh/clear args))))
+    (submit-form-success-page db args)))
