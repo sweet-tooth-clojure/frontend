@@ -20,9 +20,8 @@
 
 (reg-fx ::http
   (fn [{:keys [method url on-success on-fail] :as opts}]
-    (let [opts (dissoc opts method url on-fail on-fail)]
+    (let [opts (dissoc opts :method :url :on-success :on-fail)]
       (method url
               (cond-> opts
                 on-success (assoc :handler (ajax-success on-success))
                 on-fail    (assoc :error-handler (ajax-error on-fail)))))))
-
