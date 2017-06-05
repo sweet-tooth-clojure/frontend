@@ -4,4 +4,4 @@
 
 (defn bootstrap
   [config]
-  (strh/reg-http-fx (get-in config [::strh/http :interceptors])))
+  (strh/reg-http-event-fx (get-in config [::strh/http :interceptors])))

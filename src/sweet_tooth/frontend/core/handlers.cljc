@@ -1,7 +1,6 @@
 (ns sweet-tooth.frontend.core.handlers
   (:require [re-frame.core :refer [reg-event-db dispatch trim-v path]]
-            [sweet-tooth.frontend.core.utils :as u]
-            [com.rpl.specter :as sp]))
+            [sweet-tooth.frontend.core.utils :as u]))
 
 (reg-event-db ::assoc-in
   [trim-v]
