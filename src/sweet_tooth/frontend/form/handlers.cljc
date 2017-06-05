@@ -60,10 +60,10 @@
     {:db (-> db
              (assoc-in (u/flatv :forms form-path :state) :submitting)
              (assoc-in (u/flatv :forms form-path :errors) nil))
-     ::strh/http (submit-form (u/flatv :forms form-path)
-                              (merge (:data form-spec)
-                                     (get-in db (u/flatv :forms form-path :data)))
-                              form-spec)}))
+     :dispatch [::strh/http (submit-form (u/flatv :forms form-path)
+                                         (merge (:data form-spec)
+                                                (get-in db (u/flatv :forms form-path :data)))
+                                         form-spec)]}))
 
 (defn success-base
   "Produces a function that can be used for handling form submission success. 
@@ -109,9 +109,9 @@
       {:db (-> db
                (assoc-in (conj item-path :state) :submitting)
                (assoc-in (conj item-path :errors) nil))
-       ::strh/http (submit-form item-path
-                                data
-                                (dissoc item-spec :data))})))
+       :dispatch [::strh/http (submit-form item-path
+                                           data
+                                           (dissoc item-spec :data))]})))
 
 (reg-event-db ::delete-item-success
   [trim-v]
@@ -128,18 +128,18 @@
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [form-path [:forms type :delete (:db/id data)]]
-      {:db db 
-       ::strh/http (submit-form form-path
-                                data
-                                (merge {:success ::delete-item-success}
-                                       form-spec))})))
+      {:db db
+       :dispatch [::strh/http (submit-form form-path
+                                           data
+                                           (merge {:success ::delete-item-success}
+                                                  form-spec))]})))
 
 (reg-event-fx ::undelete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [form-path [:forms type :update (:db/id data)]]
-      {:db db 
-       ::strh/http (submit-form form-path
-                                data
-                                (merge {:success ::delete-item-success}
-                                       form-spec))})))
+      {:db db
+       :dispatch [::strh/http (submit-form form-path
+                                           data
+                                           (merge {:success ::delete-item-success}
+                                                  form-spec))]})))

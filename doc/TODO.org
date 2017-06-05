@@ -11,6 +11,7 @@ timbre in their deps
 * Split all handlers into functions and register functions
 - have a function that allows you to register all at once with incerceptors for each
   (reg-all {::strh/http [x y z]})
+- update handlers to merge (dissoc cofx :event) to make extensible
 - ex:
 (defn reg-http-fx
   [interceptors]
@@ -22,3 +23,6 @@ timbre in their deps
               (cond-> opts
                 on-success (assoc :handler (ajax-success on-success))
                 on-fail    (assoc :error-handler (ajax-error on-fail))))))))
+* make http a handler, instead of running it directly as an effect dispatch to handler
+- and handler can run it as an effect, but we can specify interceptors
+on handler

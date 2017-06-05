@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.remote.handlers
-  (:require [re-frame.core :refer [reg-fx dispatch]]
+  (:require [re-frame.core :refer [reg-fx reg-event-fx dispatch]]
             [ajax.core :refer [GET PUT POST DELETE]]
             [taoensso.timbre :as timbre]))
 
@@ -17,6 +17,13 @@
   (fn [response]
     (timbre/info "error response:" response)
     (dispatch (into [handler-key (get-in response [:response :errors])] args))))
+
+(defn reg-http-event-fx
+  [interceptors]
+  (reg-event-fx ::http
+    interceptors
+    (fn [coeffects [_ request-opts]]
+      (merge (dissoc coeffects :event) {::http request-opts}))))
 
 (reg-fx ::http
   (fn [{:keys [method url on-success on-fail] :as opts}]
