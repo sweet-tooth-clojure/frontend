@@ -48,6 +48,11 @@
 ;;~~~~~~~~~~~~~~~~~~
 ;; input
 ;;~~~~~~~~~~~~~~~~~~
+(def custom-opts #{:dk :no-label :attr-name :data})
+(defn dissoc-custom-opts
+  [x]
+  (apply dissoc x custom-opts))
+
 (defn input-opts
   [{:keys [data form-id dk attr-name placeholder] :as opts}]
   (-> opts
@@ -55,7 +60,7 @@
               :id (label-for form-id attr-name)
               :on-change #(handle-change % dk attr-name)
               :class (str "input " (name attr-name))})
-      (dissoc :dk :no-label :attr-name :data)))
+      (dissoc-custom-opts)))
 
 (defmulti input (fn [type _] type))
 
@@ -78,7 +83,7 @@
      (for [[v txt] options]
        ^{:key (gensym)}
        [:li [:label
-             [:input (merge opts
+             [:input (merge (dissoc-custom-opts opts)
                             {:type "radio"
                              :checked (= v value)
                              :on-change #(handle-change* v dk attr-name)})]
@@ -135,10 +140,8 @@
 
 (defmethod input :number
   [type {:keys [data form-id dk attr-name placeholder] :as opts}]
-  [:input (merge opts
+  [:input (merge (input-opts opts)
                  {:type (name type)
-                  :id (label-for form-id attr-name)
-                  :value (get-in @data [:data attr-name])
                   :on-change #(let [v (js/parseInt (u/tv  %))]
                                 (if (js/isNaN v)
                                   (handle-change* nil dk attr-name)
@@ -146,11 +149,7 @@
 
 (defmethod input :default
   [type {:keys [data form-id dk attr-name placeholder] :as opts}]
-  [:input (merge opts
-                 {:type (name type)
-                  :id (label-for form-id attr-name)
-                  :value (get-in @data [:data attr-name])
-                  :on-change #(handle-change % dk attr-name)})])
+  [:input (merge (input-opts opts) {:type (name type)})])
 ;;~~~~~~~~~~~~~~~~~~
 ;; end input
 ;;~~~~~~~~~~~~~~~~~~
