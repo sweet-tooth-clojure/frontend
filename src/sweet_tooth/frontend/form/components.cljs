@@ -8,9 +8,11 @@
             [sweet-tooth.frontend.core.handlers :as stch]
             [sweet-tooth.frontend.form.handlers :as stfh]))
 
-(defn form-path
+(def form-prefix ::forms)
+
+(defn full-form-path
   [partial-path]
-  (into [:forms] partial-path))
+  (into [form-prefix] partial-path))
 
 (defn progress-indicator
   "Show a progress indicator when a form is submitted"
@@ -112,6 +114,7 @@
                     :on-change #(handle-change* (toggle-set-membership checkbox-set value) dk attr-name)})]))
 
 (defn error-messages
+  "A list of error messages"
   [errors]
   (when (seq errors)
     [:ul {:class "error-messages"}
@@ -210,9 +213,9 @@
   (checkbox-field type opts))
 
 (defn builder
-  "creates a function that builds inputs"
+  "creates a function (component) that builds inputs"
   [path]
-  (let [path (form-path path)
+  (let [path (full-form-path path)
         data (subscribe (into [:key] path))]
     (fn [type attr-name & {:as opts}]
       [field type (merge {:data data
@@ -225,7 +228,12 @@
   {:on-submit (u/prevent-default #(dispatch [::stfh/submit-form form-path spec]))})
 
 (defn form
+  "Returns an input builder function and subscriptions to all the form's keys"
   [form-path]
-  {:form-state (subscribe [:form-state form-path])
-   :ui-state (subscribe [:form-ui-state form-path])
-   :input (builder form-path)})
+  (let [full-path (full-form-path form-path)
+        form-attr-path (fn [suffix] (u/flatv :key full-path suffix))]
+    {:form-state    (subscribe (form-attr-path :state))
+     :form-ui-state (subscribe (form-attr-path :ui-state))
+     :form-errors   (subscribe (form-attr-path :errors))
+     :form-data     (subscribe (form-attr-path :data)) 
+     :input         (builder form-path)}))
