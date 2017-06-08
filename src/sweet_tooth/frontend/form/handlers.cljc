@@ -4,6 +4,7 @@
             [sweet-tooth.frontend.core.handlers :as c]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.remote.handlers :as strh]
+            [sweet-tooth.frontend.paths :as p]
             [taoensso.timbre :as timbre]))
 
 ;; TODO spec set of possible actions
@@ -37,33 +38,33 @@
   - `form-spec` is a way to pass on whatevs data to the request 
     completion handler.
   - the `:request-opts` key of form spec can customize the ajax request"
-  [form-path data
+  [full-form-path data
    {:keys [success error]
     :or {success ::submit-form-success
          error ::submit-form-error}
     :as form-spec}]
-  (let [[_ endpoint action] form-path
+  (let [[_ endpoint action] full-form-path
         [method url] (method-url endpoint action data)]
     (merge
       {:method method
        :url url
        :params data
-       :on-success [success form-path form-spec]
-       :on-fail [error form-path form-spec]}
+       :on-success [success full-form-path form-spec]
+       :on-fail [error full-form-path form-spec]}
       (:request-opts form-spec))))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
 (reg-event-fx ::submit-form
   [trim-v]
-  (fn [{:keys [db]} [form-path & [form-spec]]]
-    {:db (-> db
-             (assoc-in (u/flatv :forms form-path :state) :submitting)
-             (assoc-in (u/flatv :forms form-path :errors) nil))
-     :dispatch [::strh/http (submit-form (u/flatv :forms form-path)
-                                         (merge (:data form-spec)
-                                                (get-in db (u/flatv :forms form-path :data)))
-                                         form-spec)]}))
+  (fn [{:keys [db]} [partial-form-path & [form-spec]]]
+    (let [full-form-path (p/full-form-path partial-form-path)]
+      {:db (-> db
+               (assoc-in (conj full-form-path :state) :submitting)
+               (assoc-in (conj full-form-path :errors) nil))
+       :dispatch [::strh/http (submit-form full-form-path
+                                           (merge (:data form-spec) (get-in db (conj full-form-path :data)))
+                                           form-spec)]})))
 
 (defn success-base
   "Produces a function that can be used for handling form submission success. 
@@ -77,13 +78,13 @@
   will e.g. `merge` or `deep-merge` values from the response."
   [db-update]
   (fn [db args]
-    (let [[data form-path form-spec] args]
+    (let [[data full-form-path form-spec] args]
       (if-let [callback (:callback form-spec)]
         (callback db args))
       (let [updated-db (db-update db args)]
         (if (= :all (:clear form-spec))
-          (assoc-in updated-db form-path {})
-          (update-in update-in form-path merge
+          (assoc-in updated-db full-form-path {})
+          (update-in update-in full-form-path merge
                      {:state :success :response data}
                      (zipmap (:clear form-spec) (repeat nil))))))))
 
@@ -96,10 +97,10 @@
 
 (reg-event-db ::submit-form-error
   [trim-v]
-  (fn [db [errors form-path form-spec]]
-    (timbre/info "form error:" errors form-path)
-    (-> (assoc-in db (conj form-path :errors) (or errors {:cause :unknown}))
-        (assoc-in (conj form-path :state) :sleeping))))
+  (fn [db [errors full-form-path form-spec]]
+    (timbre/info "form error:" errors full-form-path)
+    (-> (assoc-in db (conj full-form-path :errors) (or errors {:cause :unknown}))
+        (assoc-in (conj full-form-path :state) :sleeping))))
 
 ;; for cases where you can edit or manipulate many items in a list
 (reg-event-fx ::submit-item
@@ -115,21 +116,21 @@
 
 (reg-event-db ::delete-item-success
   [trim-v]
-  (fn [db [data form-path form-spec]]
-    (let [[_ type _ id] form-path]
+  (fn [db [data full-form-path form-spec]]
+    (let [[_ type _ id] full-form-path]
       (-> (if (get-in data [:data type id])
             (c/replace-ents db data)
             (update-in db [:data type] dissoc id))
           ;; TODO why is this called twice?
-          (submit-form-success [data form-path form-spec])
-          (submit-form-success [data (assoc form-path 2 :update) form-spec])))))
+          (submit-form-success [data full-form-path form-spec])
+          (submit-form-success [data (assoc full-form-path 2 :update) form-spec])))))
 
 (reg-event-fx ::delete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
-    (let [form-path [:forms type :delete (:db/id data)]]
+    (let [full-form-path (p/full-form-path [type :delete (:db/id data)])]
       {:db db
-       :dispatch [::strh/http (submit-form form-path
+       :dispatch [::strh/http (submit-form full-form-path
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
@@ -137,9 +138,9 @@
 (reg-event-fx ::undelete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
-    (let [form-path [:forms type :update (:db/id data)]]
+    (let [full-form-path (p/full-form-path [type :update (:db/id data)])]
       {:db db
-       :dispatch [::strh/http (submit-form form-path
+       :dispatch [::strh/http (submit-form full-form-path
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))

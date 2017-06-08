@@ -4,15 +4,10 @@
             [clojure.string :as s]
             [cljs-time.format :as tf]
             [cljs-time.core :as ct]
+            [sweet-tooth.frontend.paths :as p]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.core.handlers :as stch]
             [sweet-tooth.frontend.form.handlers :as stfh]))
-
-(def form-prefix ::forms)
-
-(defn full-form-path
-  [partial-path]
-  (into [form-prefix] partial-path))
 
 (defn progress-indicator
   "Show a progress indicator when a form is submitted"
@@ -214,12 +209,12 @@
 
 (defn builder
   "creates a function (component) that builds inputs"
-  [path]
-  (let [path (full-form-path path)
-        data (subscribe (into [:key] path))]
+  [partial-form-path]
+  (let [full-form-path (p/full-form-path partial-form-path)
+        data (subscribe (into [:key] full-form-path))]
     (fn [type attr-name & {:as opts}]
       [field type (merge {:data data
-                          :dk path
+                          :dk full-form-path
                           :attr-name attr-name}
                          opts)])))
 
@@ -229,11 +224,10 @@
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
-  [form-path]
-  (let [full-path (full-form-path form-path)
-        form-attr-path (fn [suffix] (u/flatv :key full-path suffix))]
+  [partial-form-path]
+  (let [form-attr-path (fn [suffix] (u/flatv :key (p/full-form-path partial-form-path) suffix))]
     {:form-state    (subscribe (form-attr-path :state))
      :form-ui-state (subscribe (form-attr-path :ui-state))
      :form-errors   (subscribe (form-attr-path :errors))
      :form-data     (subscribe (form-attr-path :data)) 
-     :input         (builder form-path)}))
+     :input         (builder partial-form-path)}))
