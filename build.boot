@@ -23,11 +23,4 @@
        :description "Some opinions on top of re-frame"
        :url         "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"
        :scm         {:url "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"}
-       :license     {"MIT" "https://opensource.org/licenses/MIT"} })
-
-(deftask make-install
-  "local install"
-  []
-  (comp (pom)
-        (jar)
-        (install)))
+       :license     {"MIT" "https://opensource.org/licenses/MIT"}})

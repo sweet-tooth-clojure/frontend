@@ -1,7 +1,7 @@
 (ns sweet-tooth.frontend.form.components
   (:require [re-frame.core :refer [dispatch-sync dispatch subscribe]]
             [reagent.core :refer [atom] :as r]
-            [clojure.string :as s]
+            [clojure.string :as str]
             [cljs-time.format :as tf]
             [cljs-time.core :as ct]
             [sweet-tooth.frontend.paths :as p]
@@ -26,18 +26,18 @@
   (u/kw-str attr))
 
 (defn dispatch-change
-  [dk attr-name val]
-  (dispatch-sync [::stch/assoc-in (conj dk :data attr-name) val]))
+  [attr-path val]
+  (dispatch-sync [::stch/assoc-in attr-path val]))
 
 (defn handle-change*
-  [v dk attr-name]
-  (dispatch-change dk attr-name v))
+  [v attr-path]
+  (dispatch-change attr-path v))
 
 (defn handle-change
   "Meant for input fields, where your keystrokes should update the
-  field"
-  [e dk attr-name]
-  (handle-change* (u/tv e) dk attr-name))
+  field. Gets new value from event."
+  [e attr-path]
+  (dispatch-change attr-path (u/tv e)))
 
 (defn label-for [form-id attr-name]
   (str form-id (name attr-name)))
@@ -45,17 +45,20 @@
 ;;~~~~~~~~~~~~~~~~~~
 ;; input
 ;;~~~~~~~~~~~~~~~~~~
-(def custom-opts #{:dk :no-label :attr-name :data})
+
+;; react doesn't recognize these and hates them
+(def custom-opts #{:attr-path :attr-val :attr-name :attr-errors :no-label})
+
 (defn dissoc-custom-opts
   [x]
   (apply dissoc x custom-opts))
 
 (defn input-opts
-  [{:keys [data form-id dk attr-name placeholder] :as opts}]
+  [{:keys [form-id placeholder attr-name attr-path attr-val] :as opts}]
   (-> opts
-      (merge {:value (get-in @data [:data attr-name])
+      (merge {:value @attr-val
               :id (label-for form-id attr-name)
-              :on-change #(handle-change % dk attr-name)
+              :on-change #(handle-change % attr-path)
               :class (str "input " (name attr-name))})
       (dissoc-custom-opts)))
 
@@ -66,33 +69,31 @@
   [:textarea (input-opts opts)])
 
 (defmethod input :select
-  [type {:keys [data options dk attr-name] :as opts}]
-  (let [value (get-in @data [:data attr-name])]
-    [:select (merge (input-opts opts) {:value value})
-     (for [[v txt] options]
-       ^{:key (gensym)}
-       [:option {:value v} txt])]))
+  [type {:keys [options attr-val] :as opts}]
+  [:select (merge (input-opts opts) {:value @attr-val})
+   (for [[v txt] options]
+     ^{:key (gensym)}
+     [:option {:value v} txt])])
 
 (defmethod input :radio
-  [type {:keys [data options dk attr-name] :as opts}]
-  (let [value (get-in @data [:data attr-name])]
-    [:ul.radio
-     (for [[v txt] options]
-       ^{:key (gensym)}
-       [:li [:label
-             [:input (merge (dissoc-custom-opts opts)
-                            {:type "radio"
-                             :checked (= v value)
-                             :on-change #(handle-change* v dk attr-name)})]
-             [:span txt]]])]))
+  [type {:keys [options attr-val attr-path] :as opts}]
+  [:ul.radio
+   (for [[v txt] options]
+     ^{:key (gensym)}
+     [:li [:label
+           [:input (merge (dissoc-custom-opts opts)
+                          {:type "radio"
+                           :checked (= v @attr-val)
+                           :on-change #(handle-change* v attr-path)})]
+           [:span txt]]])])
 
 (defmethod input :checkbox
-  [type {:keys [data form-id dk attr-name] :as opts}]
-  (let [value (get-in @data [:data attr-name])
+  [type {:keys [form-id attr-val attr-path] :as opts}]
+  (let [value @attr-val
         opts (dissoc (input-opts opts) :value)]
     [:input (merge opts
                    {:type "checkbox"
-                    :on-change #(handle-change* (not value) dk attr-name)
+                    :on-change #(handle-change* (not value) attr-path)
                     :default-checked (boolean value)})]))
 
 (defn toggle-set-membership
@@ -100,13 +101,50 @@
   ((if (s v) disj conj) s v))
 
 (defmethod input :checkbox-set
-  [type {:keys [data form-id dk attr-name options value] :as opts}]
-  (let [checkbox-set (or (get-in @data [:data attr-name]) #{})
+  [type {:keys [form-id attr-val attr-path options value] :as opts}]
+  (let [checkbox-set (or @attr-val #{})
         opts (input-opts opts)]
     [:input (merge opts
                    {:type "checkbox"
-                    :checked (checkbox-set value)
-                    :on-change #(handle-change* (toggle-set-membership checkbox-set value) dk attr-name)})]))
+                    :checked (boolean (checkbox-set value))
+                    :on-change #(handle-change* (toggle-set-membership checkbox-set value) attr-path)})]))
+
+;; date handling
+(defn unparse [fmt x]
+  (if x (tf/unparse fmt (js/goog.date.DateTime. x))))
+
+(def date-fmt (:date tf/formatters))
+
+(defn handle-date-change [e attr-path]
+  (let [v (u/tv e)]
+    (if (empty? v)
+      (dispatch-change attr-path nil)
+      (let [date (tf/parse date-fmt v)
+            date (js/Date. (ct/year date) (dec (ct/month date)) (ct/day date))]
+        (dispatch-change attr-path date)))))
+
+(defmethod input :date
+  [type {:keys [form-id attr-path attr-val attr-name]}]
+  [:input {:type "date"
+           :value (unparse date-fmt @attr-val)
+           :id (label-for form-id attr-name)
+           :on-change #(handle-date-change % attr-path)}])
+
+(defmethod input :number
+  [type {:keys [form-id placeholder attr-path] :as opts}]
+  [:input (merge (input-opts opts)
+                 {:type (name type)
+                  :on-change #(let [v (js/parseInt (u/tv  %))]
+                                (if (js/isNaN v)
+                                  (handle-change* nil attr-path)
+                                  (handle-change* (js/parseInt v) attr-path)))})])
+
+(defmethod input :default
+  [type {:keys [form-id placeholder] :as opts}]
+  [:input (merge (input-opts opts) {:type (name type)})])
+;;~~~~~~~~~~~~~~~~~~
+;; end input
+;;~~~~~~~~~~~~~~~~~~
 
 (defn error-messages
   "A list of error messages"
@@ -115,51 +153,13 @@
     [:ul {:class "error-messages"}
      (map (fn [x] ^{:key (gensym)} [:li x]) errors)]))
 
-;; date handling
-(defn unparse [fmt x]
-  (if x (tf/unparse fmt (js/goog.date.DateTime. x))))
-
-(def date-fmt (:date tf/formatters))
-
-(defn handle-date-change [e dk attr-name]
-  (let [v (u/tv e)]
-    (if (empty? v)
-      (dispatch-change dk attr-name nil)
-      (let [date (tf/parse date-fmt v)
-            date (js/Date. (ct/year date) (dec (ct/month date)) (ct/day date))]
-        (dispatch-change dk attr-name date)))))
-
-(defmethod input :date
-  [type {:keys [data form-id dk attr-name]}]
-  [:input {:type "date"
-           :value (unparse date-fmt (get-in @data [:data attr-name]))
-           :id (label-for form-id attr-name)
-           :on-change #(handle-date-change % dk attr-name)}])
-
-(defmethod input :number
-  [type {:keys [data form-id dk attr-name placeholder] :as opts}]
-  [:input (merge (input-opts opts)
-                 {:type (name type)
-                  :on-change #(let [v (js/parseInt (u/tv  %))]
-                                (if (js/isNaN v)
-                                  (handle-change* nil dk attr-name)
-                                  (handle-change* (js/parseInt v) dk attr-name)))})])
-
-(defmethod input :default
-  [type {:keys [data form-id dk attr-name placeholder] :as opts}]
-  [:input (merge (input-opts opts) {:type (name type)})])
-;;~~~~~~~~~~~~~~~~~~
-;; end input
-;;~~~~~~~~~~~~~~~~~~
-
-(defn field-row [type {:keys [data form-id attr-name required] :as opts}]
-  (let [errors (get-in @data [:errors attr-name])]
-    [:tr {:class (when errors "error")}
-     [:td [:label {:for (label-for form-id attr-name) :class "label"}
-           (label-text attr-name)
-           (if required [:span {:class "required"} "*"])]]
-     [:td [input type opts]
-      (error-messages errors)]]))
+(defn field-row [type {:keys [form-id attr-name attr-errors required] :as opts}]
+  [:tr {:class (when @attr-errors "error")}
+   [:td [:label {:for (label-for form-id attr-name) :class "label"}
+         (label-text attr-name)
+         (if required [:span {:class "required"} "*"])]]
+   [:td [input type opts]
+    (error-messages @attr-errors)]])
 
 (defn path->class
   [path]
@@ -167,37 +167,37 @@
        (filter (comp not number?))
        (filter identity)
        (map name)
-       (apply str)))
+       (str/join " ")))
 
 (defmulti field (fn [type _] type))
 
 (defmethod field :default
-  [type {:keys [data form-id tip dk attr-name required label no-label] :as opts}]
-  (let [errors (get-in @data [:errors attr-name])]
-    [:div.field {:class (str (u/kebab (name attr-name)) (when errors "error"))}
-     (when-not no-label
-       [:label {:for (label-for form-id attr-name) :class "label"}
-        (or label (label-text attr-name))
-        (when required [:span {:class "required"} "*"])])
-     (when tip [:div.tip tip])
-     [:div {:class (str (path->class dk) " " (name attr-name))}
-      [input type (dissoc opts :tip)]
-      (error-messages errors)]]))
+  [type {:keys [form-id tip attr-name attr-path attr-errors required label no-label] :as opts}]
+  [:div.field {:class (str (u/kebab (name attr-name)) (when @attr-errors "error"))}
+   (when-not no-label
+     [:label {:for (label-for form-id attr-name) :class "label"}
+      (or label (label-text attr-name))
+      (when required [:span {:class "required"} "*"])])
+   (when tip [:div.tip tip])
+   [:div {:class (path->class attr-path)}
+    [input type (dissoc opts :tip)]
+    (error-messages @attr-errors)]])
 
 (defn checkbox-field
-  [type {:keys [data form-id tip dk attr-name required label no-label] :as opts}]
-  (let [errors (get-in @data [:errors attr-name])]
-    [:div.field {:class (str (u/kebab (name attr-name)) (when errors "error"))}
-     [:div {:class (str (path->class dk) " " (name attr-name))}
-      (if no-label
-        [:span [input type (dissoc opts :tip)] [:i]]
-        [:label {:class "label"}
-         [input type (dissoc opts :tip)]
-         [:i]
-         (or label (label-text attr-name))
-         (when required [:span {:class "required"} "*"])])
-      (when tip [:div.tip tip])
-      (error-messages errors)]]))
+  [type {:keys [data form-id tip required label no-label
+                attr-name attr-path attr-errors]
+         :as opts}]
+  [:div.field {:class (str (u/kebab (name attr-name)) (when @attr-errors "error"))}
+   [:div {:class (path->class attr-path)}
+    (if no-label
+      [:span [input type (dissoc opts :tip)] [:i]]
+      [:label {:class "label"}
+       [input type (dissoc opts :tip)]
+       [:i]
+       (or label (label-text attr-name))
+       (when required [:span {:class "required"} "*"])])
+    (when tip [:div.tip tip])
+    (error-messages @attr-errors)]])
 
 (defmethod field :checkbox
   [type opts]
@@ -210,13 +210,17 @@
 (defn builder
   "creates a function (component) that builds inputs"
   [partial-form-path]
-  (let [full-form-path (p/full-form-path partial-form-path)
-        data (subscribe (into [:key] full-form-path))]
+  (let [full-form-path (p/full-form-path partial-form-path)]
     (fn [type attr-name & {:as opts}]
-      [field type (merge {:data data
-                          :dk full-form-path
-                          :attr-name attr-name}
-                         opts)])))
+      (let [attr-path (into full-form-path [:data attr-name])
+            attr-val (subscribe (u/flatv :key attr-path))
+            attr-errors (subscribe (u/flatv :key full-form-path [:errors attr-name]))]
+        (fn [type attr-name & {:as opts}]
+          [field type (merge {:attr-val attr-val
+                              :attr-path attr-path
+                              :attr-name attr-name
+                              :attr-errors attr-errors}
+                             opts)])))))
 
 (defn on-submit
   [form-path & [spec]]
