@@ -89,7 +89,7 @@
                      (zipmap (:clear form-spec) (repeat nil))))))))
 
 (def submit-form-success
-  (success-base (fn [db [data]] (u/deep-merge db data))))
+  (success-base (fn success-deep-merge [db [data]] (u/deep-merge db data))))
 
 (reg-event-db ::submit-form-success
   [trim-v]
