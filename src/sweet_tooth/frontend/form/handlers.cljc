@@ -84,7 +84,7 @@
       (let [updated-db (db-update db args)]
         (if (= :all (:clear form-spec))
           (assoc-in updated-db full-form-path {})
-          (update-in update-in full-form-path merge
+          (update-in updated-db full-form-path merge
                      {:state :success :response data}
                      (zipmap (:clear form-spec) (repeat nil))))))))
 
