@@ -69,6 +69,8 @@
   (if (= n 1) s (str s "s")))
 
 (defn id-num
+  "Extracts the integer part of a string. Useful for SEO-friendly urls
+  that combine text with an id."
   [id-str]
   (re-find #"^\d+" id-str))
 
@@ -93,12 +95,16 @@
   such that such that k1, k2, k3 are updated using update-fn-1
   and k4, k5, k6 are updated using update-fn-2"
   [x update-map]
-  (reduce (fn [x [keys update-fn]]
-            (reduce (fn [x k] (update x k update-fn))
-                    x
-                    keys))
-          x
-          update-map))
+  (let [keys-to-update (set (keys x))]
+    (reduce (fn [x [ks update-fn]]
+              (reduce (fn [x k]
+                        (if (contains? keys-to-update k)
+                          (update x k update-fn)
+                          x))
+                      x
+                      (set/intersection keys-to-update (set ks))))
+            x
+            update-map)))
 
 (defn deep-merge
   "Like merge, but merges maps recursively"

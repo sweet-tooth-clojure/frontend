@@ -3,6 +3,8 @@
             [secretary.core :as secretary]))
 
 (defn page-nav
+  "A component that displays a link to each page. Current page has the
+  `active` class"
   [pager-id]
   (let [pager (subscribe [:pager pager-id])
         query-params (subscribe [:key :params :query-params])]

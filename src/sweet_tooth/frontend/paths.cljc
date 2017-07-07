@@ -6,3 +6,5 @@
   (into [form-prefix] partial-path))
 
 (def partial-path (comp vec rest))
+
+(def page-prefix :sweet-tooth.frontend.page)

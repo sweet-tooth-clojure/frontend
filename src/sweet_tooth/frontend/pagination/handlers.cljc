@@ -3,6 +3,11 @@
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.form.handlers :as stfh]))
 
+;; TODO spec possible page states
+
+;; TODO this is just deep merging across all maps, plus updating page state
+
+;; TODO namespace the page key
 (defn merge-page
   [db [page-data]]
   (reduce (fn [db x]
