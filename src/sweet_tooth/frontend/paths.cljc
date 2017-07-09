@@ -11,3 +11,5 @@
 ;; TODO namespace this
 ;; may require renaming keys from endpoint results
 (def page-prefix :page)
+
+(def entity-prefix :entity)

@@ -45,7 +45,7 @@
 (reg-sub ::page-data
   (fn [db [_ query-id]]
     (let [{:keys [query result]} (pager db query-id)]
-      (map #(get-in db [:data (:type query) %])
+      (map #(get-in db [paths/entity-prefix (:type query) %])
            (:ordered-ids result)))))
 
 (reg-sub ::page-result

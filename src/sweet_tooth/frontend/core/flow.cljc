@@ -1,6 +1,7 @@
 (ns sweet-tooth.frontend.core.flow
   (:require [re-frame.core :refer [reg-event-db dispatch trim-v path]]
-            [sweet-tooth.frontend.core.utils :as u]))
+            [sweet-tooth.frontend.core.utils :as u]
+            [sweet-tooth.frontend.paths :as paths]))
 
 (reg-event-db ::assoc-in
   [trim-v]
@@ -15,10 +16,11 @@
 
 (defn replace-ents
   [db m]
-  (update db :data (fn [data]
-                     (reduce-kv (fn [data ent-type ents] (update data ent-type merge ents))
-                                data
-                                (:data m)))))
+  (update db paths/entity-prefix
+          (fn [data]
+            (reduce-kv (fn [data ent-type ents] (update data ent-type merge ents))
+                       data
+                       (paths/entity-prefix m)))))
 
 (reg-event-db ::deep-merge
   [trim-v]
