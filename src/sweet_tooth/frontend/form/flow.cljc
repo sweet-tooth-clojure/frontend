@@ -1,9 +1,9 @@
-(ns sweet-tooth.frontend.form.handlers
+(ns sweet-tooth.frontend.form.flow
   (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v]]
             [ajax.core :refer [GET PUT POST DELETE]]
-            [sweet-tooth.frontend.core.handlers :as c]
+            [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.remote.handlers :as strh]
+            [sweet-tooth.frontend.remote.flow :as strf]
             [sweet-tooth.frontend.paths :as p]
             [taoensso.timbre :as timbre]))
 
@@ -62,7 +62,7 @@
       {:db (-> db
                (assoc-in (conj full-form-path :state) :submitting)
                (assoc-in (conj full-form-path :errors) nil))
-       :dispatch [::strh/http (submit-form full-form-path
+       :dispatch [::strf/http (submit-form full-form-path
                                            (merge (:data form-spec) (get-in db (conj full-form-path :data)))
                                            form-spec)]})))
 
@@ -110,7 +110,7 @@
       {:db (-> db
                (assoc-in (conj item-path :state) :submitting)
                (assoc-in (conj item-path :errors) nil))
-       :dispatch [::strh/http (submit-form item-path
+       :dispatch [::strf/http (submit-form item-path
                                            data
                                            (dissoc item-spec :data))]})))
 
@@ -130,7 +130,7 @@
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-form-path [type :delete (:db/id data)])]
       {:db db
-       :dispatch [::strh/http (submit-form full-form-path
+       :dispatch [::strf/http (submit-form full-form-path
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
@@ -140,7 +140,7 @@
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-form-path [type :update (:db/id data)])]
       {:db db
-       :dispatch [::strh/http (submit-form full-form-path
+       :dispatch [::strf/http (submit-form full-form-path
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))

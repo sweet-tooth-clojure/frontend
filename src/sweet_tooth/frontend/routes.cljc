@@ -1,6 +1,6 @@
 (ns sweet-tooth.frontend.routes
   (:require [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.core.handlers :as stch]
+            [sweet-tooth.frontend.core.flow :as stcf]
             [re-frame.core :refer [dispatch]]
             [cemerick.url :as url]
             [clojure.string :as str]))
@@ -30,7 +30,7 @@
   "Updates the db state with a component and metadata to reflect the
   current route"
   [component params page-id]
-  (dispatch [::stch/assoc-in [:nav] {:routed-component component
+  (dispatch [::stcf/assoc-in [:nav] {:routed-component component
                                      :page-id page-id
                                      :params params
                                      :page-params (page-params params)}]))

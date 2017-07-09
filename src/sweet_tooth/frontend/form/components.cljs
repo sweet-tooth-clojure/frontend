@@ -6,8 +6,8 @@
             [cljs-time.core :as ct]
             [sweet-tooth.frontend.paths :as p]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.core.handlers :as stch]
-            [sweet-tooth.frontend.form.handlers :as stfh]))
+            [sweet-tooth.frontend.core.flow :as stcf]
+            [sweet-tooth.frontend.form.flow :as stff]))
 
 (defn progress-indicator
   "Show a progress indicator when a form is submitted"
@@ -27,7 +27,7 @@
 
 (defn dispatch-change
   [attr-path val]
-  (dispatch-sync [::stch/assoc-in attr-path val]))
+  (dispatch-sync [::stcf/assoc-in attr-path val]))
 
 (defn handle-change*
   [v attr-path]
@@ -224,7 +224,7 @@
 
 (defn on-submit
   [form-path & [spec]]
-  {:on-submit (u/prevent-default #(dispatch [::stfh/submit-form form-path spec]))})
+  {:on-submit (u/prevent-default #(dispatch [::stff/submit-form form-path spec]))})
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"

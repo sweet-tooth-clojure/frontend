@@ -1,4 +1,5 @@
-(ns sweet-tooth.frontend.paths)
+(ns sweet-tooth.frontend.paths
+  "sweet tooth roots for the re-frame db")
 
 (def form-prefix :sweet-tooth.frontend.form)
 (defn full-form-path
@@ -7,4 +8,6 @@
 
 (def partial-path (comp vec rest))
 
-(def page-prefix :sweet-tooth.frontend.page)
+;; TODO namespace this
+;; may require renaming keys from endpoint results
+(def page-prefix :page)

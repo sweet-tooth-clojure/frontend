@@ -1,4 +1,4 @@
-(ns sweet-tooth.frontend.core.handlers
+(ns sweet-tooth.frontend.core.flow
   (:require [re-frame.core :refer [reg-event-db dispatch trim-v path]]
             [sweet-tooth.frontend.core.utils :as u]))
 

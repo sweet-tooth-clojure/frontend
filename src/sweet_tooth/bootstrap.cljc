@@ -1,7 +1,7 @@
 (ns sweet-tooth.bootstrap
   "This will eventually provide a function to configure all sweet tooth handlers"
-  (:require [sweet-tooth.frontend.remote.handlers :as strh]))
+  (:require [sweet-tooth.frontend.remote.flow :as strf]))
 
 (defn bootstrap
   [config]
-  (strh/reg-http-event-fx (get-in config [::strh/http :interceptors])))
+  (strf/reg-http-event-fx (get-in config [::strf/http :interceptors])))
