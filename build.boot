@@ -8,7 +8,8 @@
                     [adzerk/boot-test            "1.1.1"         :scope "test"]
                     [cljs-ajax                   "0.6.0"]
                     [com.andrewmcveigh/cljs-time "0.4.0"]
-                    [com.taoensso/timbre         "4.10.0"]])
+                    [com.taoensso/timbre         "4.10.0"]
+                    [com.cemerick/url            "0.1.1"]])
 
 (require
  '[adzerk.bootlaces :refer :all]
