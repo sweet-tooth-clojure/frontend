@@ -15,7 +15,7 @@
  '[adzerk.bootlaces :refer :all]
  '[adzerk.boot-test :refer :all])
 
-(def +version+ "0.2.0-SNAPSHOT")
+(def +version+ "0.2.0")
 (bootlaces! +version+)
 
 (task-options!
@@ -25,3 +25,16 @@
        :url         "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"
        :scm         {:url "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"}
        :license     {"MIT" "https://opensource.org/licenses/MIT"}})
+
+
+(deftask push-release-without-gpg
+  "Deploy release version to Clojars without gpg signature."
+  [f file PATH str "The jar file to deploy."]
+  (comp
+    (#'adzerk.bootlaces/collect-clojars-credentials)
+    (push
+      :file           file
+      :tag            (boolean #'adzerk.bootlaces/+last-commit+)
+      :gpg-sign       false
+      :ensure-release true
+      :repo           "deploy-clojars")))
