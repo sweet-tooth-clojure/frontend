@@ -1,8 +1,12 @@
 (ns sweet-tooth.frontend.pagination.flow
   (:require [re-frame.core :refer [reg-sub reg-event-db trim-v]]
+            [cemerick.url :as url]
+            [ajax.core :refer [GET]]
             [sweet-tooth.frontend.core.utils :as u]
+            [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.paths :as paths]))
+            [sweet-tooth.frontend.paths :as paths]
+            [sweet-tooth.frontend.remote.flow :as strf]))
 
 ;;---------
 ;; Handlers
@@ -64,7 +68,18 @@
 
 (defn update-db-page-loading
   "Use when initiating a GET request fetching paginataed data"
-  [db page-query query-id]
+  [db {:keys [query-id] :as page-query}]
   (-> db
       (assoc-in [paths/page-prefix :query query-id] page-query)
       (assoc-in [paths/page-prefix :state query-id] :loading)))
+
+(defn GET-fx
+  [url-fn page-defaults & [opt-fn]]
+  (let [opt-fn (or opt-fn (fn [x & _] x))]
+    (fn [{:keys [db] :as cofx} args]
+      (let [page-query (merge page-defaults (first args))]
+        (opt-fn {::strf/http {:method GET
+                              :url (url-fn (url/map->query page-query) cofx args)
+                              :on-success [::merge-page]}
+                 :db (update-db-page-loading db page-query)}
+                cofx args)))))

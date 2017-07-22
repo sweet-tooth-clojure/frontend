@@ -1,6 +1,6 @@
 (ns sweet-tooth.frontend.pagination.components
   (:require [re-frame.core :refer [subscribe]]
-            [secretary.core :as secretary]))
+            [cemerick.url :as url]))
 
 (defn page-nav
   "A component that displays a link to each page. Current page has the
@@ -15,7 +15,7 @@
         (into [:div.pager]
               (map (fn [page]
                      [:a.page-num
-                      {:href (str url-base "?" (secretary/encode-query-params (assoc query-params :page page)))
+                      {:href (str url-base "?" (url/map->query (assoc query-params :page page)))
                        :class (if (= (:page query) page) "active")}
                       page])
                    (map inc (range (:total-pages result)))))))))

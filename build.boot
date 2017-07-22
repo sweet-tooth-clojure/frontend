@@ -3,7 +3,7 @@
   :target-path    "target/build"
   :dependencies   '[[org.clojure/clojure         "1.9.0-alpha16" :scope "provided"]
                     [org.clojure/clojurescript   "1.9.456"       :scope "provided"]
-                    [re-frame                    "0.9.1"         :scope "provided"]
+                    [re-frame                    "0.9.4"         :scope "provided"]
                     [adzerk/bootlaces            "0.1.13"        :scope "test"]
                     [adzerk/boot-test            "1.1.1"         :scope "test"]
                     [cljs-ajax                   "0.6.0"]
@@ -15,7 +15,7 @@
  '[adzerk.bootlaces :refer :all]
  '[adzerk.boot-test :refer :all])
 
-(def +version+ "0.2.0")
+(def +version+ "0.2.1-SNAPSHOT")
 (bootlaces! +version+)
 
 (task-options!

@@ -1,7 +1,8 @@
 (ns sweet-tooth.frontend.remote.flow
   (:require [re-frame.core :refer [reg-fx reg-event-fx dispatch]]
             [ajax.core :refer [GET PUT POST DELETE]]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [sweet-tooth.frontend.core.flow :as stcf]))
 
 (defn ajax-success
   "Dispatch result of ajax call to handler key"
@@ -32,3 +33,14 @@
               (cond-> opts
                 on-success (assoc :handler (ajax-success on-success))
                 on-fail    (assoc :error-handler (ajax-error on-fail)))))))
+
+
+(defn GET-fx
+  [url-fn & [opt-fn]]
+  (let [opt-fn (or opt-fn (fn [x & _] x))]
+    (fn [{:keys [db] :as cofx} args]
+      (opt-fn {::http {:method GET
+                       :url (url-fn cofx args)
+                       :on-success [::stcf/deep-merge]}
+               :db db}
+              cofx args))))
