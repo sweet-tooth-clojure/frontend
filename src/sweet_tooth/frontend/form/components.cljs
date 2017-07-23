@@ -47,7 +47,7 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 ;; react doesn't recognize these and hates them
-(def custom-opts #{:attr-path :attr-val :attr-name :attr-errors :no-label})
+(def custom-opts #{:attr-path :attr-val :attr-name :attr-errors :no-label :options})
 
 (defn dissoc-custom-opts
   [x]
@@ -81,10 +81,11 @@
    (for [[v txt] options]
      ^{:key (gensym)}
      [:li [:label
-           [:input (merge (dissoc-custom-opts opts)
-                          {:type "radio"
-                           :checked (= v @attr-val)
-                           :on-change #(handle-change* v attr-path)})]
+           [:input (-> opts
+                       dissoc-custom-opts
+                       (merge {:type "radio"
+                              :checked (= v @attr-val)
+                              :on-change #(handle-change* v attr-path)}))]
            [:span txt]]])])
 
 (defmethod input :checkbox
@@ -104,10 +105,11 @@
   [type {:keys [form-id attr-val attr-path options value] :as opts}]
   (let [checkbox-set (or @attr-val #{})
         opts (input-opts opts)]
-    [:input (merge opts
-                   {:type "checkbox"
-                    :checked (boolean (checkbox-set value))
-                    :on-change #(handle-change* (toggle-set-membership checkbox-set value) attr-path)})]))
+    [:input (-> opts
+                dissoc-custom-opts
+                (merge {:type "checkbox"
+                        :checked (boolean (checkbox-set value))
+                        :on-change #(handle-change* (toggle-set-membership checkbox-set value) attr-path)}))]))
 
 ;; date handling
 (defn unparse [fmt x]
