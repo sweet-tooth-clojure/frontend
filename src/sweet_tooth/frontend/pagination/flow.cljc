@@ -73,13 +73,13 @@
       (assoc-in [paths/page-prefix :query query-id] page-query)
       (assoc-in [paths/page-prefix :state query-id] :loading)))
 
-(defn GET-fx
-  [url-fn page-defaults & [opt-fn]]
-  (let [opt-fn (or opt-fn (fn [x & _] x))]
-    (fn [{:keys [db] :as cofx} args]
-      (let [page-query (merge page-defaults (first args))]
-        (opt-fn {::strf/http {:method GET
-                              :url (url-fn (url/map->query page-query) cofx args)
-                              :on-success [::merge-page]}
-                 :db (update-db-page-loading db page-query)}
-                cofx args)))))
+(defn GET-page-fx
+  [url page-defaults]
+  (fn [{:keys [db] :as cofx} args]
+    (let [[page-params] args
+          page-query (merge page-defaults page-params)]
+      {::strf/http {:method GET
+                    :url url
+                    :params page-query
+                    :on-success [::merge-page]}
+       :db (update-db-page-loading db page-query)})))
