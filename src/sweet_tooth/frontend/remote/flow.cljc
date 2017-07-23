@@ -39,18 +39,18 @@
   [url]
   (fn [{:keys [db] :as cofx} args]
     (let [[params] args]
-      {::http {:method GET
-               :url url
-               :params params
-               :on-success [::stcf/deep-merge]}
+      {:dispatch [::http {:method GET
+                          :url url
+                          :params params
+                          :on-success [::stcf/deep-merge]}]
        :db db})))
 
 (defn GET-single-fx
   [prefix]
   (fn [{:keys [db] :as cofx} args]
     (let [[suffix params] args]
-      {::http {:method GET
-               :url (cond-> prefix suffix (str "/" suffix))
-               :params params
-               :on-success [::stcf/deep-merge]}
+      {:dispatch [::http {:method GET
+                          :url (cond-> prefix suffix (str "/" suffix))
+                          :params params
+                          :on-success [::stcf/deep-merge]}]
        :db db})))

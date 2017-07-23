@@ -78,8 +78,8 @@
   (fn [{:keys [db] :as cofx} args]
     (let [[page-params] args
           page-query (merge page-defaults page-params)]
-      {::strf/http {:method GET
-                    :url url
-                    :params page-query
-                    :on-success [::merge-page]}
+      {:dispatch [::strf/http {:method GET
+                               :url url
+                               :params page-query
+                               :on-success [::merge-page]}]
        :db (update-db-page-loading db page-query)})))

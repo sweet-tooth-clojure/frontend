@@ -78,15 +78,15 @@
 (defmethod input :radio
   [type {:keys [options attr-val attr-path] :as opts}]
   [:ul.radio
-   (for [[v txt] options]
-     ^{:key (gensym)}
-     [:li [:label
-           [:input (-> opts
-                       dissoc-custom-opts
-                       (merge {:type "radio"
-                              :checked (= v @attr-val)
-                              :on-change #(handle-change* v attr-path)}))]
-           [:span txt]]])])
+   (doall (for [[v txt] options]
+            ^{:key (gensym)}
+            [:li [:label
+                  [:input (-> opts
+                              dissoc-custom-opts
+                              (merge {:type "radio"
+                                      :checked (= v @attr-val)
+                                      :on-change #(handle-change* v attr-path)}))]
+                  [:span txt]]]))])
 
 (defmethod input :checkbox
   [type {:keys [form-id attr-val attr-path] :as opts}]
