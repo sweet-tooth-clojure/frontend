@@ -13,3 +13,5 @@
 (def page-prefix :page)
 
 (def entity-prefix :entity)
+
+(def nav-prefix :nav)

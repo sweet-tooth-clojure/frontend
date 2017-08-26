@@ -26,3 +26,4 @@ timbre in their deps
 * make http a handler, instead of running it directly as an effect dispatch to handler
 - and handler can run it as an effect, but we can specify interceptors
 on handler
+* create a generator
