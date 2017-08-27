@@ -1,7 +1,8 @@
 (ns sweet-tooth.frontend.routes.utils
   (:require [sweet-tooth.frontend.core.utils :as u]
             [cemerick.url :as url]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [sweet-tooth.frontend.paths :as paths]))
 
 (defn query-params
   "Turn query string params into map with keyword keys"
@@ -21,3 +22,9 @@
   [params]
   (-> (select-keys params page-param-keys)
       (u/update-vals {[:page :per-page] #?(:cljs js/parseInt :clj #(Long. %))})))
+
+(defn routed-entity
+  ([db entity-key param]
+   (routed-entity db entity-key param identity))
+  ([db entity-key param param-f]
+   (get-in db [paths/entity-prefix entity-key (param-f (get-in db [paths/nav-prefix :params param]))])))

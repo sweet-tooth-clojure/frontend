@@ -11,7 +11,7 @@
 ;; TODO spec this
 (reg-event-db ::load
   [trim-v]
-  (fn [db [component page-id params]]
+  (fn [db [page-id component params]]
     (assoc db paths/nav-prefix {:component component
                                 :page-id page-id
                                 :params params
