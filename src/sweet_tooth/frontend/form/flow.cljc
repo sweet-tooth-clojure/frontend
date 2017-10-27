@@ -1,11 +1,42 @@
 (ns sweet-tooth.frontend.form.flow
-  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v]]
+  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe]]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.remote.flow :as strf]
             [sweet-tooth.frontend.paths :as p]
             [taoensso.timbre :as timbre]))
+
+;;------
+;; Form subs
+;;------
+
+(reg-sub ::form
+  (fn [db [_ partial-form-path]]
+    (get-in db (p/full-form-path partial-form-path))))
+
+(doseq [[sub-name attr] [[::state :state] [::ui-state :ui-state] [::errors :errors] [::data :data]]]
+  (reg-sub sub-name
+    (fn [[_ partial-form-path]]
+      (subscribe [::form partial-form-path]))
+    (fn [form _]
+      (get form attr))))
+
+(reg-sub ::form-attr-data
+  (fn [[_ partial-form-path]]
+    (subscribe [::form partial-form-path]))
+  (fn [form [_ _partial-form-path attr-name]]
+    (get-in form [:data attr-name])))
+
+(reg-sub ::form-attr-errors
+  (fn [[_ partial-form-path]]
+    (subscribe [::form partial-form-path]))
+  (fn [form [_ _partial-form-path attr-name]]
+    (get-in form [:errors attr-name])))
+
+;;------
+;; Building and submitting forms
+;;------
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :data :state :ui-state etc
@@ -144,4 +175,3 @@
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
-

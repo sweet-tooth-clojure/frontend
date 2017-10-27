@@ -1,10 +1,11 @@
 (ns sweet-tooth.frontend.paths
-  "sweet tooth roots for the re-frame db")
+  "sweet tooth roots for the re-frame db"
+  (:require [sweet-tooth.frontend.core.utils :as u]))
 
 (def form-prefix :sweet-tooth.frontend.form)
 (defn full-form-path
   [partial-path]
-  (into [form-prefix] partial-path))
+  (u/flatv form-prefix partial-path))
 
 (def partial-path (comp vec rest))
 

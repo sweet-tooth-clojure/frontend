@@ -214,13 +214,13 @@
   [partial-form-path]
   (let [full-form-path (p/full-form-path partial-form-path)]
     (fn [type attr-name & {:as opts}]
-      (let [attr-path (into full-form-path [:data attr-name])
-            attr-val (subscribe (u/flatv :key attr-path))
-            attr-errors (subscribe (u/flatv :key full-form-path [:errors attr-name]))]
+      (let [attr-path   (into full-form-path [:data attr-name])
+            attr-val    (subscribe [::stff/form-attr-data partial-form-path attr-name])
+            attr-errors (subscribe [::stff/form-attr-errors partial-form-path attr-name])]
         (fn [type attr-name & {:as opts}]
-          [field type (merge {:attr-val attr-val
-                              :attr-path attr-path
-                              :attr-name attr-name
+          [field type (merge {:attr-val    attr-val
+                              :attr-path   attr-path
+                              :attr-name   attr-name
                               :attr-errors attr-errors}
                              opts)])))))
 
@@ -231,9 +231,8 @@
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
   [partial-form-path]
-  (let [form-attr-path (fn [suffix] (u/flatv :key (p/full-form-path partial-form-path) suffix))]
-    {:form-state    (subscribe (form-attr-path :state))
-     :form-ui-state (subscribe (form-attr-path :ui-state))
-     :form-errors   (subscribe (form-attr-path :errors))
-     :form-data     (subscribe (form-attr-path :data)) 
-     :input         (builder partial-form-path)}))
+  {:form-state    (subscribe [::stff/state partial-form-path])
+   :form-ui-state (subscribe [::stff/ui-state partial-form-path])
+   :form-errors   (subscribe [::stff/errors partial-form-path])
+   :form-data     (subscribe [::stff/data partial-form-path]) 
+   :input         (builder partial-form-path)})

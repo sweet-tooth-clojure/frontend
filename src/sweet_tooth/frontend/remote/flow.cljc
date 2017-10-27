@@ -37,20 +37,18 @@
 
 (defn GET-list-fx
   [url]
-  (fn [{:keys [db] :as cofx} args]
+  (fn [cofx args]
     (let [[params] args]
       {:dispatch [::http {:method GET
                           :url url
                           :params params
-                          :on-success [::stcf/deep-merge]}]
-       :db db})))
+                          :on-success [::stcf/deep-merge]}]})))
 
 (defn GET-single-fx
   [prefix]
-  (fn [{:keys [db] :as cofx} args]
+  (fn [cofx args]
     (let [[suffix params] args]
       {:dispatch [::http {:method GET
                           :url (cond-> prefix suffix (str "/" suffix))
                           :params params
-                          :on-success [::stcf/deep-merge]}]
-       :db db})))
+                          :on-success [::stcf/deep-merge]}]})))

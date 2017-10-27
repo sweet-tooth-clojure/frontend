@@ -3,9 +3,17 @@
             [sweet-tooth.frontend.routes.utils :as sfru]
             [sweet-tooth.frontend.paths :as paths]))
 
-(reg-sub ::routed-component
+(reg-sub ::nav
   (fn [db _]
-    (get-in db [paths/nav-prefix :component])))
+    (get db paths/nav-prefix)))
+
+(reg-sub ::routed-component
+  :<- [::nav]
+  (fn [nav _] (:component nav)))
+
+(reg-sub ::params
+  :<- [::nav]
+  (fn [nav _] (:params nav)))
 
 ;; routed should have :params, :page-id, :component
 ;; TODO spec this
