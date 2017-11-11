@@ -6,7 +6,7 @@
 
 ;; TODO: min-length opt
 (defn filter-query
-  [query x-keys xs]
+  [_ query x-keys xs]
   (if (empty? query)
     xs
     (let [query (str/lower-case query)]
@@ -22,8 +22,15 @@
                                 query)))
               xs))))
 
+(defn filter-toggle
+  "Restrict xs to vals whose `form-attr` is truthy, if `toggle?` is true"
+  [form-attr apply-toggle? _ xs]
+  (if apply-toggle?
+    (filter form-attr xs)
+    xs))
+
 (defn filter-attr=
-  [attr-val _ xs]
+  [form-attr attr-val _ xs]
   (filter #(= attr-val %) xs))
 
 (defn reg-filtered-sub
@@ -34,6 +41,6 @@
     (fn [[unfiltered form-data] _]
       ;; TODO some intelligence about unfiltered?
       (reduce (fn [filtered [form-attr filter-fn & filter-args]]
-                (filter-fn (form-attr form-data) filter-args filtered))
+                (filter-fn form-attr (form-attr form-data) filter-args filtered))
               unfiltered
               filter-fns))))
