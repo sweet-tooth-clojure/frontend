@@ -74,12 +74,11 @@
       (assoc-in [paths/page-prefix :state query-id] :loading)))
 
 (defn GET-page-fx
-  [url page-defaults]
-  (fn [{:keys [db] :as cofx} args]
-    (let [[page-params] args
-          page-query (merge page-defaults page-params)]
+  [url page-defaults & [opts]]
+  (fn [{:keys [db] :as cofx} [page-params]]
+    (let [page-query (merge page-defaults page-params)]
       {:dispatch [::strf/http {:method GET
                                :url url
                                :params page-query
-                               :on-success [::merge-page]}]
+                               :on-success (get opts :on-success [::merge-page])}]
        :db (update-db-page-loading db page-query)})))

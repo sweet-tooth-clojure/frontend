@@ -36,19 +36,19 @@
 
 
 (defn GET-list-fx
-  [url]
+  [url & [opts]]
   (fn [cofx args]
     (let [[params] args]
       {:dispatch [::http {:method GET
                           :url url
                           :params params
-                          :on-success [::stcf/deep-merge]}]})))
+                          :on-success (get opts :on-success [::stcf/deep-merge])}]})))
 
 (defn GET-single-fx
-  [prefix]
+  [prefix & [opts]]
   (fn [cofx args]
     (let [[suffix params] args]
       {:dispatch [::http {:method GET
                           :url (cond-> prefix suffix (str "/" suffix))
                           :params params
-                          :on-success [::stcf/deep-merge]}]})))
+                          :on-success (get opts :on-success [::stcf/deep-merge])}]})))

@@ -22,6 +22,7 @@
     (fn [form _]
       (get form attr))))
 
+;; Data value for a specific form attribute
 (reg-sub ::form-attr-data
   (fn [[_ partial-form-path]]
     (subscribe [::form partial-form-path]))
