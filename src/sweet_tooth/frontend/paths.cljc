@@ -4,8 +4,8 @@
 
 (def form-prefix :sweet-tooth.frontend.form)
 (defn full-form-path
-  [partial-path]
-  (u/flatv form-prefix partial-path))
+  [& partial-path]
+  (apply u/flatv form-prefix partial-path))
 
 (def partial-path (comp vec rest))
 

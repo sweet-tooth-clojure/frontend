@@ -30,13 +30,12 @@
     xs))
 
 (defn filter-attr-compare
-  "Compares x val to form val. x must have some val for the given key"
+  "Compares x val to form val"
   [form-attr attr-val [comp-fn key-fn] xs]
   (if attr-val
     (let [key-fn (or key-fn form-attr)]
       (filter #(let [x-val (key-fn %)]
-                 (and x-val
-                      (comp-fn x-val attr-val))) xs))
+                 (comp-fn x-val attr-val)) xs))
     xs))
 
 (defn filter-attr=
