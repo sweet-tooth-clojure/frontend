@@ -15,29 +15,54 @@
   (fn [db [_ partial-form-path]]
     (get-in db (p/full-form-path partial-form-path))))
 
-(doseq [[sub-name attr] [[::state :state] [::ui-state :ui-state] [::errors :errors] [::data :data]]]
+(defn form-signal
+  [[_ partial-form-path]]
+  (subscribe [::form partial-form-path]))
+
+(doseq [[sub-name attr] {::state    :state
+                         ::ui-state :ui-state
+                         ::errors   :errors
+                         ::data     :data
+                         ::base     :base}]
   (reg-sub sub-name
-    (fn [[_ partial-form-path]]
-      (subscribe [::form partial-form-path]))
+    form-signal
     (fn [form _]
       (get form attr))))
 
 ;; Data value for a specific form attribute
 (reg-sub ::form-attr-data
-  (fn [[_ partial-form-path]]
-    (subscribe [::form partial-form-path]))
+  form-signal
   (fn [form [_ _partial-form-path attr-name]]
     (get-in form [:data attr-name])))
 
 (reg-sub ::form-attr-errors
-  (fn [[_ partial-form-path]]
-    (subscribe [::form partial-form-path]))
+  form-signal
   (fn [form [_ _partial-form-path attr-name]]
     (get-in form [:errors attr-name])))
+
+(reg-sub ::form-dirty?
+  (fn [[_ partial-form-path]]
+    [(subscribe [::base partial-form-path])
+     (subscribe [::data partial-form-path])])
+  (fn [[base data]]
+    (not= base data)))
 
 ;;------
 ;; Building and submitting forms
 ;;------
+(reg-event-db ::reset-form
+  [trim-v]
+  (fn [db [partial-form-path]]
+    (let [path (p/full-form-path partial-form-path)]
+      (update-in db path (fn [{:keys [data base] :as form}]
+                           (assoc form :data base))))))
+
+(reg-event-db ::initialize-form
+  [trim-v]
+  (fn [db [partial-form-path data]]
+    (-> db
+        (assoc-in (p/full-form-path partial-form-path :data) data)
+        (assoc-in (p/full-form-path partial-form-path :base) data))))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :data :state :ui-state etc
