@@ -31,3 +31,5 @@ on handler
 ** duh!
 ** put path defaults in app config
 ** create app config init fn
+* validation
+** create a validator that introspecs a map spec to produce invalid keys

@@ -38,10 +38,21 @@
 ;; Allow for both server-side validation and client-side validation
 ;; by allowing errors to be stored in the app db, and allowing the
 ;; client to provide `error-fn`
-(reg-sub ::form-attr-errors
+(defn default-error-fn
+  [form attr-name]
+  (get-in form [:errors attr-name]))
+
+(reg-sub ::error-fn
   form-signal
-  (fn [form [_ _partial-form-path attr-name]]
-    (get-in form [:errors attr-name])))
+  (fn [{:keys [error-fn]}]
+    (or error-fn default-error-fn)))
+
+(reg-sub ::form-attr-errors
+  (fn [[_ partial-form-path]]
+    [(subscribe [::form partial-form-path])
+     (subscribe [::error-fn partial-form-path])])
+  (fn [[form error-fn] [_ _partial-form-path attr-name]]
+    (error-fn form attr-name)))
 
 (reg-sub ::form-dirty?
   (fn [[_ partial-form-path]]
