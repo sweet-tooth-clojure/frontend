@@ -27,3 +27,7 @@ timbre in their deps
 - and handler can run it as an effect, but we can specify interceptors
 on handler
 * create a generator
+* store config in the app itself!
+** duh!
+** put path defaults in app config
+** create app config init fn

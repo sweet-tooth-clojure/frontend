@@ -62,12 +62,9 @@
 
 (reg-event-db ::initialize-form
   [trim-v]
-  (fn [db [partial-form-path data]]
-    (let [path (p/full-form-path partial-form-path)])
-    (-> db
-        (assoc-in (conj path :data) data)
-        (assoc-in (conj path :base) data)
-        (assoc-in (conj path :state) nil))))
+  (fn [db [partial-form-path {:keys [data] :as form}]]
+    (assoc-in db (p/full-form-path partial-form-path) (-> form
+                                                          (update :base #(if % % data))))))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :data :state :ui-state etc
