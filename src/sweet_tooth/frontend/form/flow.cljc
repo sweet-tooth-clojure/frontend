@@ -29,12 +29,15 @@
     (fn [form _]
       (get form attr))))
 
-;; Data value for a specific form attribute
+;; Value for a specific form attribute
 (reg-sub ::form-attr-data
   form-signal
   (fn [form [_ _partial-form-path attr-name]]
     (get-in form [:data attr-name])))
 
+;; Allow for both server-side validation and client-side validation
+;; by allowing errors to be stored in the app db, and allowing the
+;; client to provide `error-fn`
 (reg-sub ::form-attr-errors
   form-signal
   (fn [form [_ _partial-form-path attr-name]]
@@ -60,9 +63,11 @@
 (reg-event-db ::initialize-form
   [trim-v]
   (fn [db [partial-form-path data]]
+    (let [path (p/full-form-path partial-form-path)])
     (-> db
-        (assoc-in (p/full-form-path partial-form-path :data) data)
-        (assoc-in (p/full-form-path partial-form-path :base) data))))
+        (assoc-in (conj path :data) data)
+        (assoc-in (conj path :base) data)
+        (assoc-in (conj path :state) nil))))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :data :state :ui-state etc

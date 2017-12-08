@@ -69,17 +69,17 @@
   [:textarea (input-opts opts)])
 
 (defmethod input :select
-  [type {:keys [options attr-val] :as opts}]
+  [type {:keys [options attr-val attr-path] :as opts}]
   [:select (merge (input-opts opts) {:value @attr-val})
    (for [[v txt] options]
-     ^{:key (gensym)}
+     ^{:key (str attr-path v)}
      [:option {:value v} txt])])
 
 (defmethod input :radio
   [type {:keys [options attr-val attr-path] :as opts}]
   [:ul.radio
    (doall (for [[v txt] options]
-            ^{:key (gensym)}
+            ^{:key (str attr-path v)}
             [:li [:label
                   [:input (-> opts
                               dissoc-custom-opts
@@ -153,9 +153,11 @@
   [errors]
   (when (seq errors)
     [:ul {:class "error-messages"}
-     (map (fn [x] ^{:key (gensym)} [:li x]) errors)]))
+     (map (fn [x] ^{:key (str "error-" x)} [:li x]) errors)]))
 
-(defn field-row [type {:keys [form-id attr-name attr-errors required] :as opts}]
+(defn field-row
+  "Structure the field as a table row"
+  [type {:keys [form-id attr-name attr-errors required] :as opts}]
   [:tr {:class (when @attr-errors "error")}
    [:td [:label {:for (label-for form-id attr-name) :class "label"}
          (label-text attr-name)
