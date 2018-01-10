@@ -19,11 +19,12 @@
   [[_ partial-form-path]]
   (subscribe [::form partial-form-path]))
 
-(doseq [[sub-name attr] {::state    :state
-                         ::ui-state :ui-state
-                         ::errors   :errors
-                         ::data     :data
-                         ::base     :base}]
+(doseq [[sub-name attr] {::state         :state
+                         ::ui-state      :ui-state
+                         ::errors        :errors
+                         ::data          :data
+                         ::base          :base
+                         ::touched-attrs :touched-attrs}]
   (reg-sub sub-name
     form-signal
     (fn [form _]
@@ -38,10 +39,15 @@
 ;; Allow for both server-side validation and client-side validation
 ;; by allowing errors to be stored in the app db, and allowing the
 ;; client to provide `error-fn`
+;;
+;; Errors get stored in the app db when they're returned from the server
+;; Client-side error checking does not store errors in the app db
+;; Though maybe it should
 (defn default-error-fn
   [form attr-name]
   (get-in form [:errors attr-name]))
 
+;: TODO set default-error-fn in app setup
 (reg-sub ::error-fn
   form-signal
   (fn [{:keys [error-fn]}]
@@ -60,6 +66,20 @@
      (subscribe [::data partial-form-path])])
   (fn [[base data]]
     (not= base data)))
+
+;;------
+;; Interacting with forms
+;;------
+
+(reg-event-db ::update-attr
+  [trim-v]
+  (fn [db [partial-form-path attr val]]
+    (assoc-in db (p/full-form-path partial-form-path :data attr) val)))
+
+(reg-event-db ::touch-attr
+  [trim-v]
+  (fn [db [partial-form-path attr]]
+    (update-in db (p/full-form-path partial-form-path :touched-attrs) conj attr)))
 
 ;;------
 ;; Building and submitting forms

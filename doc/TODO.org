@@ -31,5 +31,13 @@ on handler
 ** duh!
 ** put path defaults in app config
 ** create app config init fn
-* validation
+* validation / forms
 ** create a validator that introspecs a map spec to produce invalid keys
+** create some default error-fn
+** respects attr state (only checks dirty)
+** does error-fn
+** subscription
+*** does form have any errors?
+*** 
+** change "state" to "submission-state"
+** make attr-path partial + attr and use form event

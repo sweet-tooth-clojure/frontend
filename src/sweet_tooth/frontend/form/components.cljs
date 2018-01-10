@@ -6,7 +6,6 @@
             [cljs-time.core :as ct]
             [sweet-tooth.frontend.paths :as p]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.form.flow :as stff]))
 
 (defn progress-indicator
@@ -26,18 +25,14 @@
   (u/kw-str attr))
 
 (defn dispatch-change
-  [attr-path val]
-  (dispatch-sync [::stcf/assoc-in attr-path val]))
-
-(defn handle-change*
-  [v attr-path]
-  (dispatch-change attr-path v))
+  [partial-form-path attr-name val]
+  (dispatch-sync [::stff/update-attr partial-form-path attr-name val]))
 
 (defn handle-change
   "Meant for input fields, where your keystrokes should update the
   field. Gets new value from event."
-  [e attr-path]
-  (dispatch-change attr-path (u/tv e)))
+  [event partial-form-path attr-name]
+  (dispatch-change partial-form-path attr-name (u/tv event)))
 
 (defn label-for [form-id attr-name]
   (str form-id (name attr-name)))
@@ -47,20 +42,24 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 ;; react doesn't recognize these and hates them
-(def custom-opts #{:attr-path :attr-val :attr-name :attr-errors :no-label :options})
+(def custom-opts #{:attr-val :attr-name :attr-errors :no-label :options :partial-form-path})
 
 (defn dissoc-custom-opts
   [x]
   (apply dissoc x custom-opts))
 
 (defn input-opts
-  [{:keys [form-id placeholder attr-name attr-path attr-val] :as opts}]
+  [{:keys [form-id placeholder attr-name attr-val partial-form-path] :as opts}]
   (-> opts
       (merge {:value @attr-val
               :id (label-for form-id attr-name)
-              :on-change #(handle-change % attr-path)
+              :on-change #(handle-change % partial-form-path attr-name)
               :class (str "input " (name attr-name))})
       (dissoc-custom-opts)))
+
+(defn input-key
+  [{:keys [form-id partial-form-path attr-name]} & suffix]
+  (str form-id partial-form-path attr-name (str/join "" suffix)))
 
 (defmulti input (fn [type _] type))
 
@@ -69,32 +68,32 @@
   [:textarea (input-opts opts)])
 
 (defmethod input :select
-  [type {:keys [options attr-val attr-path] :as opts}]
+  [type {:keys [options attr-val] :as opts}]
   [:select (merge (input-opts opts) {:value @attr-val})
    (for [[v txt] options]
-     ^{:key (str attr-path v)}
+     ^{:key (input-key opts v)}
      [:option {:value v} txt])])
 
 (defmethod input :radio
-  [type {:keys [options attr-val attr-path] :as opts}]
+  [type {:keys [options partial-form-path attr-name attr-val] :as opts}]
   [:ul.radio
    (doall (for [[v txt] options]
-            ^{:key (str attr-path v)}
+            ^{:key (input-key opts v)}
             [:li [:label
                   [:input (-> opts
                               dissoc-custom-opts
                               (merge {:type "radio"
                                       :checked (= v @attr-val)
-                                      :on-change #(handle-change* v attr-path)}))]
+                                      :on-change #(dispatch-change partial-form-path attr-name v)}))]
                   [:span txt]]]))])
 
 (defmethod input :checkbox
-  [type {:keys [form-id attr-val attr-path] :as opts}]
+  [type {:keys [form-id attr-val partial-form-path attr-name] :as opts}]
   (let [value @attr-val
         opts (dissoc (input-opts opts) :value)]
     [:input (merge opts
                    {:type "checkbox"
-                    :on-change #(handle-change* (not value) attr-path)
+                    :on-change #(dispatch-change partial-form-path attr-name (not value))
                     :default-checked (boolean value)})]))
 
 (defn toggle-set-membership
@@ -102,14 +101,14 @@
   ((if (s v) disj conj) s v))
 
 (defmethod input :checkbox-set
-  [type {:keys [form-id attr-val attr-path options value] :as opts}]
+  [type {:keys [form-id attr-val partial-form-path attr-name options value] :as opts}]
   (let [checkbox-set (or @attr-val #{})
         opts (input-opts opts)]
     [:input (-> opts
                 dissoc-custom-opts
                 (merge {:type "checkbox"
                         :checked (boolean (checkbox-set value))
-                        :on-change #(handle-change* (toggle-set-membership checkbox-set value) attr-path)}))]))
+                        :on-change #(dispatch-change partial-form-path attr-name (toggle-set-membership checkbox-set value))}))]))
 
 ;; date handling
 (defn unparse [fmt x]
@@ -117,29 +116,29 @@
 
 (def date-fmt (:date tf/formatters))
 
-(defn handle-date-change [e attr-path]
+(defn handle-date-change [e partial-form-path attr-name]
   (let [v (u/tv e)]
     (if (empty? v)
-      (dispatch-change attr-path nil)
+      (dispatch-change partial-form-path attr-name nil)
       (let [date (tf/parse date-fmt v)
             date (js/Date. (ct/year date) (dec (ct/month date)) (ct/day date))]
-        (dispatch-change attr-path date)))))
+        (dispatch-change partial-form-path attr-name date)))))
 
 (defmethod input :date
-  [type {:keys [form-id attr-path attr-val attr-name]}]
+  [type {:keys [form-id attr-val partial-form-path attr-name]}]
   [:input {:type "date"
            :value (unparse date-fmt @attr-val)
            :id (label-for form-id attr-name)
-           :on-change #(handle-date-change % attr-path)}])
+           :on-change #(handle-date-change % partial-form-path attr-name)}])
 
 (defmethod input :number
-  [type {:keys [form-id placeholder attr-path] :as opts}]
+  [type {:keys [form-id placeholder partial-form-path attr-name] :as opts}]
   [:input (merge (input-opts opts)
                  {:type (name type)
                   :on-change #(let [v (js/parseInt (u/tv  %))]
                                 (if (js/isNaN v)
-                                  (handle-change* nil attr-path)
-                                  (handle-change* (js/parseInt v) attr-path)))})])
+                                  (dispatch-change partial-form-path attr-name nil)
+                                  (dispatch-change partial-form-path attr-name (js/parseInt v))))})])
 
 (defmethod input :default
   [type {:keys [form-id placeholder] :as opts}]
@@ -214,17 +213,15 @@
 (defn builder
   "creates a function (component) that builds inputs"
   [partial-form-path]
-  (let [full-form-path (p/full-form-path partial-form-path)]
-    (fn [type attr-name & {:as opts}]
-      (let [attr-path   (into full-form-path [:data attr-name])
-            attr-val    (subscribe [::stff/form-attr-data partial-form-path attr-name])
-            attr-errors (subscribe [::stff/form-attr-errors partial-form-path attr-name])]
-        (fn [type attr-name & {:as opts}]
-          [field type (merge {:attr-val    attr-val
-                              :attr-path   attr-path
-                              :attr-name   attr-name
-                              :attr-errors attr-errors}
-                             opts)])))))
+  (fn [type attr-name & {:as opts}]
+    (let [attr-val    (subscribe [::stff/form-attr-data partial-form-path attr-name])
+          attr-errors (subscribe [::stff/form-attr-errors partial-form-path attr-name])]
+      (fn [type attr-name & {:as opts}]
+        [field type (merge {:attr-val          attr-val
+                            :attr-name         attr-name
+                            :attr-errors       attr-errors
+                            :partial-form-path partial-form-path}
+                           opts)]))))
 
 (defn on-submit
   [form-path & [spec]]
