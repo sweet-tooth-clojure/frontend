@@ -49,7 +49,7 @@
   (apply dissoc x custom-opts))
 
 (defn input-opts
-  [{:keys [form-id placeholder attr-name attr-val partial-form-path] :as opts}]
+  [{:keys [form-id attr-name attr-val partial-form-path] :as opts}]
   (-> opts
       (merge {:value @attr-val
               :id (label-for form-id attr-name)
@@ -132,7 +132,7 @@
            :on-change #(handle-date-change % partial-form-path attr-name)}])
 
 (defmethod input :number
-  [type {:keys [form-id placeholder partial-form-path attr-name] :as opts}]
+  [type {:keys [form-id partial-form-path attr-name] :as opts}]
   [:input (merge (input-opts opts)
                  {:type (name type)
                   :on-change #(let [v (js/parseInt (u/tv  %))]
@@ -141,7 +141,7 @@
                                   (dispatch-change partial-form-path attr-name (js/parseInt v))))})])
 
 (defmethod input :default
-  [type {:keys [form-id placeholder] :as opts}]
+  [type {:keys [form-id] :as opts}]
   [:input (merge (input-opts opts) {:type (name type)})])
 ;;~~~~~~~~~~~~~~~~~~
 ;; end input
@@ -210,29 +210,49 @@
   [type opts]
   (checkbox-field type opts))
 
+(defn build-input-opts
+  "Merges the input option hierarchy: 
+
+  1. options provided by the framework
+  2. options that are meant to be applied to every input for this form
+  3. options for this specific input
+
+  `formwide-input-opts` and `input-opts` can be functions, allowing
+  them access to the framework opts. This is so that custom input
+  handlers like `:on-blur` can have access to the same context as
+  framework handlers like `:on-change`."
+  [framework-opts formwide-input-opts input-opts]
+  (let [formwide-input-opts (if (fn? formwide-input-opts)
+                              (formwide-input-opts framework-opts)
+                              formwide-input-opts)
+        input-opts          (if (fn? input-opts)
+                              (input-opts framework-opts)
+                              input-opts)]
+    (merge framework-opts formwide-input-opts input-opts)))
+
 (defn builder
   "creates a function (component) that builds inputs"
-  [partial-form-path]
-  (fn [type attr-name & {:as opts}]
+  [partial-form-path formwide-input-opts]
+  (fn [type attr-name & {:as input-opts}]
     (let [attr-val    (subscribe [::stff/form-attr-data partial-form-path attr-name])
           attr-errors (subscribe [::stff/form-attr-errors partial-form-path attr-name])]
-      (fn [type attr-name & {:as opts}]
-        [field type (merge {:attr-val          attr-val
-                            :attr-name         attr-name
-                            :attr-errors       attr-errors
-                            :partial-form-path partial-form-path}
-                           opts)]))))
+      [field type (build-input-opts {:attr-val          attr-val
+                                     :attr-name         attr-name
+                                     :attr-errors       attr-errors
+                                     :partial-form-path partial-form-path}
+                                    formwide-input-opts
+                                    input-opts)])))
 
 (defn on-submit
-  [form-path & [spec]]
-  {:on-submit (u/prevent-default #(dispatch [::stff/submit-form form-path spec]))})
+  [form-path & [submit-opts]]
+  {:on-submit (u/prevent-default #(dispatch [::stff/submit-form form-path submit-opts]))})
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
-  [partial-form-path]
+  [partial-form-path & [opts]]
   {:form-state    (subscribe [::stff/state partial-form-path])
    :form-ui-state (subscribe [::stff/ui-state partial-form-path])
    :form-errors   (subscribe [::stff/errors partial-form-path])
    :form-data     (subscribe [::stff/data partial-form-path])
    :form-dirty?   (subscribe [::stff/form-dirty? partial-form-path])
-   :input         (builder partial-form-path)})
+   :input         (builder partial-form-path (:input opts))})

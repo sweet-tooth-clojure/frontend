@@ -23,8 +23,7 @@
                          ::ui-state      :ui-state
                          ::errors        :errors
                          ::data          :data
-                         ::base          :base
-                         ::touched-attrs :touched-attrs}]
+                         ::base          :base}]
   (reg-sub sub-name
     form-signal
     (fn [form _]
@@ -32,33 +31,16 @@
 
 ;; Value for a specific form attribute
 (reg-sub ::form-attr-data
-  form-signal
-  (fn [form [_ _partial-form-path attr-name]]
-    (get-in form [:data attr-name])))
-
-;; Allow for both server-side validation and client-side validation
-;; by allowing errors to be stored in the app db, and allowing the
-;; client to provide `error-fn`
-;;
-;; Errors get stored in the app db when they're returned from the server
-;; Client-side error checking does not store errors in the app db
-;; Though maybe it should
-(defn default-error-fn
-  [form attr-name]
-  (get-in form [:errors attr-name]))
-
-;: TODO set default-error-fn in app setup
-(reg-sub ::error-fn
-  form-signal
-  (fn [{:keys [error-fn]}]
-    (or error-fn default-error-fn)))
+  (fn [[_ partial-form-path]]
+    (subscribe [::data partial-form-path]))
+  (fn [form-data [_ _partial-form-path attr-name]]
+    (attr-name form-data)))
 
 (reg-sub ::form-attr-errors
   (fn [[_ partial-form-path]]
-    [(subscribe [::form partial-form-path])
-     (subscribe [::error-fn partial-form-path])])
-  (fn [[form error-fn] [_ _partial-form-path attr-name]]
-    (error-fn form attr-name)))
+    (subscribe [::errors partial-form-path]))
+  (fn [form-errors [_ _partial-form-path attr-name]]
+    (attr-name form-errors)))
 
 (reg-sub ::form-dirty?
   (fn [[_ partial-form-path]]
@@ -76,10 +58,10 @@
   (fn [db [partial-form-path attr val]]
     (assoc-in db (p/full-form-path partial-form-path :data attr) val)))
 
-(reg-event-db ::touch-attr
+(reg-event-db ::update-attr-errors
   [trim-v]
-  (fn [db [partial-form-path attr]]
-    (update-in db (p/full-form-path partial-form-path :touched-attrs) conj attr)))
+  (fn [db [partial-form-path attr errors]]
+    (assoc-in db (p/full-form-path partial-form-path :errors attr) errors)))
 
 ;;------
 ;; Building and submitting forms

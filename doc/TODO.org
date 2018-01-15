@@ -41,3 +41,10 @@ on handler
 *** 
 ** change "state" to "submission-state"
 ** make attr-path partial + attr and use form event
+** some way to add on-blur to every input
+* explore making forms attr-centric
+** [form :name] -> {:data x :base y :errors z}
+* common input opts
+** how to give fns access to field arg?
+** could make it a function that returns the common input opts
+* check that form-id is actually getting used
