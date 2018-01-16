@@ -60,8 +60,11 @@
 
 (reg-event-db ::update-attr-errors
   [trim-v]
-  (fn [db [partial-form-path attr errors]]
-    (assoc-in db (p/full-form-path partial-form-path :errors attr) errors)))
+  (fn [db [partial-form-path attr validation-fn]]
+    (let [form-data (get-in db (p/full-form-path partial-form-path :data))]
+      (assoc-in db
+                (p/full-form-path partial-form-path :errors attr)
+                (validation-fn form-data attr (get form-data attr))))))
 
 ;;------
 ;; Building and submitting forms

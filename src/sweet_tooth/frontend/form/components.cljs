@@ -28,6 +28,10 @@
   [partial-form-path attr-name val]
   (dispatch-sync [::stff/update-attr partial-form-path attr-name val]))
 
+(defn dispatch-validation
+  [partial-form-path attr-name validation-fn]
+  (dispatch-sync [::stff/update-attr-errors partial-form-path attr-name validation-fn]))
+
 (defn handle-change
   "Meant for input fields, where your keystrokes should update the
   field. Gets new value from event."
@@ -50,11 +54,11 @@
 
 (defn input-opts
   [{:keys [form-id attr-name attr-val partial-form-path] :as opts}]
-  (-> opts
-      (merge {:value @attr-val
-              :id (label-for form-id attr-name)
-              :on-change #(handle-change % partial-form-path attr-name)
-              :class (str "input " (name attr-name))})
+  (-> {:value     @attr-val
+       :id        (label-for form-id attr-name)
+       :on-change #(handle-change % partial-form-path attr-name)
+       :class     (str "input " (name attr-name))}
+      (merge opts)
       (dissoc-custom-opts)))
 
 (defn input-key

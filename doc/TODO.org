@@ -41,10 +41,18 @@ on handler
 *** 
 ** change "state" to "submission-state"
 ** make attr-path partial + attr and use form event
-** some way to add on-blur to every input
+** DONE some way to add on-blur to every input
+** what about validating on-change?
+*** don't show error messages while typing initially
+*** validate on blur / show error messages
+*** update error messages while making changes to correct
 * explore making forms attr-centric
 ** [form :name] -> {:data x :base y :errors z}
 * common input opts
 ** how to give fns access to field arg?
 ** could make it a function that returns the common input opts
 * check that form-id is actually getting used
+* clear system for composing input opts?
+** configure the on-x handlers with a selection of fields to meta-merge
+** finalize the on-x handlers by creating a function that calls doseq on them
+* indicate that a field has been positively validated
