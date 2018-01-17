@@ -260,3 +260,16 @@
    :form-data     (subscribe [::stff/data partial-form-path])
    :form-dirty?   (subscribe [::stff/form-dirty? partial-form-path])
    :input         (builder partial-form-path (:input opts))})
+
+(defn client-side-validation
+  "Returns options that you can pass to `:input` for `form`. These
+  options, passed to an input, enable client-side validation such that
+  validation is triggered on blur and performed on every change
+  thereafter."
+  [validator]
+  (fn [{:keys [partial-form-path attr-name attr-errors]}]
+    (let [validate #(dispatch-validation partial-form-path attr-name validator)]
+      {:on-change #(do (handle-change % partial-form-path attr-name)
+                       (when (some? @attr-errors)
+                         (validate)))
+       :on-blur validate})))
