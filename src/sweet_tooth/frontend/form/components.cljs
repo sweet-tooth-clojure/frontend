@@ -225,8 +225,12 @@
   them access to the framework opts. This is so that custom input
   handlers like `:on-blur` can have access to the same context as
   framework handlers like `:on-change`."
-  [framework-opts formwide-input-opts input-opts]
-  (let [formwide-input-opts (if (fn? formwide-input-opts)
+  [partial-form-path attr-name formwide-input-opts input-opts]
+  (let [framework-opts      {:attr-name         attr-name
+                             :attr-val          (subscribe [::stff/form-attr-data partial-form-path attr-name])
+                             :attr-errors       (subscribe [::stff/form-attr-errors partial-form-path attr-name])
+                             :partial-form-path partial-form-path}
+        formwide-input-opts (if (fn? formwide-input-opts)
                               (formwide-input-opts framework-opts)
                               formwide-input-opts)
         input-opts          (if (fn? input-opts)
@@ -238,14 +242,10 @@
   "creates a function (component) that builds inputs"
   [partial-form-path formwide-input-opts]
   (fn [type attr-name & {:as input-opts}]
-    (let [attr-val    (subscribe [::stff/form-attr-data partial-form-path attr-name])
-          attr-errors (subscribe [::stff/form-attr-errors partial-form-path attr-name])]
-      [field type (build-input-opts {:attr-val          attr-val
-                                     :attr-name         attr-name
-                                     :attr-errors       attr-errors
-                                     :partial-form-path partial-form-path}
-                                    formwide-input-opts
-                                    input-opts)])))
+    [field type (build-input-opts partial-form-path
+                                  attr-name
+                                  formwide-input-opts
+                                  input-opts)]))
 
 (defn on-submit
   [form-path & [submit-opts]]
