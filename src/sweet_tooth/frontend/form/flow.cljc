@@ -30,7 +30,7 @@
       (get form attr))))
 
 ;; Value for a specific form attribute
-(reg-sub ::form-attr-data
+(reg-sub ::form-attr-buffer
   (fn [[_ partial-form-path]]
     (subscribe [::buffer partial-form-path]))
   (fn [form-data [_ _partial-form-path attr-path]]
@@ -55,16 +55,16 @@
 
 (reg-event-db ::update-attr-buffer
   [trim-v]
-  (fn [db [partial-form-path attr val]]
-    (assoc-in db (p/full-form-path partial-form-path :buffer attr) val)))
+  (fn [db [partial-form-path attr-path val]]
+    (assoc-in db (p/full-form-path partial-form-path :buffer attr-path) val)))
 
 (reg-event-db ::update-attr-errors
   [trim-v]
-  (fn [db [partial-form-path attr validation-fn]]
+  (fn [db [partial-form-path attr-path validation-fn]]
     (let [form-data (get-in db (p/full-form-path partial-form-path :buffer))]
       (assoc-in db
-                (p/full-form-path partial-form-path :errors attr)
-                (validation-fn form-data attr (get form-data attr))))))
+                (p/full-form-path partial-form-path :errors attr-path)
+                (validation-fn form-data attr-path (get-in form-data attr-path))))))
 
 ;;------
 ;; Building and submitting forms

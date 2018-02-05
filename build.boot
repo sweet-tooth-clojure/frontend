@@ -15,7 +15,7 @@
  '[adzerk.bootlaces :refer :all]
  '[adzerk.boot-test :refer :all])
 
-(def +version+ "0.2.11")
+(def +version+ "0.2.12")
 (bootlaces! +version+)
 
 (task-options!

@@ -50,15 +50,15 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 ;; react doesn't recognize these and hates them
-(def custom-opts #{:attr-val :attr-name :attr-errors :no-label :options :partial-form-path})
+(def custom-opts #{:attr-buffer :attr-name :attr-errors :no-label :options :partial-form-path})
 
 (defn dissoc-custom-opts
   [x]
   (apply dissoc x custom-opts))
 
 (defn input-opts
-  [{:keys [form-id attr-name attr-val partial-form-path] :as opts}]
-  (-> {:value     @attr-val
+  [{:keys [form-id attr-name attr-buffer partial-form-path] :as opts}]
+  (-> {:value     @attr-buffer
        :id        (label-for form-id attr-name)
        :on-change #(handle-change % partial-form-path attr-name)
        :class     (str "input " (attr-name-str attr-name))}
@@ -76,14 +76,14 @@
   [:textarea (input-opts opts)])
 
 (defmethod input :select
-  [type {:keys [options attr-val] :as opts}]
-  [:select (merge (input-opts opts) {:value @attr-val})
+  [type {:keys [options attr-buffer] :as opts}]
+  [:select (merge (input-opts opts) {:value @attr-buffer})
    (for [[v txt] options]
      ^{:key (input-key opts v)}
      [:option {:value v} txt])])
 
 (defmethod input :radio
-  [type {:keys [options partial-form-path attr-name attr-val] :as opts}]
+  [type {:keys [options partial-form-path attr-name attr-buffer] :as opts}]
   [:ul.radio
    (doall (for [[v txt] options]
             ^{:key (input-key opts v)}
@@ -91,13 +91,13 @@
                   [:input (-> opts
                               dissoc-custom-opts
                               (merge {:type "radio"
-                                      :checked (= v @attr-val)
+                                      :checked (= v @attr-buffer)
                                       :on-change #(dispatch-change partial-form-path attr-name v)}))]
                   [:span txt]]]))])
 
 (defmethod input :checkbox
-  [type {:keys [form-id attr-val partial-form-path attr-name] :as opts}]
-  (let [value @attr-val
+  [type {:keys [form-id attr-buffer partial-form-path attr-name] :as opts}]
+  (let [value @attr-buffer
         opts (dissoc (input-opts opts) :value)]
     [:input (merge opts
                    {:type "checkbox"
@@ -109,8 +109,8 @@
   ((if (s v) disj conj) s v))
 
 (defmethod input :checkbox-set
-  [type {:keys [form-id attr-val partial-form-path attr-name options value] :as opts}]
-  (let [checkbox-set (or @attr-val #{})
+  [type {:keys [form-id attr-buffer partial-form-path attr-name options value] :as opts}]
+  (let [checkbox-set (or @attr-buffer #{})
         opts (input-opts opts)]
     [:input (-> opts
                 dissoc-custom-opts
@@ -133,9 +133,9 @@
         (dispatch-change partial-form-path attr-name date)))))
 
 (defmethod input :date
-  [type {:keys [form-id attr-val partial-form-path attr-name]}]
+  [type {:keys [form-id attr-buffer partial-form-path attr-name]}]
   [:input {:type "date"
-           :value (unparse date-fmt @attr-val)
+           :value (unparse date-fmt @attr-buffer)
            :id (label-for form-id attr-name)
            :on-change #(handle-date-change % partial-form-path attr-name)}])
 
@@ -231,7 +231,7 @@
   framework handlers like `:on-change`."
   [partial-form-path attr-name formwide-input-opts input-opts]
   (let [framework-opts      {:attr-name         attr-name
-                             :attr-val          (subscribe [::stff/form-attr-data partial-form-path attr-name])
+                             :attr-buffer       (subscribe [::stff/form-attr-buffer partial-form-path attr-name])
                              :attr-errors       (subscribe [::stff/form-attr-errors partial-form-path attr-name])
                              :partial-form-path partial-form-path}
         formwide-input-opts (if (fn? formwide-input-opts)
