@@ -34,6 +34,10 @@
       (str/replace #"-" " ")
       capitalize-words))
 
+(defn path
+  [scalar-or-vec]
+  (if (vector? scalar-or-vec) scalar-or-vec [scalar-or-vec]))
+
 (defn strk
   "Create a new keyword by appending strings to it"
   [key & args]

@@ -33,14 +33,14 @@
 (reg-sub ::form-attr-data
   (fn [[_ partial-form-path]]
     (subscribe [::buffer partial-form-path]))
-  (fn [form-data [_ _partial-form-path attr-name]]
-    (attr-name form-data)))
+  (fn [form-data [_ _partial-form-path attr-path]]
+    (get-in form-data (u/path attr-path))))
 
 (reg-sub ::form-attr-errors
   (fn [[_ partial-form-path]]
     (subscribe [::errors partial-form-path]))
-  (fn [form-errors [_ _partial-form-path attr-name]]
-    (attr-name form-errors)))
+  (fn [form-errors [_ _partial-form-path attr-path]]
+    (get-in form-errors (u/path attr-path))))
 
 (reg-sub ::form-dirty?
   (fn [[_ partial-form-path]]

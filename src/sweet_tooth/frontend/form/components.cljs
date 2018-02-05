@@ -21,12 +21,9 @@
             [:i {:class "fa fa-check-circle"}]
             " success"])]))
 
-(defn label-text [attr]
-  (u/kw-str attr))
-
 (defn dispatch-change
   [partial-form-path attr-name val]
-  (dispatch-sync [::stff/update-attr partial-form-path attr-name val]))
+  (dispatch-sync [::stff/update-attr-buffer partial-form-path attr-name val]))
 
 (defn dispatch-validation
   [partial-form-path attr-name validation-fn]
@@ -38,8 +35,15 @@
   [event partial-form-path attr-name]
   (dispatch-change partial-form-path attr-name (u/tv event)))
 
+(defn attr-name-str
+  [attr-name]
+  (name (if (vector? attr-name) (last attr-name) attr-name)))
+
+(defn label-text [attr]
+  (u/kw-str (attr-name-str attr)))
+
 (defn label-for [form-id attr-name]
-  (str form-id (name attr-name)))
+  (str form-id (attr-name-str attr-name)))
 
 ;;~~~~~~~~~~~~~~~~~~
 ;; input
@@ -57,7 +61,7 @@
   (-> {:value     @attr-val
        :id        (label-for form-id attr-name)
        :on-change #(handle-change % partial-form-path attr-name)
-       :class     (str "input " (name attr-name))}
+       :class     (str "input " (attr-name-str attr-name))}
       (merge opts)
       (dissoc-custom-opts)))
 
@@ -180,7 +184,7 @@
 
 (defmethod field :default
   [type {:keys [form-id tip attr-name attr-path attr-errors required label no-label] :as opts}]
-  [:div.field {:class (str (u/kebab (name attr-name)) (when @attr-errors "error"))}
+  [:div.field {:class (str (u/kebab (attr-name-str attr-name)) (when @attr-errors "error"))}
    (when-not no-label
      [:label {:for (label-for form-id attr-name) :class "label"}
       (or label (label-text attr-name))
@@ -194,7 +198,7 @@
   [type {:keys [data form-id tip required label no-label
                 attr-name attr-path attr-errors]
          :as opts}]
-  [:div.field {:class (str (u/kebab (name attr-name)) (when @attr-errors "error"))}
+  [:div.field {:class (str (u/kebab (attr-name-str attr-name)) (when @attr-errors "error"))}
    [:div {:class (path->class attr-path)}
     (if no-label
       [:span [input type (dissoc opts :tip)] [:i]]
