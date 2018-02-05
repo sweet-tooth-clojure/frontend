@@ -257,7 +257,7 @@
   {:form-state    (subscribe [::stff/state partial-form-path])
    :form-ui-state (subscribe [::stff/ui-state partial-form-path])
    :form-errors   (subscribe [::stff/errors partial-form-path])
-   :form-data     (subscribe [::stff/data partial-form-path])
+   :form-data     (subscribe [::stff/buffer partial-form-path])
    :form-dirty?   (subscribe [::stff/form-dirty? partial-form-path])
    :input         (builder partial-form-path (:input opts))})
 

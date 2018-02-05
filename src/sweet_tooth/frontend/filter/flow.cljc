@@ -62,7 +62,7 @@
   [sub-name source-sub filter-form-path filter-fns]
   (reg-sub sub-name
     :<- [source-sub]
-    :<- [::stff/data filter-form-path]
+    :<- [::stff/buffer filter-form-path]
     (fn [[unfiltered form-data] _]
       ;; TODO some intelligence about unfiltered?
       (reduce (fn [filtered [form-attr filter-fn & filter-args]]

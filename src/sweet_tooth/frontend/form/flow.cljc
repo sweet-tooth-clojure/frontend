@@ -19,11 +19,11 @@
   [[_ partial-form-path]]
   (subscribe [::form partial-form-path]))
 
-(doseq [[sub-name attr] {::state         :state
-                         ::ui-state      :ui-state
-                         ::errors        :errors
-                         ::data          :data
-                         ::base          :base}]
+(doseq [[sub-name attr] {::state    :state
+                         ::ui-state :ui-state
+                         ::errors   :errors
+                         ::buffer   :buffer
+                         ::base     :base}]
   (reg-sub sub-name
     form-signal
     (fn [form _]
@@ -32,7 +32,7 @@
 ;; Value for a specific form attribute
 (reg-sub ::form-attr-data
   (fn [[_ partial-form-path]]
-    (subscribe [::data partial-form-path]))
+    (subscribe [::buffer partial-form-path]))
   (fn [form-data [_ _partial-form-path attr-name]]
     (attr-name form-data)))
 
@@ -45,7 +45,7 @@
 (reg-sub ::form-dirty?
   (fn [[_ partial-form-path]]
     [(subscribe [::base partial-form-path])
-     (subscribe [::data partial-form-path])])
+     (subscribe [::buffer partial-form-path])])
   (fn [[base data]]
     (not= base data)))
 
@@ -53,15 +53,15 @@
 ;; Interacting with forms
 ;;------
 
-(reg-event-db ::update-attr
+(reg-event-db ::update-attr-buffer
   [trim-v]
   (fn [db [partial-form-path attr val]]
-    (assoc-in db (p/full-form-path partial-form-path :data attr) val)))
+    (assoc-in db (p/full-form-path partial-form-path :buffer attr) val)))
 
 (reg-event-db ::update-attr-errors
   [trim-v]
   (fn [db [partial-form-path attr validation-fn]]
-    (let [form-data (get-in db (p/full-form-path partial-form-path :data))]
+    (let [form-data (get-in db (p/full-form-path partial-form-path :buffer))]
       (assoc-in db
                 (p/full-form-path partial-form-path :errors attr)
                 (validation-fn form-data attr (get form-data attr))))))
@@ -74,7 +74,7 @@
   (fn [db [partial-form-path]]
     (let [path (p/full-form-path partial-form-path)]
       (update-in db path (fn [{:keys [data base] :as form}]
-                           (assoc form :data base))))))
+                           (assoc form :buffer base))))))
 
 (reg-event-db ::initialize-form
   [trim-v]
@@ -83,7 +83,7 @@
                                                           (update :base #(if % % data))))))
 
 ;; TODO spec set of possible actions
-;; TODO spec out form map, keys :data :state :ui-state etc
+;; TODO spec out form map, keys :buffer :state :ui-state etc
 
 (defmulti url-prefix
   "Customize url prefix, e.g. \"/api/v1\""
@@ -138,7 +138,7 @@
                (assoc-in (conj full-form-path :state) :submitting)
                (assoc-in (conj full-form-path :errors) nil))
        :dispatch [::strf/http (submit-form full-form-path
-                                           (merge (:data form-spec) (get-in db (conj full-form-path :data)))
+                                           (merge (:buffer form-spec) (get-in db (conj full-form-path :buffer)))
                                            form-spec)]})))
 
 (defn success-base
@@ -187,15 +187,15 @@
                (assoc-in (conj item-path :errors) nil))
        :dispatch [::strf/http (submit-form item-path
                                            data
-                                           (dissoc item-spec :data))]})))
+                                           (dissoc item-spec :buffer))]})))
 
 (reg-event-db ::delete-item-success
   [trim-v]
   (fn [db [data full-form-path form-spec]]
     (let [[_ type _ id] full-form-path]
-      (-> (if (get-in data [:data type id])
+      (-> (if (get-in data [:buffer type id])
             (c/replace-ents db data)
-            (update-in db [:data type] dissoc id))
+            (update-in db [:buffer type] dissoc id))
           ;; TODO why is this called twice?
           (submit-form-success [data full-form-path form-spec])
           (submit-form-success [data (assoc full-form-path 2 :update) form-spec])))))
