@@ -30,13 +30,13 @@
       (get form attr))))
 
 ;; Value for a specific form attribute
-(reg-sub ::form-attr-buffer
+(reg-sub ::attr-buffer
   (fn [[_ partial-form-path]]
     (subscribe [::buffer partial-form-path]))
   (fn [form-data [_ _partial-form-path attr-path]]
     (get-in form-data (u/path attr-path))))
 
-(reg-sub ::form-attr-errors
+(reg-sub ::attr-errors
   (fn [[_ partial-form-path]]
     (subscribe [::errors partial-form-path]))
   (fn [form-errors [_ _partial-form-path attr-path]]

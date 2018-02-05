@@ -231,8 +231,8 @@
   framework handlers like `:on-change`."
   [partial-form-path attr-name formwide-input-opts input-opts]
   (let [framework-opts      {:attr-name         attr-name
-                             :attr-buffer       (subscribe [::stff/form-attr-buffer partial-form-path attr-name])
-                             :attr-errors       (subscribe [::stff/form-attr-errors partial-form-path attr-name])
+                             :attr-buffer       (subscribe [::stff/attr-buffer partial-form-path attr-name])
+                             :attr-errors       (subscribe [::stff/attr-errors partial-form-path attr-name])
                              :partial-form-path partial-form-path}
         formwide-input-opts (if (fn? formwide-input-opts)
                               (formwide-input-opts framework-opts)
@@ -241,6 +241,14 @@
                               (input-opts framework-opts)
                               input-opts)]
     (merge framework-opts formwide-input-opts input-opts)))
+
+(defn input-builder
+  [partial-form-path formwide-input-opts]
+  (fn [type attr-name & {:as input-opts}])
+  [input type (build-input-opts partial-form-path
+                                attr-name
+                                formwide-input-opts
+                                input-opts)])
 
 (defn builder
   "creates a function (component) that builds inputs"
