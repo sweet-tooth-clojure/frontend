@@ -84,7 +84,7 @@
     (update-in db
                (p/full-form-path partial-form-path :touched)
                (fn [touched-attrs]
-                 (conj (or touched-attrs #{}) attr-path)))))
+                 (conj (or touched-attrs #{}) (u/path attr-path))))))
 
 ;;------
 ;; Building and submitting forms
