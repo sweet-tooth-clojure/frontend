@@ -25,6 +25,10 @@
   [partial-form-path attr-name val]
   (dispatch-sync [::stff/update-attr-buffer partial-form-path attr-name val]))
 
+(defn dispatch-touch
+  [partial-form-path attr-name]
+  (dispatch-sync [::stff/touch-attr partial-form-path attr-name val]))
+
 (defn dispatch-validation
   [partial-form-path attr-name validation-fn]
   (dispatch-sync [::stff/update-attr-errors partial-form-path attr-name validation-fn]))
@@ -61,6 +65,7 @@
   (-> {:value     @attr-buffer
        :id        (label-for form-id attr-name)
        :on-change #(handle-change % partial-form-path attr-name)
+       :on-blur   #(dispatch-touch partial-form-path attr-name)
        :class     (str "input " (attr-name-str attr-name))}
       (merge opts)
       (dissoc-custom-opts)))
