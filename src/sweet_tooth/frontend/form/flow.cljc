@@ -159,7 +159,7 @@
                (assoc-in (conj full-form-path :state) :submitting)
                (assoc-in (conj full-form-path :errors) nil))
        :dispatch [::strf/http (submit-form full-form-path
-                                           (merge (:buffer form-spec) (get-in db (conj full-form-path :buffer)))
+                                           (merge (:data form-spec) (get-in db (conj full-form-path :buffer)))
                                            form-spec)]})))
 
 (defn success-base
