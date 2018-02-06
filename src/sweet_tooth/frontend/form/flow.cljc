@@ -23,24 +23,35 @@
                          ::ui-state :ui-state
                          ::errors   :errors
                          ::buffer   :buffer
-                         ::base     :base}]
+                         ::base     :base
+                         ::touched  :touched}]
   (reg-sub sub-name
     form-signal
     (fn [form _]
       (get form attr))))
 
 ;; Value for a specific form attribute
-(reg-sub ::attr-buffer
+(defn attr-facet-sub
+  [facet]
   (fn [[_ partial-form-path]]
-    (subscribe [::buffer partial-form-path]))
-  (fn [form-data [_ _partial-form-path attr-path]]
-    (get-in form-data (u/path attr-path))))
+    (subscribe [facet partial-form-path])))
+
+(reg-sub ::attr-buffer
+  (attr-facet-sub ::buffer)
+  (fn [buffer [_ _partial-form-path attr-path]]
+    (get-in buffer (u/path attr-path))))
 
 (reg-sub ::attr-errors
-  (fn [[_ partial-form-path]]
-    (subscribe [::errors partial-form-path]))
-  (fn [form-errors [_ _partial-form-path attr-path]]
-    (get-in form-errors (u/path attr-path))))
+  (attr-facet-sub ::errors)
+  (fn [errors [_ _partial-form-path attr-path]]
+    (get-in errors (u/path attr-path))))
+
+;; Has the user interacted with the input that corresponds to this
+;; attr?
+(reg-sub ::attr-touched?
+  (attr-facet-sub ::touched)
+  (fn [touched [_ _partial-form-path attr-path]]
+    (contains? touched (u/path attr-path))))
 
 (reg-sub ::form-dirty?
   (fn [[_ partial-form-path]]
@@ -56,15 +67,24 @@
 (reg-event-db ::update-attr-buffer
   [trim-v]
   (fn [db [partial-form-path attr-path val]]
-    (assoc-in db (p/full-form-path partial-form-path :buffer attr-path) val)))
+    (assoc-in db (p/full-form-path partial-form-path :buffer (u/path attr-path)) val)))
 
 (reg-event-db ::update-attr-errors
   [trim-v]
   (fn [db [partial-form-path attr-path validation-fn]]
-    (let [form-data (get-in db (p/full-form-path partial-form-path :buffer))]
+    (let [attr-path (u/path attr-path)
+          form-data (get-in db (p/full-form-path partial-form-path :buffer))]
       (assoc-in db
                 (p/full-form-path partial-form-path :errors attr-path)
                 (validation-fn form-data attr-path (get-in form-data attr-path))))))
+
+(reg-event-db ::touch-attr
+  [trim-v]
+  (fn [db [partial-form-path attr-path]]
+    (update-in db
+               (p/full-form-path partial-form-path :touched)
+               (fn [touched-attrs]
+                 (conj (or touched-attrs #{}) attr-path)))))
 
 ;;------
 ;; Building and submitting forms
@@ -79,8 +99,9 @@
 (reg-event-db ::initialize-form
   [trim-v]
   (fn [db [partial-form-path {:keys [data] :as form}]]
-    (assoc-in db (p/full-form-path partial-form-path) (-> form
-                                                          (update :base #(if % % data))))))
+    (assoc-in db
+              (p/full-form-path partial-form-path)
+              (update form :base #(if % % data)))))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc

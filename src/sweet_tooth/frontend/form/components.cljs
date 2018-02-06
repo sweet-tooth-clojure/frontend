@@ -242,14 +242,6 @@
                               input-opts)]
     (merge framework-opts formwide-input-opts input-opts)))
 
-(defn input-builder
-  [partial-form-path formwide-input-opts]
-  (fn [type attr-name & {:as input-opts}])
-  [input type (build-input-opts partial-form-path
-                                attr-name
-                                formwide-input-opts
-                                input-opts)])
-
 (defn builder
   "creates a function (component) that builds inputs"
   [partial-form-path formwide-input-opts]
