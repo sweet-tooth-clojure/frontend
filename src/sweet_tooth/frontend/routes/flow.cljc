@@ -5,7 +5,7 @@
 
 (reg-sub ::nav
   (fn [db _]
-    (get db paths/nav-prefix)))
+    (get db (paths/prefix :nav))))
 
 (reg-sub ::routed-component
   :<- [::nav]
@@ -20,7 +20,7 @@
 (reg-event-db ::load
   [trim-v]
   (fn [db [page-id component params]]
-    (assoc db paths/nav-prefix {:component component
-                                :page-id page-id
-                                :params params
-                                :page-params (sfru/page-params params)})))
+    (assoc db (paths/prefix :nav) {:component component
+                                   :page-id page-id
+                                   :params params
+                                   :page-params (sfru/page-params params)})))

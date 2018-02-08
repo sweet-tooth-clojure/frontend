@@ -1,7 +1,7 @@
 (set-env!
   :source-paths   #{"src"}
   :target-path    "target/build"
-  :dependencies   '[[org.clojure/clojure         "1.9.0-alpha16" :scope "provided"]
+  :dependencies   '[[org.clojure/clojure         "1.9.0" :scope "provided"]
                     [org.clojure/clojurescript   "1.9.456"       :scope "provided"]
                     [re-frame                    "0.10.2"         :scope "provided"]
                     [adzerk/bootlaces            "0.1.13"        :scope "test"]
@@ -15,7 +15,7 @@
  '[adzerk.bootlaces :refer :all]
  '[adzerk.boot-test :refer :all])
 
-(def +version+ "0.2.14")
+(def +version+ "0.2.15-SNAPSHOT")
 (bootlaces! +version+)
 
 (task-options!

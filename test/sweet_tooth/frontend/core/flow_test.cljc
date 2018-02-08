@@ -5,6 +5,6 @@
                :cljs [cljs.test :as t :include-macros true :refer [is deftest]])))
 
 (deftest replace-ents
-  (is (= (f/replace-ents {paths/entity-prefix {:topic {1 {:db/id 1 :topic/title "topic" :topic/post-count 1}}}}
-                         {paths/entity-prefix {:topic {1 {:db/id 1 :topic/title "topic!"}}}})
+  (is (= (f/replace-ents {(paths/prefix :entity) {:topic {1 {:db/id 1 :topic/title "topic" :topic/post-count 1}}}}
+                         {(paths/prefix :entity) {:topic {1 {:db/id 1 :topic/title "topic!"}}}})
          {paths/entity-prefix {:topic {1 {:db/id 1 :topic/title "topic!"}}}})))

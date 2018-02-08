@@ -16,11 +16,11 @@
 
 (defn replace-ents
   [db m]
-  (update db paths/entity-prefix
+  (update db (paths/prefix :entity)
           (fn [data]
             (reduce-kv (fn [data ent-type ents] (update data ent-type merge ents))
                        data
-                       (paths/entity-prefix m)))))
+                       ((paths/prefix :entity) m)))))
 
 (reg-event-db ::deep-merge
   [trim-v]

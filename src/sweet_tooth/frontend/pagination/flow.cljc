@@ -19,7 +19,7 @@
   [db [page-data]]
   (reduce (fn [db x]
             (cond-> (u/deep-merge db x)
-              (:page x) (assoc-in [paths/page-prefix :state (first (keys (:query (:page x))))] :loaded)))
+              (:page x) (assoc-in (paths/full-path :page :state (first (keys (:query (:page x))))) :loaded)))
           db
           page-data))
 
@@ -40,16 +40,16 @@
 (defn pager
   "Retrieve a query and its results"
   [db query-id]
-  (let [query (get-in db [paths/page-prefix :query query-id])]
+  (let [query (get-in db (paths/full-path :page :query query-id))]
     {:query query
-     :result (get-in db [paths/page-prefix :result query])}))
+     :result (get-in db (paths/full-path :page :result query))}))
 
 (reg-sub ::pager (fn [db [_ query-id]] (pager db query-id)))
 
 (reg-sub ::page-data
   (fn [db [_ query-id]]
     (let [{:keys [query result]} (pager db query-id)]
-      (map #(get-in db [paths/entity-prefix (:type query) %])
+      (map #(get-in db (paths/full-path :entity (:type query) %))
            (:ordered-ids result)))))
 
 (reg-sub ::page-result
@@ -57,7 +57,7 @@
 
 (reg-sub ::page-state
   (fn [db [_ query-id]]
-    (get-in db [paths/page-prefix :state query-id])))
+    (get-in db (paths/full-path :page :state query-id))))
 
 (reg-sub ::page-query
   (fn [db [_ query-id]] (:query (pager db query-id))))
@@ -70,8 +70,8 @@
   "Use when initiating a GET request fetching paginataed data"
   [db {:keys [query-id] :as page-query}]
   (-> db
-      (assoc-in [paths/page-prefix :query query-id] page-query)
-      (assoc-in [paths/page-prefix :state query-id] :loading)))
+      (assoc-in (paths/full-path :page :query query-id) page-query)
+      (assoc-in (paths/full-path :page :state query-id) :loading)))
 
 (defn GET-page-fx
   [url page-defaults & [opts]]

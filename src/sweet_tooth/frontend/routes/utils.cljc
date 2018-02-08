@@ -27,4 +27,6 @@
   ([db entity-key param]
    (routed-entity db entity-key param identity))
   ([db entity-key param param-f]
-   (get-in db [paths/entity-prefix entity-key (param-f (get-in db [paths/nav-prefix :params param]))])))
+   (get-in db (paths/full-path :entity
+                               entity-key
+                               (param-f (get-in db (paths/full-path :nav :params param)))))))

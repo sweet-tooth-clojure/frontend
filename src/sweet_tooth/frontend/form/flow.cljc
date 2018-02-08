@@ -13,7 +13,7 @@
 
 (reg-sub ::form
   (fn [db [_ partial-form-path]]
-    (get-in db (p/full-form-path partial-form-path))))
+    (get-in db (p/full-path :form partial-form-path))))
 
 (defn form-signal
   [[_ partial-form-path]]
@@ -67,22 +67,22 @@
 (reg-event-db ::update-attr-buffer
   [trim-v]
   (fn [db [partial-form-path attr-path val]]
-    (assoc-in db (p/full-form-path partial-form-path :buffer (u/path attr-path)) val)))
+    (assoc-in db (p/full-path :form partial-form-path :buffer (u/path attr-path)) val)))
 
 (reg-event-db ::update-attr-errors
   [trim-v]
   (fn [db [partial-form-path attr-path validation-fn]]
     (let [attr-path (u/path attr-path)
-          form-data (get-in db (p/full-form-path partial-form-path :buffer))]
+          form-data (get-in db (p/full-path :form partial-form-path :buffer))]
       (assoc-in db
-                (p/full-form-path partial-form-path :errors attr-path)
+                (p/full-path :form partial-form-path :errors attr-path)
                 (validation-fn form-data attr-path (get-in form-data attr-path))))))
 
 (reg-event-db ::touch-attr
   [trim-v]
   (fn [db [partial-form-path attr-path]]
     (update-in db
-               (p/full-form-path partial-form-path :touched)
+               (p/full-path :form partial-form-path :touched)
                (fn [touched-attrs]
                  (conj (or touched-attrs #{}) (u/path attr-path))))))
 
@@ -92,7 +92,7 @@
 (reg-event-db ::reset-form
   [trim-v]
   (fn [db [partial-form-path]]
-    (let [path (p/full-form-path partial-form-path)]
+    (let [path (p/full-path :form partial-form-path)]
       (update-in db path (fn [{:keys [data base] :as form}]
                            (assoc form :buffer base))))))
 
@@ -100,7 +100,7 @@
   [trim-v]
   (fn [db [partial-form-path {:keys [data] :as form}]]
     (assoc-in db
-              (p/full-form-path partial-form-path)
+              (p/full-path :form partial-form-path)
               (update form :base #(if % % data)))))
 
 ;; TODO spec set of possible actions
@@ -154,7 +154,7 @@
 (reg-event-fx ::submit-form
   [trim-v]
   (fn [{:keys [db]} [partial-form-path & [form-spec]]]
-    (let [full-form-path (p/full-form-path partial-form-path)]
+    (let [full-form-path (p/full-path :form partial-form-path)]
       {:db (-> db
                (assoc-in (conj full-form-path :state) :submitting)
                (assoc-in (conj full-form-path :errors) nil))
@@ -224,7 +224,7 @@
 (reg-event-fx ::delete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
-    (let [full-form-path (p/full-form-path [type :delete (:db/id data)])]
+    (let [full-form-path (p/full-path :form [type :delete (:db/id data)])]
       {:db db
        :dispatch [::strf/http (submit-form full-form-path
                                            data
@@ -234,7 +234,7 @@
 (reg-event-fx ::undelete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
-    (let [full-form-path (p/full-form-path [type :update (:db/id data)])]
+    (let [full-form-path (p/full-path :form [type :update (:db/id data)])]
       {:db db
        :dispatch [::strf/http (submit-form full-form-path
                                            data

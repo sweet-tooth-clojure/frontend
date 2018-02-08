@@ -3,4 +3,4 @@
 
 (defn update-in-form
   [db partial-path attr update-fn & args]
-  (apply update-in db (into (p/full-form-path partial-path) [:data attr]) update-fn args))
+  (apply update-in db (into (p/full-path :form partial-path) [:data attr]) update-fn args))
