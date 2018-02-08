@@ -28,10 +28,10 @@
 (defn register-handler
   [registration id-ns interceptors]
   (let [configured-registration (meta-merge registration
-                                            (get interceptors id-ns)
-                                            (get interceptors (:id registration)))
+                                            {:interceptors (get interceptors id-ns)}
+                                            {:interceptors (get interceptors (:id registration))})
         [reg-fn & reg-args] (->> ((juxt :reg-fn :id :interceptors :handler-fn)
-                                  (cond-> registration
+                                  (cond-> configured-registration
                                     (empty? (:interceptors registration)) (dissoc :interceptors)))
                                  (filter identity))]
     (apply reg-fn reg-args)))
