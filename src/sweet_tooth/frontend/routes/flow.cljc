@@ -1,5 +1,6 @@
 (ns sweet-tooth.frontend.routes.flow
   (:require [re-frame.core :refer [reg-event-db reg-sub trim-v]]
+            [sweet-tooth.frontend.core :as stc]
             [sweet-tooth.frontend.routes.utils :as sfru]
             [sweet-tooth.frontend.paths :as paths]))
 
@@ -17,7 +18,7 @@
 
 ;; routed should have :params, :page-id, :component
 ;; TODO spec this
-(reg-event-db ::load
+(stc/rr reg-event-db ::load
   [trim-v]
   (fn [db [page-id component params]]
     (assoc db (paths/prefix :nav) {:component component

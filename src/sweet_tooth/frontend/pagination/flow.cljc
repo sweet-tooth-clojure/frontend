@@ -2,6 +2,7 @@
   (:require [re-frame.core :refer [reg-sub reg-event-db trim-v]]
             [cemerick.url :as url]
             [ajax.core :refer [GET]]
+            [sweet-tooth.frontend.core :as stc]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.form.flow :as stff]
@@ -23,12 +24,12 @@
           db
           page-data))
 
-(reg-event-db ::merge-page [trim-v] merge-page)
+(stc/rr reg-event-db ::merge-page [trim-v] merge-page)
 
 (def submit-form-success-page
   (stff/success-base merge-page))
 
-(reg-event-db ::submit-form-success-page
+(stc/rr reg-event-db ::submit-form-success-page
   [trim-v]
   (fn [db args]
     (submit-form-success-page db args)))

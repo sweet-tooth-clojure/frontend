@@ -1,6 +1,7 @@
 (ns sweet-tooth.frontend.filter.flow
   (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe]]
             [clojure.string :as str]
+            [sweet-tooth.frontend.core :as stc]
             [sweet-tooth.frontend.form.flow :as stff]
             [taoensso.timbre :as timbre]))
 

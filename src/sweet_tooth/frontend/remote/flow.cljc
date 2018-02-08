@@ -2,6 +2,7 @@
   (:require [re-frame.core :refer [reg-fx reg-event-fx dispatch]]
             [ajax.core :refer [GET PUT POST DELETE]]
             [taoensso.timbre :as timbre]
+            [sweet-tooth.frontend.core :as stc]
             [sweet-tooth.frontend.core.flow :as stcf]))
 
 (defn ajax-success

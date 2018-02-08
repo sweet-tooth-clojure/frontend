@@ -1,6 +1,7 @@
 (ns sweet-tooth.frontend.form.flow
   (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe]]
             [ajax.core :refer [GET PUT POST DELETE]]
+            [sweet-tooth.frontend.core :as stc]
             [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.remote.flow :as strf]
@@ -64,12 +65,12 @@
 ;; Interacting with forms
 ;;------
 
-(reg-event-db ::update-attr-buffer
+(stc/rr reg-event-db ::update-attr-buffer
   [trim-v]
   (fn [db [partial-form-path attr-path val]]
     (assoc-in db (p/full-path :form partial-form-path :buffer (u/path attr-path)) val)))
 
-(reg-event-db ::update-attr-errors
+(stc/rr reg-event-db ::update-attr-errors
   [trim-v]
   (fn [db [partial-form-path attr-path validation-fn]]
     (let [attr-path (u/path attr-path)
@@ -78,7 +79,7 @@
                 (p/full-path :form partial-form-path :errors attr-path)
                 (validation-fn form-data attr-path (get-in form-data attr-path))))))
 
-(reg-event-db ::touch-attr
+(stc/rr reg-event-db ::touch-attr
   [trim-v]
   (fn [db [partial-form-path attr-path]]
     (update-in db
@@ -89,14 +90,14 @@
 ;;------
 ;; Building and submitting forms
 ;;------
-(reg-event-db ::reset-form
+(stc/rr reg-event-db ::reset-form
   [trim-v]
   (fn [db [partial-form-path]]
     (let [path (p/full-path :form partial-form-path)]
       (update-in db path (fn [{:keys [data base] :as form}]
                            (assoc form :buffer base))))))
 
-(reg-event-db ::initialize-form
+(stc/rr reg-event-db ::initialize-form
   [trim-v]
   (fn [db [partial-form-path {:keys [data] :as form}]]
     (assoc-in db
@@ -151,7 +152,7 @@
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
-(reg-event-fx ::submit-form
+(stc/rr reg-event-fx ::submit-form
   [trim-v]
   (fn [{:keys [db]} [partial-form-path & [form-spec]]]
     (let [full-form-path (p/full-path :form partial-form-path)]
@@ -187,11 +188,11 @@
 (def submit-form-success
   (success-base (fn success-deep-merge [db [data]] (u/deep-merge db data))))
 
-(reg-event-db ::submit-form-success
+(stc/rr reg-event-db ::submit-form-success
   [trim-v]
   submit-form-success)
 
-(reg-event-db ::submit-form-error
+(stc/rr reg-event-db ::submit-form-error
   [trim-v]
   (fn [db [errors full-form-path form-spec]]
     (timbre/info "form error:" errors full-form-path)
@@ -199,7 +200,7 @@
         (assoc-in (conj full-form-path :state) :sleeping))))
 
 ;; for cases where you can edit or manipulate many items in a list
-(reg-event-fx ::submit-item
+(stc/rr reg-event-fx ::submit-item
   [trim-v]
   (fn [{:keys [db]} [item-path {:keys [data id] :as item-spec}]]
     (let [item-path (u/flatv :item-submissions item-path (get data id))]
@@ -210,7 +211,7 @@
                                            data
                                            (dissoc item-spec :buffer))]})))
 
-(reg-event-db ::delete-item-success
+(stc/rr reg-event-db ::delete-item-success
   [trim-v]
   (fn [db [data full-form-path form-spec]]
     (let [[_ type _ id] full-form-path]
@@ -221,7 +222,7 @@
           (submit-form-success [data full-form-path form-spec])
           (submit-form-success [data (assoc full-form-path 2 :update) form-spec])))))
 
-(reg-event-fx ::delete-item
+(stc/rr reg-event-fx ::delete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-path :form [type :delete (:db/id data)])]
@@ -231,7 +232,7 @@
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
 
-(reg-event-fx ::undelete-item
+(stc/rr reg-event-fx ::undelete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-path :form [type :update (:db/id data)])]
