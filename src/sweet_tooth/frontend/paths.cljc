@@ -11,4 +11,4 @@
 
 (defn full-path
   [prefix-name & partial-path]
-  (apply u/flatv (prefix prefix-name)  partial-path))
+  (apply u/flatv (prefix prefix-name) partial-path))

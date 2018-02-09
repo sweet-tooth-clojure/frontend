@@ -54,17 +54,22 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 ;; react doesn't recognize these and hates them
-(def custom-opts #{:attr-buffer :attr-path :attr-errors :no-label :options :partial-form-path})
+(def custom-opts #{:attr-buffer :attr-path :attr-errors
+                   :no-label :options :partial-form-path
+                   :format-read :format-write})
 
 (defn dissoc-custom-opts
   [x]
   (apply dissoc x custom-opts))
 
 (defn input-opts
-  [{:keys [form-id attr-path attr-buffer partial-form-path] :as opts}]
-  (-> {:value     @attr-buffer
+  [{:keys [form-id attr-path attr-buffer partial-form-path format-read format-write]
+    :or {format-read identity
+         format-write identity}
+    :as opts}]
+  (-> {:value     (format-read @attr-buffer)
        :id        (label-for form-id attr-path)
-       :on-change #(handle-change % partial-form-path attr-path)
+       :on-change #(dispatch-change partial-form-path attr-path (format-write (u/tv %)))
        :on-blur   #(dispatch-touch partial-form-path attr-path)
        :class     (str "input " (attr-path-str attr-path))}
       (merge opts)
@@ -83,9 +88,9 @@
 (defmethod input :select
   [type {:keys [options attr-buffer] :as opts}]
   [:select (merge (input-opts opts) {:value @attr-buffer})
-   (for [[v txt] options]
+   (for [[v txt option-opts] options]
      ^{:key (input-key opts v)}
-     [:option {:value v} txt])])
+     [:option (merge {:value v} option-opts) txt])])
 
 (defmethod input :radio
   [type {:keys [options partial-form-path attr-path attr-buffer] :as opts}]
@@ -275,9 +280,11 @@
   validation is triggered on blur and performed on every change
   thereafter."
   [validator]
-  (fn [{:keys [partial-form-path attr-path attr-errors]}]
+  (fn [{:keys [partial-form-path attr-path attr-errors format-write]
+        :or {format-write identity}
+        :as opts}]
     (let [validate #(dispatch-validation partial-form-path attr-path validator)]
-      {:on-change #(do (handle-change % partial-form-path attr-path)
+      {:on-change #(do (dispatch-change partial-form-path attr-path (format-write (u/tv %)))
                        (when (some? @attr-errors)
                          (validate)))
        :on-blur validate})))
