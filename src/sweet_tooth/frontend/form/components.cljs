@@ -86,14 +86,17 @@
   [:textarea (input-opts opts)])
 
 (defmethod input :select
-  [type {:keys [options attr-buffer] :as opts}]
-  [:select (merge (input-opts opts) {:value @attr-buffer})
-   (for [[v txt option-opts] options]
-     ^{:key (input-key opts v)}
-     [:option (merge {:value v} option-opts) txt])])
+  [type {:keys [options attr-buffer format-read] :as opts}]
+  [:select (merge (input-opts opts) {:value (format-read @attr-buffer)})
+   (for [[opt-value txt option-opts] options]
+     ^{:key (input-key opts opt-value)}
+     [:option (cond-> {}
+                opt-value (assoc :value opt-value)
+                true      (merge option-opts))
+      txt])])
 
 (defmethod input :radio
-  [type {:keys [options partial-form-path attr-path attr-buffer] :as opts}]
+  [type {:keys [options partial-form-path attr-path attr-buffer format-read] :as opts}]
   [:ul.radio
    (doall (for [[v txt] options]
             ^{:key (input-key opts v)}
@@ -101,13 +104,13 @@
                   [:input (-> opts
                               dissoc-custom-opts
                               (merge {:type "radio"
-                                      :checked (= v @attr-buffer)
+                                      :checked (= v (format-read @attr-buffer))
                                       :on-change #(dispatch-change partial-form-path attr-path v)}))]
                   [:span txt]]]))])
 
 (defmethod input :checkbox
-  [type {:keys [form-id attr-buffer partial-form-path attr-path] :as opts}]
-  (let [value @attr-buffer
+  [type {:keys [form-id attr-buffer partial-form-path attr-path format-read] :as opts}]
+  (let [value (format-read @attr-buffer)
         opts (dissoc (input-opts opts) :value)]
     [:input (merge opts
                    {:type "checkbox"
@@ -119,8 +122,8 @@
   ((if (s v) disj conj) s v))
 
 (defmethod input :checkbox-set
-  [type {:keys [form-id attr-buffer partial-form-path attr-path options value] :as opts}]
-  (let [checkbox-set (or @attr-buffer #{})
+  [type {:keys [form-id attr-buffer partial-form-path attr-path options value format-read] :as opts}]
+  (let [checkbox-set (or (format-read @attr-buffer) #{})
         opts (input-opts opts)]
     [:input (-> opts
                 dissoc-custom-opts
