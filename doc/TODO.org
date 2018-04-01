@@ -56,3 +56,4 @@ on handler
 ** configure the on-x handlers with a selection of fields to meta-merge
 ** finalize the on-x handlers by creating a function that calls doseq on them
 * indicate that a field has been positively validated
+* better system for avoiding dupe api requests / combining api requests

@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.pagination.flow
-  (:require [re-frame.core :refer [reg-sub reg-event-db trim-v]]
+  (:require [re-frame.core :refer [reg-sub reg-event-db reg-event-fx trim-v]]
             [cemerick.url :as url]
             [ajax.core :refer [GET]]
             [sweet-tooth.frontend.core :as stc]
@@ -29,10 +29,9 @@
 (def submit-form-success-page
   (stff/success-base merge-page))
 
-(stc/rr reg-event-db ::submit-form-success-page
+(stc/rr reg-event-fx ::submit-form-success-page
   [trim-v]
-  (fn [db args]
-    (submit-form-success-page db args)))
+  submit-form-success-page)
 
 ;;---------
 ;; Subscriptions

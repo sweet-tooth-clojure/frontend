@@ -70,7 +70,7 @@
   (fn [db [partial-form-path attr-path val]]
     (assoc-in db (p/full-path :form partial-form-path :buffer (u/path attr-path)) val)))
 
-(stc/rr reg-event-db ::update-attr-errors
+(stc/rr reg-event-db ::updtae-attr-errors
   [trim-v]
   (fn [db [partial-form-path attr-path validation-fn]]
     (let [attr-path (u/path attr-path)
@@ -90,19 +90,29 @@
 ;;------
 ;; Building and submitting forms
 ;;------
-(stc/rr reg-event-db ::reset-form
+
+;; Reset buffer to value when form was initialized
+(stc/rr reg-event-db ::reset-form-buffer
   [trim-v]
   (fn [db [partial-form-path]]
     (let [path (p/full-path :form partial-form-path)]
-      (update-in db path (fn [{:keys [data base] :as form}]
+      (update-in db path (fn [{:keys [base] :as form}]
                            (assoc form :buffer base))))))
 
+;; Populate form initial state
 (stc/rr reg-event-db ::initialize-form
   [trim-v]
   (fn [db [partial-form-path {:keys [data] :as form}]]
     (assoc-in db
               (p/full-path :form partial-form-path)
               (update form :base #(if % % data)))))
+
+;; nils out form
+(stc/rr reg-event-db ::clear-form
+  [trim-v]
+  (fn [db [partial-form-path]]
+    (let [path (p/full-path :form partial-form-path)]
+      (assoc-in db path nil))))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
@@ -172,32 +182,42 @@
   - clears form keys specified by `:clear` in `form-spec`
   
   You customize success-base by providing a `db-update` function which
-  will e.g. `merge` or `deep-merge` values from the response."
+  will e.g. `merge` or `deep-merge` values from the response.
+
+  TODO investigate useing the `after` interceptor"
   [db-update]
-  (fn [db args]
+  (fn [{:keys [db]} args]
     (let [[data full-form-path form-spec] args]
       (if-let [callback (:callback form-spec)]
         (callback db args))
-      (let [updated-db (db-update db args)]
-        (if (= :all (:clear form-spec))
-          (assoc-in updated-db full-form-path {})
-          (update-in updated-db full-form-path merge
-                     {:state :success :response data}
-                     (zipmap (:clear form-spec) (repeat nil))))))))
+      (cond-> {:db (let [updated-db (db-update db args)]
+                     (if (= :all (:clear form-spec))
+                       (assoc-in updated-db full-form-path {})
+                       (update-in updated-db full-form-path merge
+                                  {:state :success :response data}
+                                  (zipmap (:clear form-spec) (repeat nil)))))}
+        (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
+                                                                {:ms v
+                                                                 :id [:expire full-form-path k]
+                                                                 :dispatch [::c/dissoc-in (conj full-form-path k)]})
+                                                              (:expire form-spec)))))))
 
 (def submit-form-success
   (success-base (fn success-deep-merge [db [data]] (u/deep-merge db data))))
 
-(stc/rr reg-event-db ::submit-form-success
+(stc/rr reg-event-fx ::submit-form-success
   [trim-v]
   submit-form-success)
 
+(defn submit-form-error
+  [db [errors full-form-path form-spec]]
+  (timbre/info "form error:" errors full-form-path)
+  (-> (assoc-in db (conj full-form-path :errors) (or errors {:cause :unknown}))
+      (assoc-in (conj full-form-path :state) :sleeping)))
+
 (stc/rr reg-event-db ::submit-form-error
   [trim-v]
-  (fn [db [errors full-form-path form-spec]]
-    (timbre/info "form error:" errors full-form-path)
-    (-> (assoc-in db (conj full-form-path :errors) (or errors {:cause :unknown}))
-        (assoc-in (conj full-form-path :state) :sleeping))))
+  submit-form-error)
 
 ;; for cases where you can edit or manipulate many items in a list
 (stc/rr reg-event-fx ::submit-item
