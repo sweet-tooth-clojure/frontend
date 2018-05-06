@@ -51,6 +51,8 @@
     (u/dissoc-in db path)))
 
 ;; debounce dispatches
+;; TODO i don't like this atom :(
+;; TODO dispose of debouncer
 (def debouncers (atom {}))
 
 (defn new-debouncer

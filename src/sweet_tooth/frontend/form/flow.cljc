@@ -197,8 +197,8 @@
                                   {:state :success :response data}
                                   (zipmap (:clear form-spec) (repeat nil)))))}
         (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
-                                                                {:ms v
-                                                                 :id [:expire full-form-path k]
+                                                                {:ms       v
+                                                                 :id       [:expire full-form-path k]
                                                                  :dispatch [::c/dissoc-in (conj full-form-path k)]})
                                                               (:expire form-spec)))))))
 
