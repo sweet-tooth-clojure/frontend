@@ -1,3 +1,18 @@
+* validation / forms
+** TODO validate form handler against data received 
+** create a validator that introspecs a map spec to produce invalid keys
+** create some default error-fn
+** respects attr state (only checks dirty)
+** does error-fn
+** subscription
+*** does form have any errors?
+** change "state" to "submission-state"
+** make attr-path partial + attr and use form event
+** DONE some way to add on-blur to every input
+** what about validating on-change?
+*** don't show error messages while typing initially
+*** validate on blur / show error messages
+*** update error messages while making changes to correct
 * Make form-paths base agnostic
 Make the ~form-path~ base configurable. Whenever form-path is
 referenced, exclude base. Have ~full-form-path~ when base is included?
@@ -31,21 +46,6 @@ on handler
 ** duh!
 ** put path defaults in app config
 ** create app config init fn
-* validation / forms
-** create a validator that introspecs a map spec to produce invalid keys
-** create some default error-fn
-** respects attr state (only checks dirty)
-** does error-fn
-** subscription
-*** does form have any errors?
-*** 
-** change "state" to "submission-state"
-** make attr-path partial + attr and use form event
-** DONE some way to add on-blur to every input
-** what about validating on-change?
-*** don't show error messages while typing initially
-*** validate on blur / show error messages
-*** update error messages while making changes to correct
 * explore making forms attr-centric
 ** [form :name] -> {:data x :base y :errors z}
 * common input opts

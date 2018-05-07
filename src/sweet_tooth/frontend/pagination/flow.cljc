@@ -18,6 +18,7 @@
 ;; TODO namespace the page key
 (defn merge-page
   [db [page-data]]
+  {:pre [(vector? page-data)]}
   (reduce (fn [db x]
             (cond-> (u/deep-merge db x)
               (:page x) (assoc-in (paths/full-path :page :state (first (keys (:query (:page x))))) :loaded)))

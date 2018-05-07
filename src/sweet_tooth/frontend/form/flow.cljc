@@ -202,8 +202,13 @@
                                                                  :dispatch [::c/dissoc-in (conj full-form-path k)]})
                                                               (:expire form-spec)))))))
 
+(defn success-deep-merge
+  [db [data]]
+  {:pre [(map? data)]}
+  (u/deep-merge db data))
+
 (def submit-form-success
-  (success-base (fn success-deep-merge [db [data]] (u/deep-merge db data))))
+  (success-base success-deep-merge))
 
 (stc/rr reg-event-fx ::submit-form-success
   [trim-v]
