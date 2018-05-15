@@ -47,9 +47,23 @@
 
 (defn GET-single-fx
   [prefix & [opts]]
-  (fn [cofx args]
-    (let [[suffix params] args]
-      {:dispatch [::http {:method GET
-                          :url (cond-> prefix suffix (str "/" suffix))
-                          :params params
-                          :on-success (get opts :on-success [::stcf/deep-merge])}]})))
+  (fn [cofx [suffix params]]
+    {:dispatch [::http {:method GET
+                        :url (cond-> prefix suffix (str "/" suffix))
+                        :params params
+                        :on-success (get opts :on-success [::stcf/deep-merge])}]}))
+
+(defn DELETE-single-fx
+  [prefix & [opts]]
+  (fn [cofx [suffix]]
+    {:dispatch [::http {:method DELETE
+                        :url (cond-> prefix suffix (str "/" suffix))
+                        :on-success (get opts :on-success [::stcf/deep-merge])}]}))
+
+(defn PUT-single-fx
+  [prefix & [opts]]
+  (fn [cofx [suffix params]]
+    {:dispatch [::http {:method PUT
+                        :url (cond-> prefix suffix (str "/" suffix))
+                        :params params
+                        :on-success (get opts :on-success [::stcf/deep-merge])}]}))

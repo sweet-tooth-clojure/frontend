@@ -30,6 +30,14 @@
   (fn [db [m]]
     (u/deep-merge db m)))
 
+(core/rr reg-event-db ::replace-entities
+  [trim-v]
+  (fn [db [m]]
+    (reduce-kv (fn [db entity-type entities]
+                 (update-in db [:entity entity-type] merge entities))
+               db
+               (:entity m))))
+
 (core/rr reg-event-db ::toggle
   [trim-v]
   (fn [db [path]] (update-in db path not)))

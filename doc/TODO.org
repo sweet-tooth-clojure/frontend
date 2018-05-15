@@ -57,3 +57,6 @@ on handler
 ** finalize the on-x handlers by creating a function that calls doseq on them
 * indicate that a field has been positively validated
 * better system for avoiding dupe api requests / combining api requests
+* DELETE lifecycle
+** update to indicate deleting
+** update with response

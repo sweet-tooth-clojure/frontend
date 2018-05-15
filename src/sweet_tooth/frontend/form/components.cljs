@@ -196,15 +196,20 @@
 (defmulti field (fn [type _] type))
 
 (defmethod field :default
-  [type {:keys [form-id tip attr-path attr-errors required label no-label] :as opts}]
+  [type {:keys [form-id tip attr-path attr-errors required label no-label
+                before-input after-input after-errors] :as opts}]
   [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors "error"))}
    (when-not no-label
      [:label {:for (label-for form-id attr-path) :class "label"}
       (or label (label-text attr-path))
       (when required [:span {:class "required"} "*"])])
    (when tip [:div.tip tip])
-   [:div [input type (dissoc opts :tip)]
-    (error-messages @attr-errors)]])
+   [:div
+    before-input
+    [input type (dissoc opts :tip :before-input :after-input :after-errors)]
+    after-input
+    (error-messages @attr-errors)
+    after-errors]])
 
 (defn checkbox-field
   [type {:keys [data form-id tip required label no-label
