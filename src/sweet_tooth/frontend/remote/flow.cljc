@@ -43,7 +43,7 @@
       {:dispatch [::http {:method GET
                           :url url
                           :params params
-                          :on-success (get opts :on-success [::stcf/deep-merge])}]})))
+                          :on-success (get opts :on-success [::stcf/update-db])}]})))
 
 (defn GET-single-fx
   [prefix & [opts]]
@@ -51,14 +51,14 @@
     {:dispatch [::http {:method GET
                         :url (cond-> prefix suffix (str "/" suffix))
                         :params params
-                        :on-success (get opts :on-success [::stcf/deep-merge])}]}))
+                        :on-success (get opts :on-success [::stcf/update-db])}]}))
 
 (defn DELETE-single-fx
   [prefix & [opts]]
   (fn [cofx [suffix]]
     {:dispatch [::http {:method DELETE
                         :url (cond-> prefix suffix (str "/" suffix))
-                        :on-success (get opts :on-success [::stcf/deep-merge])}]}))
+                        :on-success (get opts :on-success [::stcf/update-db])}]}))
 
 (defn PUT-single-fx
   [prefix & [opts]]
@@ -66,4 +66,4 @@
     {:dispatch [::http {:method PUT
                         :url (cond-> prefix suffix (str "/" suffix))
                         :params params
-                        :on-success (get opts :on-success [::stcf/deep-merge])}]}))
+                        :on-success (get opts :on-success [::stcf/update-db])}]}))

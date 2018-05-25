@@ -14,25 +14,18 @@
 ;;---------
 
 ;; TODO spec possible page states and page keys
-;; TODO this is just deep merging across all maps, plus updating page state
 ;; TODO namespace the page key
-(defn merge-page
-  [db [page-data]]
-  {:pre [(vector? page-data)]}
-  (reduce (fn [db x]
-            (cond-> (u/deep-merge db x)
-              (:page x) (assoc-in (paths/full-path :page :state (first (keys (:query (:page x))))) :loaded)))
-          db
-          page-data))
+(defn db-patch-handle-page
+  [db db-patch]
+  (if-let [page (:page db-patch)]
+    (-> (update db :page merge page)
+        (assoc-in (paths/full-path :page :state (first (keys (:query page)))) :loaded))
+    db))
 
-(stc/rr reg-event-db ::merge-page [trim-v] merge-page)
-
-(def submit-form-success-page
-  (stff/success-base merge-page))
-
-(stc/rr reg-event-fx ::submit-form-success-page
-  [trim-v]
-  submit-form-success-page)
+(defn add-update-db-page-config
+  "Store config for update-db function in the re-frame app-db"
+  [db]
+  (assoc-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db :page] db-patch-handle-page))
 
 ;;---------
 ;; Subscriptions
@@ -81,5 +74,5 @@
       {:dispatch [::strf/http {:method GET
                                :url url
                                :params page-query
-                               :on-success (get opts :on-success [::merge-page])}]
+                               :on-success (get opts :on-success [::stcf/update-db])}]
        :db (update-db-page-loading db page-query)})))

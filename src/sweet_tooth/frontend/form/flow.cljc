@@ -108,11 +108,15 @@
               (update form :base #(if % % data)))))
 
 ;; nils out form
+(defn clear-form
+  [db partial-form-path]
+  (let [path (p/full-path :form partial-form-path)]
+      (assoc-in db path nil)))
+
 (stc/rr reg-event-db ::clear-form
   [trim-v]
   (fn [db [partial-form-path]]
-    (let [path (p/full-path :form partial-form-path)]
-      (assoc-in db path nil))))
+    (clear-form db partial-form-path)))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
@@ -202,13 +206,8 @@
                                                                  :dispatch [::c/dissoc-in (conj full-form-path k)]})
                                                               (:expire form-spec)))))))
 
-(defn success-deep-merge
-  [db [data]]
-  {:pre [(map? data)]}
-  (u/deep-merge db data))
-
 (def submit-form-success
-  (success-base success-deep-merge))
+  (success-base c/update-db))
 
 (stc/rr reg-event-fx ::submit-form-success
   [trim-v]

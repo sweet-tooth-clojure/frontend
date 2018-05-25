@@ -1,4 +1,9 @@
 (ns sweet-tooth.frontend.core
+  "Sweet Tooth provides handlers. Rather than registering outright,
+  handlers are registered with an internal registry using the `rr`
+  function in this namespace, and the `register-handlers` function is
+  then used to register the handlers with re-frame. This allows users
+  to specify interceptors for Sweet Tooth's handlers."
   (:require [meta-merge.core :refer [meta-merge]]))
 
 (def config
@@ -10,6 +15,7 @@
 (def handlers (atom {}))
 
 (defn register-registration
+  "Store a re-frame registration in sweet little config atom"
   [{:keys [id] :as registration}]
   (let [id-ns (symbol (namespace id))]
     (swap! handlers update id-ns (fn [registrations]

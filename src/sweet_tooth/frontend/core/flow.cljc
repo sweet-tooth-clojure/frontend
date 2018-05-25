@@ -27,16 +27,46 @@
 
 (core/rr reg-event-db ::deep-merge
   [trim-v]
-  (fn [db [m]]
-    (u/deep-merge db m)))
+  (fn [db [m]] (u/deep-merge db m)))
 
+;; whereas deep merge will merge new entities with old, this replaces
+;; old entities withnew
 (core/rr reg-event-db ::replace-entities
   [trim-v]
   (fn [db [m]]
     (reduce-kv (fn [db entity-type entities]
-                 (update-in db [:entity entity-type] merge entities))
+                 (update-in db (paths/full-path :entity entity-type) merge entities))
                db
                (:entity m))))
+
+(defn update-db
+  "Takes a db and a vector of db-patches, and applies those patches to
+  the db using the udpaters stored in 
+  [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db]
+  of the app-db."
+  [db [db-patches]]
+  {:pre [(vector? db-patches)]}
+  (let [updaters (vals (get-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db]))]
+    (reduce (fn [db db-patch]
+              (reduce (fn [db updater] (updater db db-patch))
+                      db
+                      updaters))
+            db
+            db-patches)))
+
+(core/rr reg-event-db ::update-db [trim-v] update-db)
+
+(defn db-patch-handle-entity
+  [db db-patch]
+  (let [entity-prefix (paths/prefix :entity)]
+    (if-let [entity (get db-patch entity-prefix)]
+      (update db entity-prefix u/deep-merge entity)
+      db)))
+
+(defn add-update-db-entity-config
+  "Store config for update-db function in the re-frame app-db"
+  [db]
+  (assoc-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db (paths/prefix :entity)] db-patch-handle-entity))
 
 (core/rr reg-event-db ::toggle
   [trim-v]

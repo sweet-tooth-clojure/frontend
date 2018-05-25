@@ -1,62 +1,73 @@
-* validation / forms
-** TODO validate form handler against data received 
-** create a validator that introspecs a map spec to produce invalid keys
-** create some default error-fn
-** respects attr state (only checks dirty)
-** does error-fn
-** subscription
-*** does form have any errors?
-** change "state" to "submission-state"
-** make attr-path partial + attr and use form event
-** DONE some way to add on-blur to every input
-** what about validating on-change?
-*** don't show error messages while typing initially
-*** validate on blur / show error messages
-*** update error messages while making changes to correct
-* Make form-paths base agnostic
-Make the ~form-path~ base configurable. Whenever form-path is
-referenced, exclude base. Have ~full-form-path~ when base is included?
-* Update form components to be more specific
+* ideas
+** store config in the app itself?
+*** put path defaults in app config
+*** create app config init fn
+** validation / forms
+*** TODO validate form handler against data received 
+*** create a validator that introspecs a map spec to produce invalid keys
+*** create some default error-fn
+*** respects attr state (only checks dirty)
+*** does error-fn
+*** subscription
+**** does form have any errors?
+*** change "state" to "submission-state"
+*** make attr-path partial + attr and use form event
+*** DONE some way to add on-blur to every input
+*** what about validating on-change?
+**** don't show error messages while typing initially
+**** validate on blur / show error messages
+**** update error messages while making changes to correct
+** Update form components to be more specific
 Instead of the ~builder~ creating a ~data~ subscription for the entire
 form, create data and error subscriptions for that attribute
-* Update method-url to allow overriding
-* Not require timbre?
-Change timbre in build.boot? Don't punch users who don't specify
-timbre in their deps
-* Split all handlers into functions and register functions
-- have a function that allows you to register all at once with incerceptors for each
-  (reg-all {::strh/http [x y z]})
-- update handlers to merge (dissoc cofx :event) to make extensible
-- ex:
-(defn reg-http-fx
-  [interceptors]
-  (reg-fx ::http
-  interceptors
-  (fn [{:keys [method url on-success on-fail] :as opts}]
-    (let [opts (dissoc opts :method :url :on-success :on-fail)]
-      (method url
-              (cond-> opts
-                on-success (assoc :handler (ajax-success on-success))
-                on-fail    (assoc :error-handler (ajax-error on-fail))))))))
-* make http a handler, instead of running it directly as an effect dispatch to handler
-- and handler can run it as an effect, but we can specify interceptors
-on handler
-* create a generator
-* store config in the app itself!
-** duh!
-** put path defaults in app config
-** create app config init fn
-* explore making forms attr-centric
-** [form :name] -> {:data x :base y :errors z}
-* common input opts
-** how to give fns access to field arg?
-** could make it a function that returns the common input opts
-* check that form-id is actually getting used
-* clear system for composing input opts?
-** configure the on-x handlers with a selection of fields to meta-merge
-** finalize the on-x handlers by creating a function that calls doseq on them
-* indicate that a field has been positively validated
-* better system for avoiding dupe api requests / combining api requests
-* DELETE lifecycle
-** update to indicate deleting
-** update with response
+** Update method-url to allow overriding
+** Not require timbre?
+*Change timbre in build.boot? Don't punch users who don't specify
+*timbre in their deps
+** Split all handlers into functions and register functions
+*- have a function that allows you to register all at once with incerceptors for each
+*  (reg-all {::strh/http [x y z]})
+*- update handlers to merge (dissoc cofx :event) to make extensible
+*- ex:
+*(defn reg-http-fx
+*  [interceptors]
+*  (reg-fx ::http
+*  interceptors
+*  (fn [{:keys [method url on-success on-fail] :as opts}]
+*    (let [opts (dissoc opts :method :url :on-success :on-fail)]
+*      (method url
+*              (cond-> opts
+*                on-success (assoc :handler (ajax-success on-success))
+*                on-fail    (assoc :error-handler (ajax-error on-fail))))))))
+** make http a handler, instead of running it directly as an effect dispatch to handler
+*- and handler can run it as an effect, but we can specify interceptors
+*on handler
+** create a generator
+** explore making forms attr-centric
+*** [form :name] -> {:data x :base y :errors z}
+** common input opts
+*** how to give fns access to field arg?
+*** could make it a function that returns the common input opts
+** check that form-id is actually getting used
+** clear system for composing input opts?
+*** configure the on-x handlers with a selection of fields to meta-merge
+*** finalize the on-x handlers by creating a function that calls doseq on them
+** indicate that a field has been positively validated
+** better system for avoiding dupe api requests / combining api requests
+* todo
+** DONE Make form-paths base agnostic
+Make the ~form-path~ base configurable. Whenever form-path is
+referenced, exclude base. Have ~full-form-path~ when base is included?
+** TODO generic db updating handling special keys
+*** vector of maps
+*** keys
+**** :entity
+**** TODO :page should get folded in
+**** user should be able to specify own keys
+**** store db updaters / key handlers in the app db?
+** DELETE lifecycle
+*** update to indicate deleting
+*** update with response
+** TODO document sweet-tooth.frontend.core
+** TODO config
+*** does it make sense to use duct for config?
