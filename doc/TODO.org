@@ -26,19 +26,6 @@ form, create data and error subscriptions for that attribute
 *timbre in their deps
 ** Split all handlers into functions and register functions
 *- have a function that allows you to register all at once with incerceptors for each
-*  (reg-all {::strh/http [x y z]})
-*- update handlers to merge (dissoc cofx :event) to make extensible
-*- ex:
-*(defn reg-http-fx
-*  [interceptors]
-*  (reg-fx ::http
-*  interceptors
-*  (fn [{:keys [method url on-success on-fail] :as opts}]
-*    (let [opts (dissoc opts :method :url :on-success :on-fail)]
-*      (method url
-*              (cond-> opts
-*                on-success (assoc :handler (ajax-success on-success))
-*                on-fail    (assoc :error-handler (ajax-error on-fail))))))))
 ** make http a handler, instead of running it directly as an effect dispatch to handler
 *- and handler can run it as an effect, but we can specify interceptors
 *on handler
@@ -54,6 +41,11 @@ form, create data and error subscriptions for that attribute
 *** finalize the on-x handlers by creating a function that calls doseq on them
 ** indicate that a field has been positively validated
 ** better system for avoiding dupe api requests / combining api requests
+** the ui/nav connection
+*** registering ui keys as dependent on nav
+*** what changes indicate that the ui key is no longer relevant?
+*** component-did-unmount to clean up after itself
+*** not just UI but form as well
 * todo
 ** DONE Make form-paths base agnostic
 Make the ~form-path~ base configurable. Whenever form-path is

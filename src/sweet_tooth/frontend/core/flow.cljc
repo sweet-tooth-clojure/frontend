@@ -25,9 +25,13 @@
                        data
                        ((paths/prefix :entity) m)))))
 
+(defn deep-merge
+  [db [m]]
+  (u/deep-merge db m))
+
 (core/rr reg-event-db ::deep-merge
   [trim-v]
-  (fn [db [m]] (u/deep-merge db m)))
+  deep-merge)
 
 ;; whereas deep merge will merge new entities with old, this replaces
 ;; old entities withnew
@@ -43,14 +47,21 @@
   "Takes a db and a vector of db-patches, and applies those patches to
   the db using the udpaters stored in 
   [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db]
-  of the app-db."
+  of the app-db.
+
+  If no updaters apply, then just merge the patch in."
   [db [db-patches]]
   {:pre [(vector? db-patches)]}
-  (let [updaters (vals (get-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db]))]
+  (let [updaters     (get-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db])
+        updater-keys (keys updaters)
+        updater-fns  (vals updaters)]
     (reduce (fn [db db-patch]
-              (reduce (fn [db updater] (updater db db-patch))
-                      db
-                      updaters))
+              ;; default case is to just merge
+              (if (empty? (select-keys db-patch updater-keys))
+                (merge db db-patch)
+                (reduce (fn [db updater] (updater db db-patch))
+                        db
+                        updater-fns)))
             db
             db-patches)))
 
