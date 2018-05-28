@@ -27,13 +27,20 @@
     (fn [coeffects [_ request-opts]]
       (merge (dissoc coeffects :event) {::http request-opts}))))
 
+(def methods
+  {:get    GET
+   :put    PUT
+   :post   POST
+   :delete DELETE})
+
 (reg-fx ::http
   (fn [{:keys [method url on-success on-fail] :as opts}]
     (let [opts (dissoc opts :method :url :on-success :on-fail)]
-      (method url
-              (cond-> opts
-                on-success (assoc :handler (ajax-success on-success))
-                on-fail    (assoc :error-handler (ajax-error on-fail)))))))
+      ((get methods method method)
+       url
+       (cond-> opts
+         on-success (assoc :handler (ajax-success on-success))
+         on-fail    (assoc :error-handler (ajax-error on-fail)))))))
 
 
 (defn GET-list-fx
