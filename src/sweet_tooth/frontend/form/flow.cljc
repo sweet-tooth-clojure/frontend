@@ -65,12 +65,16 @@
 ;; Interacting with forms
 ;;------
 
+(defn set-attr-facet
+  [db [partial-form-path attr-path facet val]]
+  (assoc-in db (p/full-path :form partial-form-path facet (u/path attr-path)) val))
+
 (stc/rr reg-event-db ::update-attr-buffer
   [trim-v]
   (fn [db [partial-form-path attr-path val]]
-    (assoc-in db (p/full-path :form partial-form-path :buffer (u/path attr-path)) val)))
+    (set-attr-facet db [partial-form-path attr-path :buffer val])))
 
-(stc/rr reg-event-db ::updtae-attr-errors
+(stc/rr reg-event-db ::update-attr-errors
   [trim-v]
   (fn [db [partial-form-path attr-path validation-fn]]
     (let [attr-path (u/path attr-path)
@@ -99,19 +103,30 @@
       (update-in db path (fn [{:keys [base] :as form}]
                            (assoc form :buffer base))))))
 
+(defn initialize-form
+  [db [partial-form-path {:keys [buffer] :as form}]]
+  (assoc-in db
+            (p/full-path :form partial-form-path)
+            (update form :base #(if % % buffer))))
+
 ;; Populate form initial state
 (stc/rr reg-event-db ::initialize-form
   [trim-v]
-  (fn [db [partial-form-path {:keys [data] :as form}]]
-    (assoc-in db
-              (p/full-path :form partial-form-path)
-              (update form :base #(if % % data)))))
+  initialize-form)
+
+;; Populate form initial state
+(stc/rr reg-event-db ::initialize-form-from-path
+  [trim-v]
+  (fn [db [partial-form-path {:keys [data-path data-tx]
+                              :or {data-tx identity}
+                              :as form}]]
+    (initialize-form db [partial-form-path (assoc form :buffer (data-tx (get-in db (u/path data-path))))])))
 
 ;; nils out form
 (defn clear-form
   [db partial-form-path]
   (let [path (p/full-path :form partial-form-path)]
-      (assoc-in db path nil)))
+    (assoc-in db path nil)))
 
 (stc/rr reg-event-db ::clear-form
   [trim-v]

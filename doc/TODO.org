@@ -46,6 +46,7 @@ form, create data and error subscriptions for that attribute
 *** what changes indicate that the ui key is no longer relevant?
 *** component-did-unmount to clean up after itself
 *** not just UI but form as well
+** allow :label to take a fn with buffer val as arg
 * todo
 ** DONE Make form-paths base agnostic
 Make the ~form-path~ base configurable. Whenever form-path is
@@ -57,9 +58,12 @@ referenced, exclude base. Have ~full-form-path~ when base is included?
 **** TODO :page should get folded in
 **** user should be able to specify own keys
 **** store db updaters / key handlers in the app db?
+** TODO accountant / routing not handling different query strings
 ** DELETE lifecycle
 *** update to indicate deleting
 *** update with response
 ** TODO document sweet-tooth.frontend.core
 ** TODO config
 *** does it make sense to use duct for config?
+** TODO make routed entity a sub
+[[file:~/projects/web/sweet-tooth/frontend/src/sweet_tooth/frontend/routes/utils.cljc::(defn%20routed-entity][routed entity code]]

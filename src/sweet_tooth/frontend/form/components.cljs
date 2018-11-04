@@ -62,15 +62,24 @@
   [x]
   (apply dissoc x custom-opts))
 
+(defn on-change-fn
+  [{:keys [attr-path partial-form-path format-write]
+    :or   {format-write identity}}]
+  #(dispatch-change partial-form-path attr-path (format-write (u/tv %))))
+
+(defn on-blur-fn
+  [{:keys [attr-path partial-form-path]}]
+  #(dispatch-touch partial-form-path attr-path))
+
 (defn input-opts
   [{:keys [form-id attr-path attr-buffer partial-form-path format-read format-write]
-    :or {format-read identity
-         format-write identity}
-    :as opts}]
+    :or   {format-read  identity
+           format-write identity}
+    :as   opts}]
   (-> {:value     (format-read @attr-buffer)
        :id        (label-for form-id attr-path)
-       :on-change #(dispatch-change partial-form-path attr-path (format-write (u/tv %)))
-       :on-blur   #(dispatch-touch partial-form-path attr-path)
+       :on-change (on-change-fn opts)
+       :on-blur   (on-blur-fn opts)
        :class     (str "input " (attr-path-str attr-path))}
       (merge opts)
       (dissoc-custom-opts)))
@@ -86,7 +95,10 @@
   [:textarea (input-opts opts)])
 
 (defmethod input :select
-  [type {:keys [options attr-buffer format-read] :as opts}]
+  [type {:keys [options attr-buffer format-read]
+         :or   {format-read  identity
+                format-write identity}
+         :as   opts}]
   [:select (merge (input-opts opts) {:value (format-read @attr-buffer)})
    (for [[opt-value txt option-opts] options]
      ^{:key (input-key opts opt-value)}
@@ -96,25 +108,31 @@
       txt])])
 
 (defmethod input :radio
-  [type {:keys [options partial-form-path attr-path attr-buffer format-read] :as opts}]
+  [type {:keys [options partial-form-path attr-path attr-buffer format-read]
+         :or   {format-read  identity
+                format-write identity}
+         :as   opts}]
   [:ul.radio
    (doall (for [[v txt] options]
             ^{:key (input-key opts v)}
             [:li [:label
                   [:input (-> opts
                               dissoc-custom-opts
-                              (merge {:type "radio"
-                                      :checked (= v (format-read @attr-buffer))
+                              (merge {:type      "radio"
+                                      :checked   (= v (format-read @attr-buffer))
                                       :on-change #(dispatch-change partial-form-path attr-path v)}))]
                   [:span txt]]]))])
 
 (defmethod input :checkbox
-  [type {:keys [form-id attr-buffer partial-form-path attr-path format-read] :as opts}]
+  [type {:keys [form-id attr-buffer partial-form-path attr-path format-read]
+         :or   {format-read  identity
+                format-write identity}
+         :as   opts}]
   (let [value (format-read @attr-buffer)
-        opts (dissoc (input-opts opts) :value)]
+        opts  (dissoc (input-opts opts) :value)]
     [:input (merge opts
-                   {:type "checkbox"
-                    :on-change #(dispatch-change partial-form-path attr-path (not value))
+                   {:type            "checkbox"
+                    :on-change       #(dispatch-change partial-form-path attr-path (not value))
                     :default-checked (boolean value)})]))
 
 (defn toggle-set-membership
@@ -122,13 +140,16 @@
   ((if (s v) disj conj) s v))
 
 (defmethod input :checkbox-set
-  [type {:keys [form-id attr-buffer partial-form-path attr-path options value format-read] :as opts}]
+  [type {:keys [form-id attr-buffer partial-form-path attr-path options value format-read]
+         :or   {format-read  identity
+                format-write identity}
+         :as   opts}]
   (let [checkbox-set (or (format-read @attr-buffer) #{})
-        opts (input-opts opts)]
+        opts         (input-opts opts)]
     [:input (-> opts
                 dissoc-custom-opts
-                (merge {:type "checkbox"
-                        :checked (boolean (checkbox-set value))
+                (merge {:type      "checkbox"
+                        :checked   (boolean (checkbox-set value))
                         :on-change #(dispatch-change partial-form-path attr-path (toggle-set-membership checkbox-set value))}))]))
 
 ;; date handling
@@ -267,10 +288,13 @@
                                   attr-path
                                   formwide-input-opts
                                   input-opts)]))
+(defn on-submit-handler
+  [form-path & [submit-opts]]
+  (u/prevent-default #(dispatch [::stff/submit-form form-path submit-opts])))
 
 (defn on-submit
   [form-path & [submit-opts]]
-  {:on-submit (u/prevent-default #(dispatch [::stff/submit-form form-path submit-opts]))})
+  {:on-submit (apply on-submit-handler form-path submit-opts)})
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
@@ -278,7 +302,7 @@
   {:form-state    (subscribe [::stff/state partial-form-path])
    :form-ui-state (subscribe [::stff/ui-state partial-form-path])
    :form-errors   (subscribe [::stff/errors partial-form-path])
-   :form-data     (subscribe [::stff/buffer partial-form-path])
+   :form-buffer   (subscribe [::stff/buffer partial-form-path])
    :form-dirty?   (subscribe [::stff/form-dirty? partial-form-path])
    :input         (builder partial-form-path (:input opts))})
 
