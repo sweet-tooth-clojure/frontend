@@ -77,7 +77,9 @@
 (defn add-update-db-entity-config
   "Store config for update-db function in the re-frame app-db"
   [db]
-  (assoc-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db (paths/prefix :entity)] db-patch-handle-entity))
+  (assoc-in db
+            [:sweet-tooth.frontend/config ::update-db (paths/prefix :entity)]
+            db-patch-handle-entity))
 
 (core/rr reg-event-db ::toggle
   [trim-v]

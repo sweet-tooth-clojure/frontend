@@ -10,7 +10,8 @@
                     [meta-merge                  "1.0.0"]
                     [com.andrewmcveigh/cljs-time "0.4.0"]
                     [com.taoensso/timbre         "4.10.0"]
-                    [com.cemerick/url            "0.1.1"]])
+                    [com.cemerick/url            "0.1.1"]
+                    [integrant                   "0.8.0-alpha2"]])
 
 (require
   '[adzerk.bootlaces :refer :all]

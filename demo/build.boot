@@ -12,6 +12,7 @@
                     [com.andrewmcveigh/cljs-time "0.4.0"]
                     [com.taoensso/timbre         "4.10.0"]
                     [com.cemerick/url            "0.1.1"]
+                    [integrant                   "0.8.0-alpha2"]
 
                     
                     [adzerk/boot-cljs        "RELEASE" :scope "test"]
@@ -19,7 +20,8 @@
                     [pandeiro/boot-http      "RELEASE" :scope "test"]
                     [flyingmachine/boot-sass "0.2.2-SNAPSHOT" :scope "test"]
                     [binaryage/devtools      "0.9.4"          :scope "test"]
-                    [day8.re-frame/re-frame-10x "0.2.0"       :scope "test"]])
+                    [day8.re-frame/re-frame-10x "0.2.0"       :scope "test"]
+                    [venantius/accountant       "0.2.4"]])
 
 (require
   '[adzerk.boot-cljs      :refer [cljs]]
@@ -36,7 +38,8 @@
                              :parallel-build  true
                              :aot-cache       true
                              :preloads        '[devtools.preload
-                                                day8.re-frame-10x.preload]}})
+                                                day8.re-frame-10x.preload]}}
+    reload {:on-jsload 'demo.core/-main})
   
   (comp (serve :dir "target/demo")
         (watch)
