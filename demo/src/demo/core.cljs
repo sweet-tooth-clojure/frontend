@@ -11,6 +11,7 @@
             [sweet-tooth.frontend.routes.flow :as strf]
             [sweet-tooth.frontend.form.components :as stfc]
             [sweet-tooth.frontend.sync.flow :as stsf]
+            [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
             [goog.events]
             [integrant.core :as ig]
 
@@ -21,11 +22,10 @@
 (enable-console-print!)
 (def config
   {::stsf/sync {:interceptors []
-                :sync-dispatch (fn [req] (println "SYNC DISPATCH!" req))
+                :sync-dispatch (ig/ref ::stsda/sync)
                 ;; :dispatch     #ig/ref :sweet-tooth.frontend.dispatch.mock/flow
                 }
-   ;; :sweet-tooth.frontend.dispatch.mock/flow {}
-   })
+   ::stsda/sync {}})
 
 (extend-protocol ISeqable
   js/NodeList
@@ -39,7 +39,7 @@
   [:div.container.app "App!"])
 
 (defn -main []
-  (rf/dispatch-sync [:init (ig/init config)])
+  (rf/dispatch-sync [:init (-> config ig/prep ig/init)])
   (r/render [app] (stcu/el-by-id "app"))
   (goog.events/listen js/window
                       EventType.CLICK

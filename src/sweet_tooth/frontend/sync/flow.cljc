@@ -2,7 +2,7 @@
   "Sync provides a layer of indirection between requests to read/write
   data and the mechanism for handling the request. It also provides a
   common interface across those mechanisms."
-  (:require [re-frame.core :refer [reg-fx reg-event-fx dispatch]]
+  (:require [re-frame.core :as rf]
             [ajax.core :refer [GET PUT POST DELETE]]
             [taoensso.timbre :as timbre]
             [sweet-tooth.frontend.core :as stc]
@@ -16,7 +16,7 @@
 (defn new-request
   [db req]
   (-> db
-      (assoc-in [::requests (req-path req)] {:state :active})
+      (assoc-in [::reqs (req-path req)] {:state :active})
       (update ::active-request-count (fnil inc 0))))
 
 (defn sync-event-fx
@@ -33,17 +33,50 @@
                 ::sync
                 :sync-dispatch]))
 
+;;------
+;; dispatch handler wrappers
+;;------
+(defn sync-success
+  [db [_ req]]
+  (assoc-in db [::reqs (req-path req)] {:state :success}))
+
+(defn sync-fail
+  [db [_ req]]
+  (assoc-in db [::reqs (req-path req)] {:state :fail}))
+
+(defn sync-success-handler
+  [req [handler-key & args :as dispatch-sig]]
+  (fn [resp]
+    (rf/dispatch [::sync-success req resp])
+    (when dispatch-sig
+      (rf/dispatch (into [handler-key resp] args)))))
+
+(defn sync-fail-handler
+  [req [handler-key & args :as dispatch-sig]]
+  (fn [resp]
+    (rf/dispatch [::sync-fail req resp])
+    (when dispatch-sig
+      (rf/dispatch (into [handler-key (get-in resp [:response :errors])] args)))))
+
 ;; TODO write a schema describing the config that can be sent here
 ;; TODO possibly add some timeout effect here to clean up sync
-(defmethod ig/init-key :sweet-tooth.frontend.sync.flow/sync
+(defmethod ig/init-key ::sync
   [_ {:keys [interceptors] :as opts}]
-  (reg-event-fx ::sync
-    interceptors
+  (rf/reg-event-fx ::sync
+    (::sync interceptors)
     (fn [cofx [_ & req]]
       (sync-event-fx cofx req)))
 
-  (reg-fx ::sync
+  (rf/reg-fx ::sync
     (fn [cofx]
       ((sync-dispatch-fn cofx) cofx)))
+
+  (rf/reg-event-db ::sync-success
+    (::sync-success interceptors)
+    sync-success)
+
+  (rf/reg-event-db ::sync-fail
+    (::sync-fail interceptors)
+    sync-fail)
 
   opts)
