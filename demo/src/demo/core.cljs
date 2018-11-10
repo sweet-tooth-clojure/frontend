@@ -15,17 +15,17 @@
             [goog.events]
             [integrant.core :as ig]
 
-            [demo.handlers])
+            [demo.handlers]
+            [demo.sync.dispatch.local :as dsdl])
   (:import [goog.events EventType]))
 
 (st-core/register-handlers)
 (enable-console-print!)
 (def config
   {::stsf/sync {:interceptors []
-                :sync-dispatch (ig/ref ::stsda/sync)
-                ;; :dispatch     #ig/ref :sweet-tooth.frontend.dispatch.mock/flow
-                }
-   ::stsda/sync {}})
+                :sync-dispatch (ig/ref ::dsdl/sync)}
+   ::stsda/sync {}
+   ::dsdl/sync {}})
 
 (extend-protocol ISeqable
   js/NodeList

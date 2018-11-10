@@ -36,13 +36,19 @@
 ;;------
 ;; dispatch handler wrappers
 ;;------
+(defn sync-finished
+  [db req status]
+  (-> db
+      (assoc-in [::reqs (req-path req)] {:state status})
+      (update ::active-request-count dec)))
+
 (defn sync-success
   [db [_ req]]
-  (assoc-in db [::reqs (req-path req)] {:state :success}))
+  (sync-finished db req :success))
 
 (defn sync-fail
   [db [_ req]]
-  (assoc-in db [::reqs (req-path req)] {:state :fail}))
+  (sync-finished db req :fail))
 
 (defn sync-success-handler
   [req [handler-key & args :as dispatch-sig]]
@@ -56,6 +62,7 @@
   (fn [resp]
     (rf/dispatch [::sync-fail req resp])
     (when dispatch-sig
+      ;; TODO this is cljs-ajax specific
       (rf/dispatch (into [handler-key (get-in resp [:response :errors])] args)))))
 
 ;; TODO write a schema describing the config that can be sent here

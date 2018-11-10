@@ -23,4 +23,4 @@
   (fn [cofx [config]]
     (stsf/sync-event-fx {:db {:global-handlers             {:window-clicked {}}
                               :sweet-tooth.frontend/config config}}
-                        [:get :init {:on-success [::init-success]}])))
+                        [:get :init {:on-success [::stcf/update-db]}])))

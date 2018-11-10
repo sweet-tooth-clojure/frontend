@@ -1,9 +1,6 @@
 (ns sweet-tooth.frontend.sync.dispatch.ajax
   (:require [re-frame.core :as rf]
             [ajax.core :refer [GET PUT POST DELETE]]
-            [taoensso.timbre :as timbre]
-            [sweet-tooth.frontend.core :as stc]
-            [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [integrant.core :as ig]))
 
