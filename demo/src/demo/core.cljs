@@ -18,16 +18,16 @@
 
             [demo.handlers]
             [demo.sync.dispatch.local :as dsdl]
-            [demo.routes :as routes])
+            [demo.routes :as routes]
+            [demo.location-dispatch :as ld])
   (:import [goog.events EventType]))
 
 (st-core/register-handlers)
 (enable-console-print!)
 (def config
   {::stsf/sync {:interceptors []
-                :sync-dispatch (ig/ref ::stsda/sync)}
+                :sync-dispatch (ig/ref ::dsdl/sync)}
    ::stsda/sync {:req-adapter (fn [[method res opts]]
-                                (println "RES:" res)
                                 [method res (assoc opts :uri (bide/resolve routes/routes res))])}
 
    ::dsdl/sync {}})
