@@ -85,7 +85,6 @@
    :post           {:spec      :post/post
                     :relations {:post/topic [:topic :db/id]
                                 :meta/owner [:user :db/id]}
-                    :constraints {:post/topic #{:uniq}}
                     :prefix    :p}
    :user           {:spec     :user/user
                     :prefix   :u}

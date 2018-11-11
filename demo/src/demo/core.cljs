@@ -14,6 +14,8 @@
             [sweet-tooth.frontend.form.components :as stfc]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
+            [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
+            [sweet-tooth.frontend.config :as stconfig]
             [goog.events]
             [integrant.core :as ig]
             [bide.core :as bide]
@@ -27,16 +29,14 @@
 (st-core/register-handlers)
 (enable-console-print!)
 (def config
-  {::stsf/sync  {:interceptors  []
-                 :sync-dispatch (ig/ref ::dsdl/sync)}
-   ::stsda/sync {:req-adapter (fn [[method res opts]]
-                                [method res (assoc opts :uri (bide/resolve routes/routes res))])}
+  (merge stconfig/default-config
+         {::stsf/sync         {:interceptors  []
+                               :sync-dispatch (ig/ref ::dsdl/sync)}
+          ::stsdb/req-adapter routes/routes
 
-   ::dsdl/sync {}
+          ::dsdl/sync {}
 
-   ::stra/accountant  {:match-route (ig/ref ::strb/match-route)}
-   ::strb/match-route {:routes (ig/ref ::strb/routes)}
-   ::strb/routes      routes/routes})
+          ::strb/routes routes/routes}))
 
 (extend-protocol ISeqable
   js/NodeList

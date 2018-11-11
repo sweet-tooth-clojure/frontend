@@ -20,8 +20,8 @@
 (rf/reg-event-fx ::init-success
   [rf/trim-v]
   (fn [cofx [[init-ent-db]]]
-    (-> (update cofx :db merge init-ent-db)
-        (assoc :nav/dispatch-current true))))
+    {:db (merge (:db cofx) init-ent-db)
+     :nav/dispatch-current true}))
 
 (rf/reg-event-fx :init
   [rf/trim-v]
