@@ -48,7 +48,7 @@
                                                             :sync-dispatch (ig/ref ::dsdl/sync)}
                                        ::stsdb/req-adapter routes/routes
 
-                                       ::dsdl/sync {}
+                                       ::dsdl/sync {:delay 2000}
 
                                        ::strb/routes routes/routes})
                                ig/prep

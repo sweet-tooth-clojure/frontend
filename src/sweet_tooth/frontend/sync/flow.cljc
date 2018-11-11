@@ -11,7 +11,7 @@
 
 (defn req-path
   [[method resource opts]]
-  [method resource (select-keys opts [:params])])
+  [method resource (or (select-keys opts [:params]) {})])
 
 (defn new-request
   [db req]
@@ -86,4 +86,8 @@
     (::sync-fail interceptors)
     sync-fail)
 
+  (rf/reg-sub ::sync-state
+    (fn [db [_ req]]
+      (:state (get-in db [::reqs (req-path req)]))))
+  
   opts)

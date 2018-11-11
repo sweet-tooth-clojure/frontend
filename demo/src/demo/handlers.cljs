@@ -17,17 +17,17 @@
     {:db             (assoc-in db window-clicked-path {})
      :dispatch-later (vals (get-in db window-clicked-path))}))
 
-(rf/reg-event-fx ::init-success
+(rf/reg-event-db ::init-success
   [rf/trim-v]
-  (fn [cofx [[init-ent-db]]]
-    {:db (merge (:db cofx) init-ent-db)
-     :nav/dispatch-current true}))
+  (fn [db [[init-ent-db]]]
+    (merge db init-ent-db)))
 
 (rf/reg-event-fx :init
   [rf/trim-v]
   (fn [cofx [config]]
     (stsf/sync-event-fx {:db {:global-handlers             {:window-clicked {}}
-                              :sweet-tooth.frontend/config config}}
+                              :sweet-tooth.frontend/config config}
+                         :nav/dispatch-current true}
                         [:get :init {:on-success [::init-success]}])))
 
 ;;--------------------

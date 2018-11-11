@@ -144,7 +144,7 @@
 (def form-states #{nil :submitting :success :sleeping})
 
 (defn submit-form
-  "Returns a config that the sync handler can use
+  "Returns a request that the sync handler can use
 
   - `success` and `error` are the handlers for request completion.
   - `form-spec` is a way to pass on whatevs data to the request 
@@ -157,11 +157,10 @@
   (let [[_ endpoint action] full-form-path]
     [action
      (get form-spec :route-name endpoint)
-     (merge
-       {:params     data
-        :on-success [success full-form-path form-spec]
-        :on-fail    [error full-form-path form-spec]}
-       (:request-opts form-spec))]))
+     (merge {:params     data
+             :on-success [success full-form-path form-spec]
+             :on-fail    [error full-form-path form-spec]}
+            (:request-opts form-spec))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
