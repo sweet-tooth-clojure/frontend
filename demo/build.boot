@@ -21,7 +21,10 @@
                     [flyingmachine/boot-sass "0.2.2-SNAPSHOT" :scope "test"]
                     [binaryage/devtools      "0.9.4"          :scope "test"]
                     [day8.re-frame/re-frame-10x "0.2.0"       :scope "test"]
-                    [venantius/accountant       "0.2.4"]])
+                    [venantius/accountant       "0.2.4"]
+                    [reifyhealth/specmonstah "2.0.0-alpha-1" :scope "test"]
+                    [org.clojure/test.check "0.9.0" :scope "test"]
+                    [aysylu/loom "1.0.2"]])
 
 (require
   '[adzerk.boot-cljs      :refer [cljs]]
