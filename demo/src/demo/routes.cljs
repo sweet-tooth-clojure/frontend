@@ -11,8 +11,8 @@
             [demo.components.home :as h]))
 
 (def routes
-  (bide/router [["/" :home]
-                ["/init" :init]]))
+  [["/" :home]
+   ["/init" :init]])
 
 (defn match-route
   [path]
