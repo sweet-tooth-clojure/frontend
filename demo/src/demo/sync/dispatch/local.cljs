@@ -1,5 +1,6 @@
 (ns demo.sync.dispatch.local
   (:require [re-frame.core :as rf]
+            [reifyhealth.specmonstah.core :as rs]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [integrant.core :as ig]
@@ -15,6 +16,11 @@
                    (data/ent-gen :topic)
                    (data/ent-gen :user)
                    (data/ent-gen :topic-category))}])
+
+(defmethod success-resp [:create :topic]
+  [[method res opts]]
+  (data/populate {:topic [[1 {:spec-gen (:params opts)}]]})
+  [{:entity (data/ent-gen :topic)}])
 
 (defn fail-resp
   [req]

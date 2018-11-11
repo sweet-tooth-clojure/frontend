@@ -5,6 +5,7 @@
             [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.remote.flow :as strf]
+            [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.paths :as p]
             [taoensso.timbre :as timbre]))
 
@@ -140,44 +141,27 @@
   "Customize url prefix, e.g. \"/api/v1\""
   (fn [endpoint action] [endpoint action]))
 
-(defmulti data-id
-  "URL fragment to use when doing PUT and DELETE requests"
-  (fn [endpoint action data] [endpoint action]))
-
-(defn method-url
-  [endpoint action data]
-  (let [multi (str (url-prefix endpoint action) "/" (name endpoint))
-        single (str multi "/" (data-id endpoint action data))]
-    (case action
-      :create [POST multi]
-      :update [PUT single]
-      :query  [GET multi]
-      :get    [GET single]
-      :delete [DELETE single])))
-
 (def form-states #{nil :submitting :success :sleeping})
 
 (defn submit-form
-  "Returns a config that ajax.core methods can use to send a request.  
+  "Returns a config that the sync handler can use
 
   - `success` and `error` are the handlers for request completion.
   - `form-spec` is a way to pass on whatevs data to the request 
     completion handler.
   - the `:request-opts` key of form spec can customize the ajax request"
-  [full-form-path data
-   {:keys [success error]
-    :or {success ::submit-form-success
-         error ::submit-form-error}
-    :as form-spec}]
-  (let [[_ endpoint action] full-form-path
-        [method url] (method-url endpoint action data)]
-    (merge
-      {:method method
-       :url url
-       :params data
-       :on-success [success full-form-path form-spec]
-       :on-fail [error full-form-path form-spec]}
-      (:request-opts form-spec))))
+  [full-form-path data {:keys [success error]
+                        :or   {success ::submit-form-success
+                               error   ::submit-form-error}
+                        :as   form-spec}]
+  (let [[_ endpoint action] full-form-path]
+    [action
+     (get form-spec :route-name endpoint)
+     (merge
+       {:params     data
+        :on-success [success full-form-path form-spec]
+        :on-fail    [error full-form-path form-spec]}
+       (:request-opts form-spec))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
@@ -185,12 +169,12 @@
   [trim-v]
   (fn [{:keys [db]} [partial-form-path & [form-spec]]]
     (let [full-form-path (p/full-path :form partial-form-path)]
-      {:db (-> db
-               (assoc-in (conj full-form-path :state) :submitting)
-               (assoc-in (conj full-form-path :errors) nil))
-       :dispatch [::strf/http (submit-form full-form-path
-                                           (merge (:data form-spec) (get-in db (conj full-form-path :buffer)))
-                                           form-spec)]})))
+      {:db       (-> db
+                     (assoc-in (conj full-form-path :state) :submitting)
+                     (assoc-in (conj full-form-path :errors) nil))
+       :dispatch (into [::stsf/sync] (submit-form full-form-path
+                                                  (merge (:data form-spec) (get-in db (conj full-form-path :buffer)))
+                                                  form-spec))})))
 
 (defn success-base
   "Produces a function that can be used for handling form submission success. 

@@ -5,9 +5,12 @@
             [integrant.core :as ig]))
 
 (def request-methods
-  {:get    GET
+  {:query  GET
+   :get    GET
    :put    PUT
+   :update PUT
    :post   POST
+   :create POST
    :delete DELETE})
 
 (defn sync-fn

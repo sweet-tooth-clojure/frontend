@@ -4,6 +4,9 @@
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
             [sweet-tooth.frontend.routes.accountant :as stra]
             [sweet-tooth.frontend.routes.bide :as strb]
+            
+            [sweet-tooth.frontend.form.flow :as stff]
+            
             [integrant.core :as ig]))
 
 
@@ -15,5 +18,8 @@
    ::stra/accountant  {:match-route (ig/ref ::strb/match-route)}
    ::strb/match-route {:routes (ig/ref ::strb/routes)}
    ;; User must specify this
-   ::strb/routes      []})
+   ::strb/routes      []
+
+   ;;::stff/config {:data-id :db/id}
+   })
 

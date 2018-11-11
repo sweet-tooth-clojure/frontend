@@ -12,14 +12,8 @@
 
 (def routes
   [["/" :home]
-   ["/init" :init]])
-
-(defn match-route
-  [path]
-  (let [[route-name params query-params] (bide/match routes path)]
-    {:route-name route-name
-     :params     (merge params query-params)}))
-
+   ["/init" :init]
+   ["/topic" :topic]])
 
 (defmethod strf/dispatch-route :home
   [{:keys [route-name params]} handler params]

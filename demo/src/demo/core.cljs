@@ -28,15 +28,6 @@
 
 (st-core/register-handlers)
 (enable-console-print!)
-(def config
-  (merge stconfig/default-config
-         {::stsf/sync         {:interceptors  []
-                               :sync-dispatch (ig/ref ::dsdl/sync)}
-          ::stsdb/req-adapter routes/routes
-
-          ::dsdl/sync {}
-
-          ::strb/routes routes/routes}))
 
 (extend-protocol ISeqable
   js/NodeList
@@ -51,7 +42,17 @@
    @(rf/subscribe [::strf/routed-component :main])])
 
 (defn -main []
-  (rf/dispatch-sync [:init (-> config ig/prep ig/init)])
+  (println "main!")
+  (rf/dispatch-sync [:init (-> stconfig/default-config
+                               (merge {::stsf/sync         {:interceptors  []
+                                                            :sync-dispatch (ig/ref ::dsdl/sync)}
+                                       ::stsdb/req-adapter routes/routes
+
+                                       ::dsdl/sync {}
+
+                                       ::strb/routes routes/routes})
+                               ig/prep
+                               ig/init)])
   (r/render [app] (stcu/el-by-id "app"))
   (goog.events/listen js/window
                       EventType.CLICK
