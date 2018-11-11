@@ -10,15 +10,16 @@
    :post   POST
    :delete DELETE})
 
-(defn sync
-  [{:keys [::stsf/req]}]
-  (let [[method _ {:keys [uri on-success on-fail] :as opts}] req]
-    ((get request-methods method)
-     uri
-     (-> opts
-         (assoc :handler       (stsf/sync-success-handler req on-success))
-         (assoc :error-handler (stsf/sync-fail-handler req on-fail))))))
+(defn sync-fn
+  [req-adapter]
+  (fn [{:keys [::stsf/req]}]
+    (let [[method res {:keys [uri on-success on-fail] :as opts}] (req-adapter req)]
+      ((get request-methods method)
+       uri
+       (-> opts
+           (assoc :handler       (stsf/sync-success-handler req on-success))
+           (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
 
 (defmethod ig/init-key ::sync
-  [_ _]
-  sync)
+  [_ {:keys [req-adapter]}]
+  (sync-fn (or req-adapter identity)))

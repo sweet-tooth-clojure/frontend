@@ -24,7 +24,8 @@
                     [venantius/accountant       "0.2.4"]
                     [reifyhealth/specmonstah "2.0.0-alpha-1" :scope "test"]
                     [org.clojure/test.check "0.9.0" :scope "test"]
-                    [aysylu/loom "1.0.2"]])
+                    [aysylu/loom "1.0.2"]
+                    [funcool/bide "1.6.0"]])
 
 (require
   '[adzerk.boot-cljs      :refer [cljs]]

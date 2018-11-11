@@ -14,17 +14,22 @@
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
             [goog.events]
             [integrant.core :as ig]
+            [bide.core :as bide]
 
             [demo.handlers]
-            [demo.sync.dispatch.local :as dsdl])
+            [demo.sync.dispatch.local :as dsdl]
+            [demo.routes :as routes])
   (:import [goog.events EventType]))
 
 (st-core/register-handlers)
 (enable-console-print!)
 (def config
   {::stsf/sync {:interceptors []
-                :sync-dispatch (ig/ref ::dsdl/sync)}
-   ::stsda/sync {}
+                :sync-dispatch (ig/ref ::stsda/sync)}
+   ::stsda/sync {:req-adapter (fn [[method res opts]]
+                                (println "RES:" res)
+                                [method res (assoc opts :uri (bide/resolve routes/routes res))])}
+
    ::dsdl/sync {}})
 
 (extend-protocol ISeqable
@@ -36,7 +41,8 @@
 
 (defn app
   []
-  [:div.container.app "App!"])
+  [:div.container.app "App!"
+   @(rf/subscribe [::strf/routed-component])])
 
 (defn -main []
   (rf/dispatch-sync [:init (-> config ig/prep ig/init)])
