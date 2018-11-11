@@ -11,6 +11,7 @@
                     [com.andrewmcveigh/cljs-time "0.4.0"]
                     [com.taoensso/timbre         "4.10.0"]
                     [com.cemerick/url            "0.1.1"]
+                    [venantius/accountant        "0.2.4"]
                     [integrant                   "0.8.0-alpha2"]])
 
 (require

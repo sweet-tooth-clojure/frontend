@@ -9,6 +9,7 @@
             [sweet-tooth.frontend.core.utils :as stcu]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.routes.flow :as strf]
+            [sweet-tooth.frontend.routes.accountant :as stra]
             [sweet-tooth.frontend.form.components :as stfc]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
@@ -30,7 +31,9 @@
    ::stsda/sync {:req-adapter (fn [[method res opts]]
                                 [method res (assoc opts :uri (bide/resolve routes/routes res))])}
 
-   ::dsdl/sync {}})
+   ::dsdl/sync {}
+
+   ::stra/accountant {:match-route routes/match-route}})
 
 (extend-protocol ISeqable
   js/NodeList
@@ -42,7 +45,7 @@
 (defn app
   []
   [:div.container.app "App!"
-   @(rf/subscribe [::strf/routed-component])])
+   @(rf/subscribe [::strf/routed-component :main])])
 
 (defn -main []
   (rf/dispatch-sync [:init (-> config ig/prep ig/init)])

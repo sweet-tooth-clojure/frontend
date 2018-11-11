@@ -17,7 +17,7 @@
 
 (defmethod dispatch-route :home
   [handler params]
-  (rf/dispatch [::strf/load handler [h/component] params]))
+  (rf/dispatch [::strf/load handler {:main [h/component]} params]))
 
 (defonce nav
   ;; defonce to prevent this from getting re-configured with
