@@ -5,7 +5,7 @@
             ;; ["react-transition-group/Transition" :as Transition]
             ;; ["react-transition-group/CSSTransition" :as CSSTransition]
             [sweet-tooth.frontend.form.flow :as stff] ;; prep handlers for registration
-            [sweet-tooth.frontend.core :as st-core]
+            [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.utils :as stcu]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.routes.flow :as strf]
@@ -26,7 +26,7 @@
             [demo.location-dispatch :as ld])
   (:import [goog.events EventType]))
 
-(st-core/register-handlers)
+(sth/register-handlers)
 (enable-console-print!)
 
 (extend-protocol ISeqable
@@ -42,10 +42,8 @@
    @(rf/subscribe [::strf/routed-component :main])])
 
 (defn -main []
-  (println "main!")
   (rf/dispatch-sync [:init (-> stconfig/default-config
-                               (merge {::stsf/sync         {:interceptors  []
-                                                            :sync-dispatch (ig/ref ::dsdl/sync)}
+                               (merge {::stsf/sync         {:sync-dispatch (ig/ref ::dsdl/sync)}
                                        ::stsdb/req-adapter routes/routes
 
                                        ::dsdl/sync {:delay 2000}

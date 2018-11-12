@@ -3,14 +3,14 @@
             [re-frame.loggers :refer [console]]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.paths :as paths]
-            [sweet-tooth.frontend.core :as core])
+            [sweet-tooth.frontend.handlers :as sth])
   (:import #?(:cljs [goog.async Debouncer])))
 
-(core/rr reg-event-db ::assoc-in
+(sth/rr reg-event-db ::assoc-in
   [trim-v]
   (fn [db [path val]] (assoc-in db path val)))
 
-(core/rr reg-event-db ::merge
+(sth/rr reg-event-db ::merge
   [trim-v]
   (fn [db [m & [path]]]
     (if path
@@ -29,13 +29,13 @@
   [db [m]]
   (u/deep-merge db m))
 
-(core/rr reg-event-db ::deep-merge
+(sth/rr reg-event-db ::deep-merge
   [trim-v]
   deep-merge)
 
 ;; whereas deep merge will merge new entities with old, this replaces
 ;; old entities withnew
-(core/rr reg-event-db ::replace-entities
+(sth/rr reg-event-db ::replace-entities
   [trim-v]
   (fn [db [m]]
     (reduce-kv (fn [db entity-type entities]
@@ -65,7 +65,7 @@
             db
             db-patches)))
 
-(core/rr reg-event-db ::update-db [trim-v] update-db)
+(sth/rr reg-event-db ::update-db [trim-v] update-db)
 
 (defn db-patch-handle-entity
   [db db-patch]
@@ -81,22 +81,22 @@
             [:sweet-tooth.frontend/config ::update-db (paths/prefix :entity)]
             db-patch-handle-entity))
 
-(core/rr reg-event-db ::toggle
+(sth/rr reg-event-db ::toggle
   [trim-v]
   (fn [db [path]] (update-in db path not)))
 
-(core/rr reg-event-db ::toggle-val
+(sth/rr reg-event-db ::toggle-val
   [trim-v]
   (fn [db [path val]]
     (update-in db path #(if % nil val))))
 
 ;; Toggles set inclusion/exclusion from set
-(core/rr reg-event-db ::set-toggle
+(sth/rr reg-event-db ::set-toggle
   [trim-v]
   (fn [db [path val]]
     (update-in db path u/set-toggle val)))
 
-(core/rr reg-event-db ::dissoc-in
+(sth/rr reg-event-db ::dissoc-in
   [trim-v]
   (fn [db [path]]
     (u/dissoc-in db path)))

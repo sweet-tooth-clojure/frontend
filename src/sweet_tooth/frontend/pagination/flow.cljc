@@ -2,7 +2,6 @@
   (:require [re-frame.core :refer [reg-sub reg-event-db reg-event-fx trim-v]]
             [cemerick.url :as url]
             [ajax.core :refer [GET]]
-            [sweet-tooth.frontend.core :as stc]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.form.flow :as stff]

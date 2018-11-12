@@ -1,17 +1,19 @@
 (ns sweet-tooth.frontend.config
-  (:require [sweet-tooth.frontend.sync.flow :as stsf]
+  (:require [sweet-tooth.frontend.load-all-handler-ns]
+            [sweet-tooth.frontend.handlers :as sth]
+            [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
             [sweet-tooth.frontend.routes.accountant :as stra]
             [sweet-tooth.frontend.routes.bide :as strb]
-            
             [sweet-tooth.frontend.form.flow :as stff]
             
             [integrant.core :as ig]))
 
 
 (def default-config
-  {::stsf/sync  {:interceptors  []
+  {::sth/register-handlers []
+   ::stsf/sync  {:interceptors  []
                  :sync-dispatch (ig/ref ::stsda/sync)}
    ::stsda/sync {:req-adapter (ig/ref ::stsdb/req-adapter)}
 

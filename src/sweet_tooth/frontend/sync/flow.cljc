@@ -5,7 +5,7 @@
   (:require [re-frame.core :as rf]
             [ajax.core :refer [GET PUT POST DELETE]]
             [taoensso.timbre :as timbre]
-            [sweet-tooth.frontend.core :as stc]
+            [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as stcf]
             [integrant.core :as ig]))
 
@@ -65,29 +65,31 @@
       ;; TODO this is cljs-ajax specific
       (rf/dispatch (into [handler-key (get-in resp [:response :errors])] args)))))
 
+(rf/reg-sub ::sync-state
+  (fn [db [_ req]]
+    (:state (get-in db [::reqs (req-path req)]))))
+
+(sth/rr rf/reg-event-fx ::sync
+  []
+  (fn [cofx [_ & req]]
+    (sync-event-fx cofx req)))
+
+(sth/rr rf/reg-fx ::sync
+  (fn [cofx]
+    ((sync-dispatch-fn cofx) cofx)))
+
+(sth/rr rf/reg-event-db ::sync-success
+  []
+  sync-success)
+
+(sth/rr rf/reg-event-db ::sync-fail
+  []
+  sync-fail)
+
 ;; TODO write a schema describing the config that can be sent here
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
   [_ {:keys [interceptors] :as opts}]
-  (rf/reg-event-fx ::sync
-    (::sync interceptors)
-    (fn [cofx [_ & req]]
-      (sync-event-fx cofx req)))
-
-  (rf/reg-fx ::sync
-    (fn [cofx]
-      ((sync-dispatch-fn cofx) cofx)))
-
-  (rf/reg-event-db ::sync-success
-    (::sync-success interceptors)
-    sync-success)
-
-  (rf/reg-event-db ::sync-fail
-    (::sync-fail interceptors)
-    sync-fail)
-
-  (rf/reg-sub ::sync-state
-    (fn [db [_ req]]
-      (:state (get-in db [::reqs (req-path req)]))))
+  
   
   opts)

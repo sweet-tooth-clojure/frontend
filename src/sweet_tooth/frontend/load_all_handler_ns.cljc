@@ -6,4 +6,5 @@
             [sweet-tooth.frontend.form.flow]
             [sweet-tooth.frontend.pagination.flow]
             [sweet-tooth.frontend.remote.flow]
-            [sweet-tooth.frontend.routes.flow]))
+            [sweet-tooth.frontend.routes.flow]
+            [sweet-tooth.frontend.sync.flow]))
