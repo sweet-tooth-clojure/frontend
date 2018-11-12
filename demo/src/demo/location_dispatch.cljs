@@ -18,17 +18,3 @@
 (defmethod dispatch-route :home
   [handler params]
   (rf/dispatch [::strf/load handler {:main [h/component]} params]))
-
-(defonce nav
-  ;; defonce to prevent this from getting re-configured with
-  ;; boot/reload on every change
-  ;;
-  ;; TODO add this to ST frontend
-  (acc/configure-navigation!
-    {:nav-handler
-     (fn [path]
-       (let [[res params query-string] (bide/match routes/routes path)]
-         (dispatch-route res (merge params query-string))))
-     :path-exists?
-     (fn [path]
-       (boolean (bide/match routes/routes path)))}))
