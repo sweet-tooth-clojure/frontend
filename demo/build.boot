@@ -14,6 +14,7 @@
                     [com.cemerick/url            "0.1.1"]
                     [venantius/accountant        "0.2.4"]
                     [integrant                   "0.8.0-alpha2"]
+                    [funcool/bide "1.6.0"]
 
                     
                     [adzerk/boot-cljs        "RELEASE" :scope "test"]
@@ -24,8 +25,7 @@
                     [day8.re-frame/re-frame-10x "0.2.0"       :scope "test"]
                     [reifyhealth/specmonstah "2.0.0-alpha-1" :scope "test"]
                     [org.clojure/test.check "0.9.0" :scope "test"]
-                    [aysylu/loom "1.0.2"]
-                    [funcool/bide "1.6.0"]])
+                    [aysylu/loom "1.0.2"]])
 
 (require
   '[adzerk.boot-cljs      :refer [cljs]]

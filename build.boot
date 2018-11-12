@@ -12,13 +12,14 @@
                     [com.taoensso/timbre         "4.10.0"]
                     [com.cemerick/url            "0.1.1"]
                     [venantius/accountant        "0.2.4"]
-                    [integrant                   "0.8.0-alpha2"]])
+                    [integrant                   "0.8.0-alpha2"]
+                    [funcool/bide                "1.6.0"]])
 
 (require
   '[adzerk.bootlaces :refer :all]
   '[adzerk.boot-test :refer :all])
 
-(def +version+ "0.5.0")
+(def +version+ "0.5.1")
 (bootlaces! +version+)
 
 (task-options!
