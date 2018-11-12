@@ -21,11 +21,6 @@
         (assoc-in (paths/full-path :page :state (first (keys (:query page)))) :loaded))
     db))
 
-(defn add-update-db-page-config
-  "Store config for update-db function in the re-frame app-db"
-  [db]
-  (assoc-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db :page] db-patch-handle-page))
-
 ;;---------
 ;; Subscriptions
 ;;---------

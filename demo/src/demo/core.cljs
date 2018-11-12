@@ -26,7 +26,6 @@
             [demo.location-dispatch :as ld])
   (:import [goog.events EventType]))
 
-(sth/register-handlers)
 (enable-console-print!)
 
 (extend-protocol ISeqable

@@ -3,7 +3,8 @@
             [re-frame.loggers :refer [console]]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.paths :as paths]
-            [sweet-tooth.frontend.handlers :as sth])
+            [sweet-tooth.frontend.handlers :as sth]
+            [integrant.core :as ig])
   (:import #?(:cljs [goog.async Debouncer])))
 
 (sth/rr reg-event-db ::assoc-in
@@ -74,13 +75,6 @@
       (update db entity-prefix u/deep-merge entity)
       db)))
 
-(defn add-update-db-entity-config
-  "Store config for update-db function in the re-frame app-db"
-  [db]
-  (assoc-in db
-            [:sweet-tooth.frontend/config ::update-db (paths/prefix :entity)]
-            db-patch-handle-entity))
-
 (sth/rr reg-event-db ::toggle
   [trim-v]
   (fn [db [path]] (update-in db path not)))
@@ -119,3 +113,7 @@
         (if-let [debouncer (get @debouncers id)]
           (.fire debouncer dispatch)
           (swap! debouncers assoc id (new-debouncer ms dispatch)))))))
+
+(defmethod ig/init-key ::update-db
+  [_ config]
+  config)

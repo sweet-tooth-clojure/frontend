@@ -1,6 +1,9 @@
 (ns sweet-tooth.frontend.config
   (:require [sweet-tooth.frontend.load-all-handler-ns]
+            [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.handlers :as sth]
+            [sweet-tooth.frontend.core.flow :as stcf]
+            [sweet-tooth.frontend.pagination.flow :as stpf]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
@@ -13,6 +16,7 @@
 
 (def default-config
   {::sth/register-handlers []
+   
    ::stsf/sync  {:interceptors  []
                  :sync-dispatch (ig/ref ::stsda/sync)}
    ::stsda/sync {:req-adapter (ig/ref ::stsdb/req-adapter)}
@@ -23,5 +27,5 @@
    ::strb/routes      []
 
    ;;::stff/config {:data-id :db/id}
-   })
-
+   ::stcf/update-db {(paths/prefix :entity) stcf/db-patch-handle-entity
+                     :page                  stpf/db-patch-handle-page}})
