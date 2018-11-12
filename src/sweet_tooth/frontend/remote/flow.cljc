@@ -1,4 +1,5 @@
 (ns sweet-tooth.frontend.remote.flow
+  "deprecated"
   (:require [re-frame.core :refer [reg-fx reg-event-fx dispatch]]
             [ajax.core :refer [GET PUT POST DELETE]]
             [taoensso.timbre :as timbre]

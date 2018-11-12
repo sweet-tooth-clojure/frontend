@@ -5,8 +5,8 @@
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.paths :as paths]
-            [sweet-tooth.frontend.remote.flow :as strf]))
+            [sweet-tooth.frontend.sync.flow :as stsf]
+            [sweet-tooth.frontend.paths :as paths]))
 
 ;;---------
 ;; Handlers
@@ -62,11 +62,9 @@
       (assoc-in (paths/full-path :page :state query-id) :loading)))
 
 (defn GET-page-fx
-  [url page-defaults & [opts]]
+  [endpoint page-defaults & [opts]]
   (fn [{:keys [db] :as cofx} [page-params]]
     (let [page-query (merge page-defaults page-params)]
-      {:dispatch [::strf/http {:method GET
-                               :url url
-                               :params page-query
-                               :on-success (get opts :on-success [::stcf/update-db])}]
+      {:dispatch [::stsf/sync [:get endpoint {:params page-params
+                                              :on-success (get opts :on-success [::stcf/update-db])}]]
        :db (update-db-page-loading db page-query)})))

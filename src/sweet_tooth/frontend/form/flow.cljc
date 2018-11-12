@@ -4,7 +4,6 @@
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.remote.flow :as strf]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.paths :as p]
             [taoensso.timbre :as timbre]))
@@ -171,9 +170,9 @@
       {:db       (-> db
                      (assoc-in (conj full-form-path :state) :submitting)
                      (assoc-in (conj full-form-path :errors) nil))
-       :dispatch (into [::stsf/sync] (submit-form full-form-path
-                                                  (merge (:data form-spec) (get-in db (conj full-form-path :buffer)))
-                                                  form-spec))})))
+       :dispatch [::stsf/sync (submit-form full-form-path
+                                           (merge (:data form-spec) (get-in db (conj full-form-path :buffer)))
+                                           form-spec)]})))
 
 (defn success-base
   "Produces a function that can be used for handling form submission success. 
@@ -229,7 +228,7 @@
       {:db (-> db
                (assoc-in (conj item-path :state) :submitting)
                (assoc-in (conj item-path :errors) nil))
-       :dispatch [::strf/http (submit-form item-path
+       :dispatch [::stsf/sync (submit-form item-path
                                            data
                                            (dissoc item-spec :buffer))]})))
 
@@ -249,7 +248,7 @@
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-path :form [type :delete (:db/id data)])]
       {:db db
-       :dispatch [::strf/http (submit-form full-form-path
+       :dispatch [::stsf/sync (submit-form full-form-path
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
@@ -259,7 +258,7 @@
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-path :form [type :update (:db/id data)])]
       {:db db
-       :dispatch [::strf/http (submit-form full-form-path
+       :dispatch [::stsf/sync (submit-form full-form-path
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))

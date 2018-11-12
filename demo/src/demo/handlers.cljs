@@ -5,7 +5,6 @@
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.remote.flow :as strf]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.pagination.flow :as stpf]
             [sweet-tooth.frontend.core.utils :as stcu]))

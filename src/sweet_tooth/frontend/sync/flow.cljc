@@ -71,7 +71,7 @@
 
 (sth/rr rf/reg-event-fx ::sync
   []
-  (fn [cofx [_ & req]]
+  (fn [cofx [_ & [req]]]
     (sync-event-fx cofx req)))
 
 (sth/rr rf/reg-fx ::sync
@@ -89,7 +89,5 @@
 ;; TODO write a schema describing the config that can be sent here
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
-  [_ {:keys [interceptors] :as opts}]
-  
-  
+  [_ opts]
   opts)
