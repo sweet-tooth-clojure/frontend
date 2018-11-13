@@ -43,7 +43,7 @@
 (defn -main []
   (rf/dispatch-sync [:init (-> stconfig/default-config
                                (merge {::stsf/sync         {:sync-dispatch (ig/ref ::dsdl/sync)}
-                                       ::stsdb/req-adapter routes/routes
+                                       ::stsdb/req-adapter {:routes routes/routes}
 
                                        ::dsdl/sync {:delay 2000}
 
