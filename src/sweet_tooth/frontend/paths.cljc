@@ -13,7 +13,7 @@
 
 (defn prefix
   [prefix-name]
-  (get-in @config [:paths prefix-name]))
+  (get @config prefix-name))
 
 (defn full-path
   [prefix-name & partial-path]

@@ -65,6 +65,6 @@
   [endpoint page-defaults & [opts]]
   (fn [{:keys [db] :as cofx} [page-params]]
     (let [page-query (merge page-defaults page-params)]
-      {:dispatch [::stsf/sync [:get endpoint {:params page-params
+      {:dispatch [::stsf/sync [:get endpoint {:params page-query
                                               :on-success (get opts :on-success [::stcf/update-db])}]]
        :db (update-db-page-loading db page-query)})))
