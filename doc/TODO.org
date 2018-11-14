@@ -51,6 +51,7 @@ form, create data and error subscriptions for that attribute
 ** DONE Make form-paths base agnostic
 Make the ~form-path~ base configurable. Whenever form-path is
 referenced, exclude base. Have ~full-form-path~ when base is included?
+** TODO make sync requests easy to debug
 ** TODO generic db updating handling special keys
 *** vector of maps
 *** keys

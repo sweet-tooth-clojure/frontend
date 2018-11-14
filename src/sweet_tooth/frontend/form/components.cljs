@@ -73,14 +73,18 @@
 (def field-opts #{:tip :before-input :after-input :after-errors :label :no-label})
 
 ;; react doesn't recognize these and hates them
-(def custom-opts #{:attr-buffer :attr-path :attr-errors
-                   :label :no-label :options
-                   :partial-form-path :input-type
-                   :format-read :format-write})
+(def input-opts #{:attr-buffer :attr-path :attr-errors
+                  :label :no-label :options
+                  :partial-form-path :input-type
+                  :format-read :format-write})
 
-(defn dissoc-custom-opts
+(defn dissoc-input-opts
   [x]
-  (apply dissoc x (into custom-opts field-opts)))
+  (apply dissoc x input-opts))
+
+(defn dissoc-field-opts
+  [x]
+  (apply dissoc x field-opts))
 
 
 (defn framework-input-opts
@@ -188,12 +192,12 @@
 
 (defmethod input :textarea
   [opts]
-  [:textarea opts])
+  [:textarea (dissoc-input-opts opts)])
 
 (defmethod input :select
   [{:keys [options]
     :as   opts}]
-  [:select opts
+  [:select (dissoc-input-opts opts)
    (for [[opt-value txt option-opts] options]
      ^{:key (input-key opts opt-value)}
      [:option (cond-> {}
@@ -203,7 +207,7 @@
 
 (defmethod input :default
   [opts]
-  [:input opts])
+  [:input (dissoc-input-opts opts)])
 
 ;;~~~~~~~~~~~~~~~~~~
 ;; 'field' interface, wraps inputs with error messagse and labels
@@ -231,7 +235,7 @@
    (when tip [:div.tip tip])
    [:div
     before-input
-    [input (dissoc-custom-opts opts)]
+    [input (dissoc-field-opts opts)]
     after-input
     (error-messages @attr-errors)
     after-errors]])
@@ -245,7 +249,7 @@
     (if no-label
       [:span [input (apply dissoc opts field-opts)] [:i]]
       [:label {:class "label"}
-       [input (dissoc-custom-opts opts)]
+       [input (dissoc-field-opts opts)]
        [:i]
        (or label (label-text attr-path))
        (when required [:span {:class "required"} "*"])])
@@ -308,10 +312,9 @@
   [input (all-input-opts :partial-form-path :text :user/username {:x :y})]"
   [all-input-opts-fn]
   (fn [input-type & [attr-path input-opts]]
-    [input (-> (if (map? input-type)
-                 input-type
-                 (all-input-opts-fn input-type attr-path input-opts))
-               (dissoc-custom-opts))]))
+    [input (if (map? input-type)
+             input-type
+             (all-input-opts-fn input-type attr-path input-opts))]))
 
 (defn on-submit-handler
   [form-path & [submit-opts]]
