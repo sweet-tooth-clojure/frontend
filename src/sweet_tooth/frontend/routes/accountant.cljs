@@ -7,6 +7,7 @@
 
 (defmethod ig/init-key ::accountant
   [_ {:keys [match-route]}]
+  
   (acc/configure-navigation!
     {:nav-handler (comp strf/dispatch-route match-route)
-     :path-exists? (comp boolean match-route)}))
+     :path-exists? (comp :route-name match-route)}))
