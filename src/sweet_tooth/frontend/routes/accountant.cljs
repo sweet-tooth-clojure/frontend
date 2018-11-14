@@ -9,5 +9,5 @@
   [_ {:keys [match-route]}]
   
   (acc/configure-navigation!
-    {:nav-handler (comp strf/dispatch-route match-route)
+    {:nav-handler  (comp strf/dispatch-route match-route)
      :path-exists? (comp :route-name match-route)}))

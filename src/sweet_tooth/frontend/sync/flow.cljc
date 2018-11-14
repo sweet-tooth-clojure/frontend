@@ -76,7 +76,8 @@
 (sth/rr rf/reg-event-fx ::sync
   []
   (fn [cofx [_ & [req]]]
-    (sync-event-fx cofx req)))
+    (sync-event-fx cofx (update req 2 (fn [{:keys [on-success] :as opts}]
+                                        (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))))
 
 (sth/rr rf/reg-fx ::sync
   (fn [cofx]
@@ -96,8 +97,7 @@
 (defn sync-fx
   [[method endpoint & [opts]]]
   (fn [cofx [params]]
-    {:dispatch [::sync [method endpoint {:params     (merge (:params opts) params)
-                                         :on-success (get opts :on-success [::stcf/update-db])}]]}))
+    {:dispatch [::sync [method endpoint {:params     (merge (:params opts) params)}]]}))
 
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
