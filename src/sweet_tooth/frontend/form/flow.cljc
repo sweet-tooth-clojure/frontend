@@ -149,14 +149,14 @@
   - `form-spec` is a way to pass on whatevs data to the request 
     completion handler.
   - the `:request-opts` key of form spec can customize the ajax request"
-  [full-form-path data {:keys [success error]
+  [full-form-path data {:keys [success error params]
                         :or   {success ::submit-form-success
                                error   ::submit-form-error}
                         :as   form-spec}]
   (let [[_ endpoint action] full-form-path]
     [action
      (get form-spec :route-name endpoint)
-     (merge {:params     data
+     (merge {:params     (merge params data)
              :on-success [success full-form-path form-spec]
              :on-fail    [error full-form-path form-spec]}
             (:request-opts form-spec))]))
