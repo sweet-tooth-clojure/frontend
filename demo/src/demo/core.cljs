@@ -20,6 +20,7 @@
             [integrant.core :as ig]
             [bide.core :as bide]
 
+            [demo.subs]
             [demo.handlers]
             [demo.sync.dispatch.local :as dsdl]
             [demo.routes :as routes]
@@ -56,3 +57,4 @@
                       (fn [] (rf/dispatch-sync [:window-clicked]))))
 
 (-main)
+
