@@ -69,9 +69,13 @@
 ;; registrations
 ;;------
 
+(defn sync-state
+  [db req]
+  (get-in db [::reqs (req-path req) :state]))
+
 (rf/reg-sub ::sync-state
   (fn [db [_ req]]
-    (:state (get-in db [::reqs (req-path req)]))))
+    (sync-state db req)))
 
 (sth/rr rf/reg-event-fx ::sync
   []

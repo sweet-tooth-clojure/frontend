@@ -11,7 +11,7 @@
   (let [pager        (subscribe [::stpf/pager pager-id])
         query-params (subscribe [::strf/params pager-id])]
     (fn [pager-id]
-      (let [{:keys [query result]} @pager
+      (let [{:keys [query page-count]} @pager
             url-base               (aget js/document "location" "pathname")
             query-params           @query-params]
         (into [:div.pager]
@@ -20,4 +20,4 @@
                       {:href  (str url-base "?" (url/map->query (assoc query-params :page page)))
                        :class (if (= (:page query) page) "active")}
                       page])
-                   (map inc (range (:total-pages result)))))))))
+                   (map inc (range page-count))))))))

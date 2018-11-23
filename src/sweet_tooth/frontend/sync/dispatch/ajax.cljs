@@ -14,15 +14,16 @@
    :delete DELETE})
 
 (defn sync-fn
-  [req-adapter]
+  [req-adapter global-opts]
   (fn [{:keys [::stsf/req]}]
     (let [[method res {:keys [uri on-success on-fail] :as opts}] (req-adapter req)]
       ((get request-methods method)
        uri
-       (-> opts
+       (-> global-opts
+           (merge opts)
            (assoc :handler       (stsf/sync-success-handler req on-success))
            (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
 
 (defmethod ig/init-key ::sync
-  [_ {:keys [req-adapter]}]
-  (sync-fn (or req-adapter identity)))
+  [_ {:keys [req-adapter opts]}]
+  (sync-fn (or req-adapter identity) opts))

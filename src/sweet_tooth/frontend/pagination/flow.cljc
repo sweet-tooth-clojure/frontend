@@ -28,9 +28,7 @@
 (defn pager
   "Retrieve a query and its results"
   [db query-id]
-  (let [query (get-in db (paths/full-path :page :query query-id))]
-    {:query query
-     :result (get-in db (paths/full-path :page :result query))}))
+  (get-in db (paths/full-path :page query-id)))
 
 (reg-sub ::pager (fn [db [_ query-id]] (pager db query-id)))
 
@@ -38,17 +36,20 @@
   (fn [db [_ query-id]]
     (let [{:keys [query result]} (pager db query-id)]
       (map #(get-in db (paths/full-path :entity (:type query) %))
-           (:ordered-ids result)))))
+           (:ordered-ids (get result query))))))
 
 (reg-sub ::page-result
   (fn [db [_ query-id]] (:result (pager db query-id))))
 
-(reg-sub ::page-state
-  (fn [db [_ query-id]]
-    (get-in db (paths/full-path :page :state query-id))))
-
 (reg-sub ::page-query
   (fn [db [_ query-id]] (:query (pager db query-id))))
+
+(reg-sub ::page-count
+  (fn [db [_ query-id]] (:page-count (pager db query-id))))
+
+(reg-sub ::sync-state
+  (fn [db [_ endpoint query-id]]
+    (stsf/sync-state db [:get endpoint {:params (:query (pager db query-id))}])))
 
 ;;---------
 ;; Helpers
@@ -57,14 +58,12 @@
 (defn update-db-page-loading
   "Use when initiating a GET request fetching paginataed data"
   [db {:keys [query-id] :as page-query}]
-  (-> db
-      (assoc-in (paths/full-path :page :query query-id) page-query)
-      (assoc-in (paths/full-path :page :state query-id) :loading)))
+  (assoc-in db (paths/full-path :page query-id :query) page-query))
 
 (defn GET-page-fx
   [endpoint page-defaults & [opts]]
   (fn [{:keys [db] :as cofx} [page-params]]
     (let [page-query (merge page-defaults page-params)]
-      {:dispatch [::stsf/sync [:get endpoint {:params page-query
+      {:dispatch [::stsf/sync [:get endpoint {:params     page-query
                                               :on-success (get opts :on-success [::stcf/update-db])}]]
-       :db (update-db-page-loading db page-query)})))
+       :db       (update-db-page-loading db page-query)})))
