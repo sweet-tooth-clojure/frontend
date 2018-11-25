@@ -99,9 +99,10 @@
 ;; event helpers
 ;;------
 (defn sync-fx
+  "Returns an effect handler that dispatches a sync event"
   [[method endpoint & [opts]]]
   (fn [cofx [params]]
-    {:dispatch [::sync [method endpoint {:params     (merge (:params opts) params)}]]}))
+    {:dispatch [::sync [method endpoint {:params (merge (:params opts) params)}]]}))
 
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
