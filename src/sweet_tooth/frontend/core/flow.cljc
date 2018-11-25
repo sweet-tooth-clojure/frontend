@@ -38,11 +38,14 @@
 ;; old entities withnew
 (sth/rr reg-event-db ::replace-entities
   [trim-v]
-  (fn [db [m]]
-    (reduce-kv (fn [db entity-type entities]
-                 (update-in db (paths/full-path :entity entity-type) merge entities))
-               db
-               (:entity m))))
+  (fn [db [patches]]
+    (reduce (fn [db patch]
+              (reduce-kv (fn [db entity-type entities]
+                           (update-in db (paths/full-path :entity entity-type) merge entities))
+                         db
+                         (:entity patch)))
+            db
+            patches)))
 
 (defn update-db
   "Takes a db and a vector of db-patches, and applies those patches to
