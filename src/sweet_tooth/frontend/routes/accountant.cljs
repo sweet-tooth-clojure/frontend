@@ -5,6 +5,7 @@
 
 (defonce accountant-configured? (atom false))
 
+;; TODO use unconfigure-navigation! with halt-key
 (defmethod ig/init-key ::accountant
   [_ {:keys [match-route]}]
   (when-not @accountant-configured?

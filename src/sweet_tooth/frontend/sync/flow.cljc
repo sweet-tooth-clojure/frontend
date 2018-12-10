@@ -80,10 +80,8 @@
 (sth/rr rf/reg-event-fx ::sync
   []
   (fn [cofx [_ & [req]]]
-    (sync-event-fx cofx (let [x (update req 2 (fn [{:keys [on-success] :as opts}]
-                                                (if on-success opts (merge opts {:on-success [::stcf/update-db]}))))]
-                          (println "REQ" x)
-                          x))))
+    (sync-event-fx cofx (update req 2 (fn [{:keys [on-success] :as opts}]
+                                        (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))))
 
 (sth/rr rf/reg-fx ::sync
   (fn [cofx]

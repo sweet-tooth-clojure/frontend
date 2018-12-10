@@ -117,10 +117,12 @@
 ;; Populate form initial state
 (sth/rr reg-event-db ::initialize-form-from-path
   [trim-v]
-  (fn [db [partial-form-path {:keys [data-path data-tx]
-                              :or {data-tx identity}
+  (fn [db [partial-form-path {:keys [data-path data-fn]
+                              :or {data-fn identity}
                               :as form}]]
-    (initialize-form db [partial-form-path (assoc form :buffer (data-tx (get-in db (u/path data-path))))])))
+    (initialize-form db [partial-form-path (-> form
+                                               (assoc :buffer (data-fn (get-in db (u/path data-path))))
+                                               (dissoc :data-path :data-fn))])))
 
 ;; nils out form
 (defn clear-form
