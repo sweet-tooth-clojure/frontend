@@ -1,26 +1,17 @@
 (set-env!
   :source-paths   #{"src"}
   :target-path    "target/build"
-  :dependencies   '[[org.clojure/clojure         "1.9.0"    :scope "provided"]
-                    [org.clojure/clojurescript   "1.10.439" :scope "provided"]
-                    [re-frame                    "0.10.5"   :scope "provided"]
-                    [adzerk/bootlaces            "0.1.13"   :scope "test"]
-                    [adzerk/boot-test            "1.1.1"    :scope "test"]
-                    [cljs-ajax                   "0.6.0"]
-                    [meta-merge                  "1.0.0"]
-                    [com.andrewmcveigh/cljs-time "0.4.0"]
-                    [com.taoensso/timbre         "4.10.0"]
-                    [com.cemerick/url            "0.1.1"]
-                    [venantius/accountant        "0.2.4"]
-                    [integrant                   "0.8.0-alpha2"]
-                    [funcool/bide                "1.6.0"]])
+  :dependencies   '[[adzerk/bootlaces "0.1.13" :scope "test"]
+                    [adzerk/boot-test "1.1.1"  :scope "test"]
+                    [seancorfield/boot-tools-deps "0.4.7" :scope "test"]])
 
 (require
-  '[adzerk.bootlaces :refer :all]
-  '[adzerk.boot-test :refer :all])
+  '[adzerk.bootlaces :as bootlaces]
+  '[adzerk.boot-test :as boot-test]
+  '[boot-tools-deps.core :refer [deps]])
 
-(def +version+ "0.5.2-SNAPSHOT")
-(bootlaces! +version+)
+(def +version+ "0.5.2")
+(bootlaces/bootlaces! +version+)
 
 (task-options!
  pom  {:project     'sweet-tooth/sweet-tooth-frontend
@@ -34,11 +25,16 @@
 (deftask push-release-without-gpg
   "Deploy release version to Clojars without gpg signature."
   [f file PATH str "The jar file to deploy."]
-  (comp
-    (#'adzerk.bootlaces/collect-clojars-credentials)
-    (push
-      :file           file
-      :tag            (boolean #'adzerk.bootlaces/+last-commit+)
-      :gpg-sign       false
-      :ensure-release true
-      :repo           "deploy-clojars")))
+  (comp (deps)
+        (#'adzerk.bootlaces/collect-clojars-credentials)
+        (push
+          :file           file
+          :tag            (boolean #'adzerk.bootlaces/+last-commit+)
+          :gpg-sign       false
+          :ensure-release true
+          :repo           "deploy-clojars")))
+
+(deftask build-jar
+  ""
+  []
+  (comp (deps) (bootlaces/build-jar)))

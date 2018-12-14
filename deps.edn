@@ -1,14 +1,14 @@
 {:paths ["src"]
- :deps {org.clojure/clojure         {:mvn/version "1.9.0"}
-        org.clojure/clojurescript   {:mvn/version "1.10.439"}
-        re-frame                    {:mvn/version "0.10.5"}
-        adzerk/bootlaces            {:mvn/version "0.1.13"}
-        adzerk/boot-test            {:mvn/version "1.1.1"}
-        cljs-ajax                   {:mvn/version "0.6.0"}
-        meta-merge                  {:mvn/version "1.0.0"}
-        com.andrewmcveigh/cljs-time {:mvn/version "0.4.0"}
-        com.taoensso/timbre         {:mvn/version "4.10.0"}
-        com.cemerick/url            {:mvn/version "0.1.1"}
-        venantius/accountant        {:mvn/version "0.2.4"}
-        integrant                   {:mvn/version "0.8.0-alpha2"}
-        funcool/bide                {:mvn/version "1.6.0"}}}
+ :deps  {org.clojure/clojure         {:mvn/version "1.9.0"}
+         org.clojure/clojurescript   {:mvn/version "1.10.439"}
+         re-frame                    {:mvn/version "0.10.5"}
+         cljs-ajax                   {:mvn/version "0.6.0"}
+         meta-merge                  {:mvn/version "1.0.0"}
+         com.andrewmcveigh/cljs-time {:mvn/version "0.4.0"}
+         com.taoensso/timbre         {:mvn/version "4.10.0"}
+         com.cemerick/url            {:mvn/version "0.1.1"}
+         venantius/accountant        {:mvn/version "0.2.4"}
+         integrant                   {:mvn/version "0.8.0-alpha2"}
+         funcool/bide                {:mvn/version "1.6.0"}}
+ 
+ :aliases {:test {:extra-deps {adzerk/boot-test {:mvn/version "1.1.1"}}}}}
