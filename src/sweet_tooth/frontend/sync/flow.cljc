@@ -10,21 +10,17 @@
             [integrant.core :as ig]))
 
 (defn req-path
+  "Get the 'address' for a request in the app-db"
   [[method resource opts]]
   [method resource (or (select-keys opts [:params]) {})])
 
-(defn new-request
+(defn track-new-request
+  "Adds a request's state te the app-db and increments the activ request
+  count"
   [db req]
   (-> db
       (assoc-in [::reqs (req-path req)] {:state :active})
       (update ::active-request-count (fnil inc 0))))
-
-(defn sync-event-fx
-  [cofx req]
-  (-> cofx
-      (dissoc :event)
-      (update :db new-request req)
-      (merge {::sync (assoc cofx ::req req)})))
 
 (defn sync-dispatch-fn
   [cofx]
@@ -32,6 +28,20 @@
                 :sweet-tooth.frontend/config
                 ::sync
                 :sync-dispatch-fn]))
+
+;; TODO update this to include the sync-dispatch-fn rather than all of cofx
+(defn sync-event-fx
+  "In response to a sync event, return an effect map of:
+  a) updated db to track a sync request
+  b) ::sync effect, to be handled by the ::sync effect handler"
+  [cofx req]
+  (-> cofx
+      (dissoc :event)
+      (update :db track-new-request req)
+      (assoc ::sync {:req         req
+                     :cofx        cofx
+                     :dispatch-fn (sync-dispatch-fn cofx)})))
+
 
 ;;------
 ;; dispatch handler wrappers
@@ -84,8 +94,7 @@
                                         (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))))
 
 (sth/rr rf/reg-fx ::sync
-  (fn [cofx]
-    ((sync-dispatch-fn cofx) cofx)))
+  (fn [{:keys [dispatch-fn req]}] (dispatch-fn req)))
 
 (sth/rr rf/reg-event-db ::sync-success
   []

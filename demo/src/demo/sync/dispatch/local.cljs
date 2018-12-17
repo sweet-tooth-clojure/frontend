@@ -28,7 +28,7 @@
 
 (defn sync-fn
   [sync-config]
-  (fn [{:keys [::stsf/req]}]
+  (fn [req]
     (let [[method _ {:keys [uri on-success on-fail fail?] :as opts}] req
 
           success (stsf/sync-success-handler req on-success)

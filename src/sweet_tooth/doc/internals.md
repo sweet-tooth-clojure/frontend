@@ -33,3 +33,14 @@ implement it using different dispatching mechanisms than XHR. For
 example, you could create a fully-local dispatcher that simulates
 remote requests by generating data for the response and using timeouts
 to simulate request latency.
+
+Separates the data describing a request from actually performing the
+request. This allows success and failure handlers to be constructed
+that reference the original request, which can be useful - for
+example, the request data is used to derive an address for that sync,
+and that address is used to make the lifecycle state accessible. The
+response handlers are thus able to update the lifecycle, because they
+have access to the sync's address.
+
+TODO document the structure of a request, along with possible request
+methods.

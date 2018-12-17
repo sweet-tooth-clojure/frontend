@@ -15,7 +15,7 @@
 
 (defn sync-dispatch-fn
   [req-adapter global-opts]
-  (fn [{:keys [::stsf/req]}]
+  (fn [req]
     (let [[method res {:keys [uri on-success on-fail] :as opts}] (req-adapter req)]
       ((get request-methods method)
        uri
