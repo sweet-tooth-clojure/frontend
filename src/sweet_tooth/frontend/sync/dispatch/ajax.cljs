@@ -13,7 +13,7 @@
    :create POST
    :delete DELETE})
 
-(defn sync-fn
+(defn sync-dispatch-fn
   [req-adapter global-opts]
   (fn [{:keys [::stsf/req]}]
     (let [[method res {:keys [uri on-success on-fail] :as opts}] (req-adapter req)]
@@ -24,6 +24,6 @@
            (assoc :handler       (stsf/sync-success-handler req on-success))
            (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
 
-(defmethod ig/init-key ::sync
-  [_ {:keys [req-adapter opts]}]
-  (sync-fn (or req-adapter identity) opts))
+(defmethod ig/init-key ::sync-dispatch-fn
+  [_ {:keys [req-adapter global-opts]}]
+  (sync-dispatch-fn (or req-adapter identity) global-opts))

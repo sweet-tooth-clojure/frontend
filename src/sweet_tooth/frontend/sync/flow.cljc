@@ -31,7 +31,7 @@
   (get-in cofx [:db
                 :sweet-tooth.frontend/config
                 ::sync
-                :sync-dispatch]))
+                :sync-dispatch-fn]))
 
 ;;------
 ;; dispatch handler wrappers

@@ -51,12 +51,13 @@ form, create data and error subscriptions for that attribute
 ** DONE Make form-paths base agnostic
 Make the ~form-path~ base configurable. Whenever form-path is
 referenced, exclude base. Have ~full-form-path~ when base is included?
-** TODO finish shadow conversion
+** DONE finish shadow conversion
 *** resolve build.boot / deps.edn duplication
 **** figure out how to use deps.edn with boot
 **** "scope" bootlaces, boot-test
 *** ensure I can still build and deploy a jar
-** TODO make sync requests easy to debug>
+** TODO investigate keyword inheritance to specify a sync adapter
+** TODO make sync requests easy to debug
 ** TODO generic db updating handling special keys
 *** vector of maps
 *** keys

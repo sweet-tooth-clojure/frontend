@@ -12,7 +12,3 @@
 (defmethod ig/init-key ::match-route
   [_ {:keys [routes]}]
   (match-route-fn routes))
-
-(defmethod ig/init-key ::routes
-  [_ routes]
-  (bide/router routes))

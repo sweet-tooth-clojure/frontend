@@ -17,14 +17,13 @@
 (def default-config
   {::sth/register-handlers []
    
-   ::stsf/sync  {:interceptors  []
-                 :sync-dispatch (ig/ref ::stsda/sync)}
-   ::stsda/sync {:req-adapter (ig/ref ::stsdb/req-adapter)}
+   ::stsf/sync              {:sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
+   ::stsda/sync-dispatch-fn {:req-adapter (ig/ref ::stsdb/req-adapter)}
 
    ::stra/accountant  {:match-route (ig/ref ::strb/match-route)}
-   ::strb/match-route {:routes (ig/ref ::strb/routes)}
-   ;; User must specify this
-   ::strb/routes      []
+   
+   ;; User must specify :routes key
+   ::strb/match-route {:routes nil}
 
    ;;::stff/config {:data-id :db/id}
    ::stcf/update-db {(paths/prefix :entity) stcf/db-patch-handle-entity
