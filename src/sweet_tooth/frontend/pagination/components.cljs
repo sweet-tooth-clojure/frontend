@@ -12,8 +12,8 @@
         query-params (subscribe [::strf/params pager-id])]
     (fn [pager-id]
       (let [{:keys [query page-count]} @pager
-            url-base               (aget js/document "location" "pathname")
-            query-params           @query-params]
+            url-base                   (aget js/document "location" "pathname")
+            query-params               @query-params]
         (into [:div.pager]
               (map (fn [page]
                      [:a.page-num

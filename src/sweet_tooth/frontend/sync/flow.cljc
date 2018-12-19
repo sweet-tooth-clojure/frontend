@@ -3,8 +3,6 @@
   data and the mechanism for handling the request. It also provides a
   common interface across those mechanisms."
   (:require [re-frame.core :as rf]
-            [ajax.core :refer [GET PUT POST DELETE]]
-            [taoensso.timbre :as timbre]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as stcf]
             [integrant.core :as ig]))
@@ -87,11 +85,15 @@
   (fn [db [_ req]]
     (sync-state db req)))
 
+(defn add-default-success-handler
+  [req]
+  (update req 2 (fn [{:keys [on-success] :as opts}]
+                  (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))
+
 (sth/rr rf/reg-event-fx ::sync
   []
-  (fn [cofx [_ & [req]]]
-    (sync-event-fx cofx (update req 2 (fn [{:keys [on-success] :as opts}]
-                                        (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))))
+  (fn [cofx [_ req]]
+    (sync-event-fx cofx (add-default-success-handler req))))
 
 (sth/rr rf/reg-fx ::sync
   (fn [{:keys [dispatch-fn req]}] (dispatch-fn req)))

@@ -56,7 +56,11 @@ referenced, exclude base. Have ~full-form-path~ when base is included?
 **** figure out how to use deps.edn with boot
 **** "scope" bootlaces, boot-test
 *** ensure I can still build and deploy a jar
+** TODO explore using reitit instead of bide
 ** TODO investigate keyword inheritance to specify a sync adapter
+the end result is to have a sync-dispatch function in the config,
+which is then accessible in the db
+
 ** TODO make sync requests easy to debug
 ** TODO generic db updating handling special keys
 *** vector of maps

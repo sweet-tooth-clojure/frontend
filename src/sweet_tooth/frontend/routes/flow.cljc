@@ -20,6 +20,7 @@
 
 ;; routed should have :params, :page-id, :components
 ;; TODO spec this
+;; TODO instead of page-id, route-id
 (sth/rr reg-event-db ::load
   [trim-v]
   (fn [db [page-id components params]]

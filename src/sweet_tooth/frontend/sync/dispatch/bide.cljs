@@ -2,6 +2,7 @@
   (:require [bide.core :as bide]
             [integrant.core :as ig]))
 
+;; TODO document purpose of route-param-fn and quey-param-fn
 (defmethod ig/init-key ::req-adapter
   [_ {:keys [routes route-param-fn query-param-fn]
       :or   {route-param-fn (constantly nil)

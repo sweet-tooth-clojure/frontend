@@ -24,9 +24,7 @@
       (u/update-vals {[:page :per-page] #?(:cljs js/parseInt :clj #(Long. %))})))
 
 (defn routed-entity
-  ([db entity-key param]
-   (routed-entity db entity-key param identity))
-  ([db entity-key param param-f]
-   (get-in db (paths/full-path :entity
-                               entity-key
-                               (param-f (get-in db (paths/full-path :nav :params param)))))))
+  [db entity-key param]
+  (get-in db (paths/full-path :entity
+                              entity-key
+                              (get-in db (paths/full-path :nav :params param)))))

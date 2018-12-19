@@ -42,5 +42,33 @@ and that address is used to make the lifecycle state accessible. The
 response handlers are thus able to update the lifecycle, because they
 have access to the sync's address.
 
-TODO document the structure of a request, along with possible request
-methods.
+### Request Structure
+
+A request is a vector of
+
+```clojure
+[method resource-name opts]
+```
+
+* `method` is one of `#{:get :query :put :update :post :create :delete}`
+* `resource-name` will correspond to a route
+* `opts` can include
+  * `:on-success`
+  * `:on-fail`
+  * `:params`
+
+### AJAX dispatching, adapters
+
+You'll notice that the request structure does not include a URI. AJAX
+requests (obviously) need a URI. The request adapter takes the request
+as an argument, and adds a URI to the last element of the request,
+`opts`.
+
+`sweet-tooth.frontend.sync.dispatch.bide` includes the default request
+adapter that comes bundled with Sweet Tooth. It uses routes to update
+the request by adding `:uri` to `opts`.
+
+## Routes
+
+* Backend routes
+* URL routes

@@ -3,12 +3,13 @@
             [integrant.core :as ig]))
 
 (defn match-route-fn
-  [routes]
+  [router param-coercion]
   (fn [path]
-    (let [[route-name params query-params] (bide/match routes path)]
+    (let [[route-name params query-params] (bide/match router path)]
       {:route-name route-name
-       :params     (merge params query-params)})))
+       :params     (param-coercion route-name (merge params query-params))})))
 
 (defmethod ig/init-key ::match-route
-  [_ {:keys [routes]}]
-  (match-route-fn routes))
+  [_ {:keys [router param-coercion]
+      :or   {param-coercion identity}}]
+  (match-route-fn router param-coercion))
