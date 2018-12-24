@@ -22,6 +22,13 @@
   (data/populate {:topic [[1 {:spec-gen (:params opts)}]]})
   [{:entity (data/ent-gen :topic)}])
 
+;; don't generate anything; topic is already generated
+;; super lazy but whatevs!
+;; we can "build" the database some other day
+(defmethod success-resp [:get :topic]
+  [_]
+  [{}])
+
 (defn fail-resp
   [req]
   [])

@@ -34,11 +34,12 @@
 (defn -main []
   (rf/dispatch-sync [:init (-> stconfig/default-config
                                (merge {::stsf/sync         {:sync-dispatch-fn (ig/ref ::dsdl/sync)}
-                                       ::stsdb/req-adapter {:routes routes/routes}
+                                       ::stsdb/req-adapter {:routes routes/api-routes}
 
                                        ::dsdl/sync {:delay 500}
 
-                                       ::strb/match-route {:router routes/router}})
+                                       ::strb/match-route {:router         routes/browser-router
+                                                           :param-coercion routes/browser-route-coercion}})
                                ig/prep
                                ig/init)])
   (r/render [app] (stcu/el-by-id "app"))

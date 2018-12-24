@@ -24,7 +24,7 @@
         [:span "loading..."])
 
       [:div "topic count:" @(rf/subscribe [:topic-count])]
-      (map-indexed (fn [i topic]
-                     ^{:key (:db/id topic)}
-                     [:div [:a {:href (str "/topic/" i)} (:topic/title topic)]])
-                   @(rf/subscribe [:topics]))]]))
+      (doall (map (fn [topic]
+                    ^{:key (:db/id topic)}
+                    [:div [:a {:href (str "/topic/" (:db/id topic))} (:topic/title topic)]])
+                  @(rf/subscribe [:topics])))]]))

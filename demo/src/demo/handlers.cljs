@@ -29,6 +29,12 @@
                          :nav/dispatch-current true}
                         [:get :init {:on-success [::init-success]}])))
 
+(rf/reg-event-fx :load-topic
+  [rf/trim-v]
+  (fn [cofx [params]]
+    (stsf/sync-event-fx (select-keys cofx [:db])
+                        [:get :topic {:params params}])))
+
 ;;--------------------
 ;; nav
 ;;--------------------

@@ -11,5 +11,5 @@
 
 (defmethod ig/init-key ::match-route
   [_ {:keys [router param-coercion]
-      :or   {param-coercion identity}}]
+      :or   {param-coercion (fn [_ params] params)}}]
   (match-route-fn router param-coercion))

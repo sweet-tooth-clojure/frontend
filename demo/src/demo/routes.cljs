@@ -11,18 +11,26 @@
             [demo.components.home :as h]
             [demo.components.show-topic :as st]))
 
-(def routes
-  [["/" :home]
-   ["/init" :init]
+(def api-routes
+  [["/init" :init]
    ["/topic/:id" :topic]])
 
-(def router
-  (bide/router routes))
+(def browser-routes
+  [["/" :home]
+   ["/topic/:id" :topic]])
+
+(def browser-router
+  (bide/router browser-routes))
+
+(defn browser-route-coercion
+  [_ params]
+  (stcu/update-vals params {[:id] js/parseInt}))
 
 (defmethod strf/dispatch-route :home
-  [{:keys [route-name params]} handler params]
-  (rf/dispatch [::strf/load handler {:main [h/component]} params]))
+  [{:keys [route-name params] :as opts}]
+  (rf/dispatch [::strf/load route-name {:main [h/component]} params]))
 
 (defmethod strf/dispatch-route :topic
-  [handler params]
-  (rf/dispatch [::strf/load handler {:main [st/component]} params]))
+  [{:keys [route-name params] :as opts}]
+  (rf/dispatch [:load-topic params])
+  (rf/dispatch [::strf/load route-name {:main [st/component]} params]))
