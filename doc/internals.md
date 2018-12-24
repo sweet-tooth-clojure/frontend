@@ -68,7 +68,16 @@ as an argument, and adds a URI to the last element of the request,
 adapter that comes bundled with Sweet Tooth. It uses routes to update
 the request by adding `:uri` to `opts`.
 
+### TODO
+
+- how to handle offline
+- how to handle local storage
+- ideal would be to handle sync impl details at a lower level
+  perhaps each "resource" can have a different sync strategy
+
 ## Routes
 
 * Backend routes
 * URL routes
+
+### TODO

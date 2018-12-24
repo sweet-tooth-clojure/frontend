@@ -78,6 +78,13 @@ which is then accessible in the db
 *** does it make sense to use duct for config?
 ** TODO make routed entity a sub
 [[file:~/projects/web/sweet-tooth/frontend/src/sweet_tooth/frontend/routes/utils.cljc::(defn%20routed-entity][routed entity code]]
-** TODO routed entity parseInt is a code smell, should only have to call once
+** DONE routed entity parseInt is a code smell, should only have to call once
 subscribers should not have to know how to parse routed vars
 [[file:~/projects/web/grateful-place-3/src/frontend/grateful_place/subs.cljs::(let%20%5B%5D)%20(stru/routed-entity%20db%20:topic%20:topic-id%20js/parseInt)))][gp3 routed entity]]
+** TODO examine route dispatching
+*** potential for caching
+*** how to manage state teardown
+*** display alerts for certain transitions
+- integrate accountant into re-frame? make pushstate an effect?
+*** introduce the concept of route enter/exit/update
+
