@@ -15,3 +15,8 @@
 ## Dev
 
 ## Demo
+
+```shell
+cd demo
+shadow-cljs watch app
+```

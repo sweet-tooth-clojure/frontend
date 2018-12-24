@@ -5,7 +5,10 @@
   (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as stcf]
-            [integrant.core :as ig]))
+            [integrant.core :as ig]
+            [medley.core :as medley]
+            [clojure.data :as data]
+            [clojure.walk :as walk]))
 
 (defn req-path
   "Get the 'address' for a request in the app-db"
@@ -84,6 +87,22 @@
 (rf/reg-sub ::sync-state
   (fn [db [_ req]]
     (sync-state db req)))
+
+(defn projection?
+  "Is every value in x present in y?"
+  [x y]
+  {:pre [(and (seqable? x) (seqable? y))]}
+  (let [diff (second (clojure.data/diff y x))]
+    (->> (walk/postwalk (fn [x]
+                          (when-not (and (map? x)
+                                         (nil? (first (vals x))))
+                            x))
+                        diff)
+         (every? nil?))))
+
+(rf/reg-sub ::sync-state-q
+  (fn [db [_ query]]
+    (medley/filter-keys (partial projection? query) (::reqs db))))
 
 (defn add-default-success-handler
   [req]

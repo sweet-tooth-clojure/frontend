@@ -7,7 +7,7 @@
 (defn component
   []
   (if (= :active @(rf/subscribe [::stsf/sync-state [:get :init]]))
-    [:div "birb"]
+    [:div "loading..."]
     [:div "Chirb"
      [:div [:h2 "Create new topic"]
       (let [form-path [:topic :create]
@@ -16,6 +16,10 @@
          [:div [input :text :topic/title {:placeholder "Title"}]]
          [:div [:input {:type :submit}]]])]
      [:div [:h2 "topics:"]
+      (when (->> @(rf/subscribe [::stsf/sync-state-q [:create :topic]])
+                 vals
+                 (some #(= :active (:state %))))
+        [:span "loading..."])
       [:div "topic count:" @(rf/subscribe [:topic-count])]
       (doall (map (fn [topic]
                     ^{:key (:db/id topic)}

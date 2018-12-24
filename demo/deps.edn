@@ -6,5 +6,6 @@
         aysylu/loom                {:mvn/version "1.0.2"}
 
         cider/cider-nrepl {:mvn/version "0.18.0"}
+        refactor-nrepl    {:mvn/version "2.4.0"}
 
         sweet-tooth/sweet-tooth-frontend {:local/root "/Users/daniel/projects/web/sweet-tooth/frontend"}}}

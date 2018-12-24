@@ -4,6 +4,8 @@
                 :output-dir "public/js"
                 :asset-path "/js"
 
+                :compiler-options {:closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}}
+
                 :modules
                 {:main ;; <- becomes public/js/main.js
                  {:entries [demo.core]}}
@@ -11,4 +13,5 @@
                 ;; start a development http server on http://localhost:8020
                 :devtools
                 {:http-root "public"
-                 :http-port 8020}}}}
+                 :http-port 8020
+                 :preloads  [day8.re-frame-10x.preload]}}}}

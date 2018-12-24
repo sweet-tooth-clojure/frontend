@@ -9,6 +9,7 @@
          com.cemerick/url            {:mvn/version "0.1.1"}
          venantius/accountant        {:mvn/version "0.2.4"}
          integrant                   {:mvn/version "0.8.0-alpha2"}
-         funcool/bide                {:mvn/version "1.6.0"}}
+         funcool/bide                {:mvn/version "1.6.0"}
+         medley                      {:mvn/version "1.0.0"}}
  
  :aliases {:test {:extra-deps {adzerk/boot-test {:mvn/version "1.1.1"}}}}}

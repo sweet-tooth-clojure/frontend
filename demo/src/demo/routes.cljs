@@ -15,6 +15,9 @@
    ["/init" :init]
    ["/topic" :topic]])
 
+(def router
+  (bide/router routes))
+
 (defmethod strf/dispatch-route :home
   [{:keys [route-name params]} handler params]
   (rf/dispatch [::strf/load handler {:main [h/component]} params]))
