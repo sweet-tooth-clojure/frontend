@@ -14,8 +14,7 @@
             [demo.subs]
             [demo.handlers]
             [demo.sync.dispatch.local :as dsdl]
-            [demo.routes :as routes]
-            [demo.location-dispatch :as ld])
+            [demo.routes :as routes])
   (:import [goog.events EventType]))
 
 (enable-console-print!)
@@ -37,7 +36,7 @@
                                (merge {::stsf/sync         {:sync-dispatch-fn (ig/ref ::dsdl/sync)}
                                        ::stsdb/req-adapter {:routes routes/routes}
 
-                                       ::dsdl/sync {:delay 2000}
+                                       ::dsdl/sync {:delay 500}
 
                                        ::strb/match-route {:router routes/router}})
                                ig/prep

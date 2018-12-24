@@ -8,20 +8,23 @@
   []
   (if (= :active @(rf/subscribe [::stsf/sync-state [:get :init]]))
     [:div "loading..."]
-    [:div "Chirb"
+    [:div "Topic Thing"
+
      [:div [:h2 "Create new topic"]
       (let [form-path [:topic :create]
             {:keys [input form-state form-ui-state]} (stfc/form form-path)]
         [:form (stfc/on-submit form-path)
          [:div [input :text :topic/title {:placeholder "Title"}]]
          [:div [:input {:type :submit}]]])]
+
      [:div [:h2 "topics:"]
       (when (->> @(rf/subscribe [::stsf/sync-state-q [:create :topic]])
                  vals
                  (some #(= :active (:state %))))
         [:span "loading..."])
+
       [:div "topic count:" @(rf/subscribe [:topic-count])]
-      (doall (map (fn [topic]
-                    ^{:key (:db/id topic)}
-                    [:div (:topic/title topic)])
-                  @(rf/subscribe [:topics])))]]))
+      (map-indexed (fn [i topic]
+                     ^{:key (:db/id topic)}
+                     [:div [:a {:href (str "/topic/" i)} (:topic/title topic)]])
+                   @(rf/subscribe [:topics]))]]))
