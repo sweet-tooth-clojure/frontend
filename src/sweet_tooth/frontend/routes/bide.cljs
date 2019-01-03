@@ -10,6 +10,6 @@
        :params     (param-coercion route-name (merge params query-params))})))
 
 (defmethod ig/init-key ::match-route
-  [_ {:keys [router param-coercion]
+  [_ {:keys [routes param-coercion]
       :or   {param-coercion (fn [_ params] params)}}]
-  (match-route-fn router param-coercion))
+  (match-route-fn (bide/router routes) param-coercion))

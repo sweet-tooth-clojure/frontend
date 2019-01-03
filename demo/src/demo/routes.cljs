@@ -19,9 +19,6 @@
   [["/" :home]
    ["/topic/:id" :topic]])
 
-(def browser-router
-  (bide/router browser-routes))
-
 (defn browser-route-coercion
   [_ params]
   (stcu/update-vals params {[:id] js/parseInt}))

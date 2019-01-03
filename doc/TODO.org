@@ -57,12 +57,29 @@ referenced, exclude base. Have ~full-form-path~ when base is included?
 **** "scope" bootlaces, boot-test
 *** ensure I can still build and deploy a jar
 ** DONE explore using reitit instead of bide
+** TODO don't force match-route to take router
+take routes instead... what was the rationale for passing in a router?
+** TODO navigation
+*** gain firm understanding of how history API works
+**** 
 ** TODO examine route dispatching
 *** display alerts for certain transitions
 - integrate accountant into re-frame? make pushstate an effect?
 *** potential for caching
 *** how to manage state teardown
 *** introduce the concept of route enter/exit/update
+*** instead of making it route-centric, make it navigation-centric
+**** replace accountant
+**** allow some way to define:
+***** additional effects or handlers to trigger on route change
+****** loading data
+****** sending metrics
+***** guards that can prevent route changes
+***** flow:
+- user clicks link or a :nav event is triggered somehow
+- :nav event interceptor checks for :pre definitions
+- :pre definitions can be effectful and can prevent :nav effect
+- :nav effect is to: call setToken, clean up exits, perform entrances
 ** TODO investigate keyword inheritance to specify a sync adapter
 the end result is to have a sync-dispatch function in the config,
 which is then accessible in the db

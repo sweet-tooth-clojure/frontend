@@ -38,7 +38,7 @@
 
                                        ::dsdl/sync {:delay 500}
 
-                                       ::strb/match-route {:router         routes/browser-router
+                                       ::strb/match-route {:routes         routes/browser-routes
                                                            :param-coercion routes/browser-route-coercion}})
                                ig/prep
                                ig/init)])
