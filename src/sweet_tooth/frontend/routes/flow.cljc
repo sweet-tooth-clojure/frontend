@@ -31,27 +31,3 @@
                                       :page-params (sfru/page-params params)}))))
 
 (defmulti dispatch-route :route-name)
-
-(def new-route
-  {:id     :handle-route-change
-   :before (fn [context])
-   :after  (fn [context])})
-
-(def topics
-  {:enter        (fn [params page-params])
-   :exit         (fn [params page-params])
-   :should-exit  (fn [db])
-   :param-change (fn [params page-params])
-   :components   {}})
-
-#_(defroute :topics
-    :enter ([db ])
-    
-    :exit  ()
-    :should-exit
-    
-    :params [:page-id]
-
-    
-    :enter-from :x ()
-    :exit-to :y ())

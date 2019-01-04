@@ -6,6 +6,7 @@
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
+            [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.routes.flow :as strf])
   (:import goog.history.Event
@@ -179,45 +180,78 @@
 ;; interceptor converts URL to route
 ;; interceptor checks that change is allowable
 ;; interceptor places results as coeffect
-(def route
-  {:id     ::route
-   :before (fn [context]
-             (let [match-route (get-in context [:coeffects :db :sweet-tooth/system ::handler :match-route])
-                   path        (get-in context [:coeffects :event 1])]
-               (assoc-in context [:coeffects ::route] (match-route path))))
-   :after  identity})
+(defmulti route-lifecycle :route-name)
+
+(defn can-change-route?
+  [db new-route existing-route {:keys [can-exit? can-change-params?]
+                                :or   {can-exit?          (constantly true)
+                                       can-change-params? (constantly true)}}]
+  ;; are we changing the entire route or just the params?
+  (if (not= (:route-name new-route) (:route-name existing-route))
+    (and (can-change-params? db) (can-exit? db))
+    (can-change-params? db)))
+
+(def process-new-route
+  {:id     ::process-new-route
+   :before (fn [ctx]
+             (let [cofx           (:coeffects ctx)
+                   match-route    (get-in cofx [:db :sweet-tooth/system ::handler :match-route])
+                   path           (get-in cofx [:event 1])
+                   new-route      (match-route path (get-in cofx [:db ::route]))
+                   existing-route (get-in cofx [:db ::route])
+                   
+                   new-route-lifecycle      (route-lifecycle new-route)
+                   existing-route-lifecycle (when existing-route (route-lifecycle existing-route))]
+               (assoc-in ctx [:coeffects ::route]
+                         {:can-change-route? (can-change-route? (:db cofx) new-route existing-route existing-route-lifecycle)
+                          :lifecycle         (merge (select-keys existing-route-lifecycle [:exit :param-change])
+                                                    (select-keys new-route-lifecycle [:enter]))
+                          :components        (:components new-route-lifecycle)
+                          :route             new-route})))
+   :after identity})
 
 ;; ------
 ;; dispatch route
 ;; ------
+(defn new-route-fx
+  ([cofx _] (new-route-fx cofx))
+  ([{:keys [db] :as cofx}]
+   (let [{:keys [can-change-route? lifecycle components route]} (::route cofx)]
+     (when can-change-route?
+       {:db               (assoc db
+                                 ::route route
+                                 ::routed-components components)
+        ::route-lifecycle {:lifecycle lifecycle
+                           :route     route}}))))
 
 (sth/rr rf/reg-event-fx ::dispatch-route
-  [route]
-  (fn [cofx _]
-    {::dispatch-route (::route cofx)}))
+  [process-new-route]
+  new-route-fx)
 
-(sth/rr rf/reg-fx ::dispatch-route
-  (fn [route]
-    (strf/dispatch-route route)))
+(sth/rr rf/reg-fx ::route-lifecycle
+  (fn [{:keys [lifecycle route]}]
+    (let [{:keys [params]}                  route
+          {:keys [exit param-change enter]} lifecycle]
+      (when exit (exit))
+      (when enter (enter))
+      (when param-change (param-change)))))
 
 ;; ------
 ;; dispatch current
 ;; ------
 
-(defn dispatch-current-effect
-  [cofx]
-  {::dispatch-current (get-in cofx [:db :sweet-tooth/system ::handler :match-route])})
+(def add-current-path
+  {:id     ::add-current-path
+   :before (fn [ctx]
+             (let [path  (-> js/window .-location .-pathname)
+                   query (-> js/window .-location .-search)
+                   hash  (-> js/window .-location .-hash)]
+               (assoc-in ctx [:coeffects :event 1] (str path query hash))))
+   :after  identity})
 
 (sth/rr rf/reg-event-fx ::dispatch-current
-  []
-  (fn [cofx _] (dispatch-current-effect cofx)))
-
-(sth/rr rf/reg-fx ::dispatch-current
-  (fn [match-route]
-    (let [path  (-> js/window .-location .-pathname)
-          query (-> js/window .-location .-search)
-          hash  (-> js/window .-location .-hash)]
-      (strf/dispatch-route (match-route (str path query hash))))))
+  [add-current-path process-new-route]
+  new-route-fx)
 
 ;; ------
 ;; update token
@@ -225,16 +259,25 @@
 
 ;; TODO do I need to ensure that dispatch-route finished before update-token?
 (sth/rr rf/reg-event-fx ::update-token
-  [route]
+  [process-new-route]
   (fn [cofx [_ relative-href op title]]
-    {::dispatch-route (::route cofx)
-     ::update-token   {:history       (get-in cofx [:db :sweet-tooth/system ::handler :history])
-                       :relative-href relative-href
-                       :title         title
-                       :op            op}}))
+    (merge (new-route-fx cofx)
+           {::update-token {:history       (get-in cofx [:db :sweet-tooth/system ::handler :history])
+                            :relative-href relative-href
+                            :title         title
+                            :op            op}})))
 
 (sth/rr rf/reg-fx ::update-token
   (fn [{:keys [op history relative-href title]}]
     (if (= op :replace)
       (. history (replaceToken relative-href title))
       (. history (setToken relative-href title)))))
+
+
+;; ------
+;; subscriptions
+;; ------
+
+(rf/reg-sub ::routed-component
+  (fn [db [_ path]]
+    (get-in (::routed-components db) (u/path path))))

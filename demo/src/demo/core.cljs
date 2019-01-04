@@ -8,6 +8,7 @@
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
             [sweet-tooth.frontend.config :as stconfig]
+            [sweet-tooth.frontend.nav.handler :as stnh]
             [goog.events]
             [integrant.core :as ig]
 
@@ -29,7 +30,7 @@
 (defn app
   []
   [:div.container.app "App!"
-   @(rf/subscribe [::strf/routed-component :main])])
+   @(rf/subscribe [::stnh/routed-component :main])])
 
 (def system-config
   (merge stconfig/default-config
@@ -45,8 +46,8 @@
   (rf/dispatch-sync [::stcf/init-system system-config])
   (rf/dispatch-sync [:init])
   (r/render [app] (stcu/el-by-id "app"))
-  (goog.events/listen js/window
-                      EventType.CLICK
-                      (fn [] (rf/dispatch-sync [:window-clicked]))))
+  #_(goog.events/listen js/window
+                        EventType.CLICK
+                        (fn [] (rf/dispatch-sync [:window-clicked]))))
 
 (-main)

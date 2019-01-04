@@ -71,6 +71,7 @@ take routes instead... what was the rationale for passing in a router?
 ***** add history as a resource to load - coeffect
 ***** create effect handler that updates history
 **** TODO create new handlers that will check :should-change?
+**** TODO use core-async to convey route info from update-token to dispatch?
 *** units
 **** named route
 **** params

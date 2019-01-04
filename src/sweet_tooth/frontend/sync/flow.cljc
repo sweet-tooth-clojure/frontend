@@ -96,12 +96,9 @@
   "In response to a sync event, return an effect map of:
   a) updated db to track a sync request
   b) ::sync effect, to be handled by the ::sync effect handler"
-  [cofx req]
-  (-> cofx
-      (dissoc :event)
-      (dissoc :re-frame.std-interceptors/untrimmed-event)
-      (update :db track-new-request req)
-      (assoc ::sync #((sync-dispatch-fn cofx) req))))
+  [{:keys [db] :as cofx} req]
+  {:db    (track-new-request db req)
+   ::sync #((sync-dispatch-fn cofx) req)})
 
 (sth/rr rf/reg-event-fx ::sync
   []
