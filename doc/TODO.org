@@ -61,15 +61,16 @@ referenced, exclude base. Have ~full-form-path~ when base is included?
 take routes instead... what was the rationale for passing in a router?
 ** DONE navigation
 *** DONE gain firm understanding of how history API works
-** TODO define initializer handler
+** DONE define initializer handler
 *** should store system somewhere
 *** provide system as a coeffect
 *** update sync to use system coeffect
 ** navigation
 *** steps
-**** parity with accountant
+**** DONE parity with accountant
 ***** add history as a resource to load - coeffect
 ***** create effect handler that updates history
+**** TODO create new handlers that will check :should-change?
 *** units
 **** named route
 **** params
