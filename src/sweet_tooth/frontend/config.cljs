@@ -10,6 +10,7 @@
             [sweet-tooth.frontend.routes.accountant :as stra]
             [sweet-tooth.frontend.routes.bide :as strb]
             [sweet-tooth.frontend.form.flow :as stff]
+            [sweet-tooth.frontend.nav.handler :as stnh]
             
             [integrant.core :as ig]))
 
@@ -20,7 +21,8 @@
    ::stsf/sync              {:sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
    ::stsda/sync-dispatch-fn {:req-adapter (ig/ref ::stsdb/req-adapter)}
 
-   ::stra/accountant  {:match-route (ig/ref ::strb/match-route)}
+   ::stnh/handler {:match-route (ig/ref ::strb/match-route)} 
+   
    
    ;; User must specify :routes key
    ::strb/match-route {:routes nil}

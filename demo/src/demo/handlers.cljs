@@ -7,7 +7,8 @@
             [sweet-tooth.frontend.form.flow :as stff]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.pagination.flow :as stpf]
-            [sweet-tooth.frontend.core.utils :as stcu]))
+            [sweet-tooth.frontend.core.utils :as stcu]
+            [sweet-tooth.frontend.nav.handler :as stnh]))
 
 (def window-clicked-path [:global-handlers :window-clicked])
 
@@ -26,7 +27,7 @@
   (fn [cofx [config]]
     (stsf/sync-event-fx (-> cofx
                             (update :db assoc :global-handlers {:window-clicked {}})
-                            (assoc :nav/dispatch-current true))
+                            (merge (stnh/dispatch-current-effect cofx)))
                         [:get :init {:on-success [::init-success]}])))
 
 (rf/reg-event-fx :load-topic
@@ -34,11 +35,3 @@
   (fn [cofx [params]]
     (stsf/sync-event-fx (select-keys cofx [:db])
                         [:get :topic {:params params}])))
-
-;;--------------------
-;; nav
-;;--------------------
-
-(rf/reg-fx :nav/dispatch-current
-  (fn [_]
-    (acc/dispatch-current!)))
