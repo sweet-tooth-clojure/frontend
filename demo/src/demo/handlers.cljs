@@ -24,9 +24,9 @@
 (rf/reg-event-fx :init
   [rf/trim-v]
   (fn [cofx [config]]
-    (stsf/sync-event-fx {:db {:global-handlers             {:window-clicked {}}
-                              :sweet-tooth.frontend/config config}
-                         :nav/dispatch-current true}
+    (stsf/sync-event-fx (-> cofx
+                            (update :db assoc :global-handlers {:window-clicked {}})
+                            (assoc :nav/dispatch-current true))
                         [:get :init {:on-success [::init-success]}])))
 
 (rf/reg-event-fx :load-topic

@@ -57,11 +57,42 @@ referenced, exclude base. Have ~full-form-path~ when base is included?
 **** "scope" bootlaces, boot-test
 *** ensure I can still build and deploy a jar
 ** DONE explore using reitit instead of bide
-** TODO don't force match-route to take router
+** DONE don't force match-route to take router
 take routes instead... what was the rationale for passing in a router?
-** TODO navigation
-*** gain firm understanding of how history API works
-**** 
+** DONE navigation
+*** DONE gain firm understanding of how history API works
+** TODO define initializer handler
+*** should store system somewhere
+*** provide system as a coeffect
+*** update sync to use system coeffect
+** navigation
+*** steps
+**** parity with accountant
+***** add history as a resource to load - coeffect
+***** create effect handler that updates history
+*** units
+**** named route
+**** params
+**** hierarchical?
+named route encompasses params
+can even call out specific params
+or: watch for change on any part of route
+*** TODO define lifecycle
+**** will-change-route
+**** will-change-params
+**** exit
+**** will-enter
+**** enter
+*** accountant integration
+**** copy the prevent-reload-on-known-path code
+**** unset the navigate listener key
+**** set it to my listener
+**** new listener dispatches NAV-CLICK
+***** NAV-CLICK handles should-exit
+***** results in:
+****** (.history setToken) (effect handler)
+****** indicate skipping should-exit
+**** other events dispatch NAV
 ** TODO examine route dispatching
 *** display alerts for certain transitions
 - integrate accountant into re-frame? make pushstate an effect?

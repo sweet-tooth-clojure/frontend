@@ -1,28 +1,28 @@
 (ns sweet-tooth.frontend.routes.flow
-  (:require [re-frame.core :refer [reg-event-db reg-sub trim-v]]
+  (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.routes.utils :as sfru]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.paths :as paths]))
 
-(reg-sub ::nav
+(rf/reg-sub ::nav
   (fn [db _]
     (get db (paths/prefix :nav))))
 
-(reg-sub ::routed-component
+(rf/reg-sub ::routed-component
   :<- [::nav]
   (fn [nav [_ path]]
     (get-in (:components nav) (u/path path))))
 
-(reg-sub ::params
+(rf/reg-sub ::params
   :<- [::nav]
   (fn [nav _] (:params nav)))
 
 ;; routed should have :params, :page-id, :components
 ;; TODO spec this
 ;; TODO instead of page-id, route-id
-(sth/rr reg-event-db ::load
-  [trim-v]
+(sth/rr rf/reg-event-db ::load
+  [rf/trim-v]
   (fn [db [page-id components params]]
     (update db (paths/prefix :nav) (fn [nav]
                                      {:components  (merge (:components nav) components)
@@ -31,3 +31,27 @@
                                       :page-params (sfru/page-params params)}))))
 
 (defmulti dispatch-route :route-name)
+
+(def new-route
+  {:id     :handle-route-change
+   :before (fn [context])
+   :after  (fn [context])})
+
+(def topics
+  {:enter        (fn [params page-params])
+   :exit         (fn [params page-params])
+   :should-exit  (fn [db])
+   :param-change (fn [params page-params])
+   :components   {}})
+
+#_(defroute :topics
+    :enter ([db ])
+    
+    :exit  ()
+    :should-exit
+    
+    :params [:page-id]
+
+    
+    :enter-from :x ()
+    :exit-to :y ())

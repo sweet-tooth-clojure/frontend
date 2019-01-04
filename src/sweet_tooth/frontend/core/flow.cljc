@@ -1,6 +1,7 @@
 (ns sweet-tooth.frontend.core.flow
   (:require [re-frame.core  :as rf :refer [reg-fx reg-event-db dispatch trim-v path]]
-            [re-frame.loggers :refer [console]]
+            [re-frame.db :as rfdb]
+            [re-frame.loggers :as rfl]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.handlers :as sth]
@@ -69,7 +70,7 @@
             db
             db-patches)))
 
-(sth/rr reg-event-db ::update-db [trim-v] update-db)
+(sth/rr rf/reg-event-db ::update-db [trim-v] update-db)
 
 (defn db-patch-handle-entity
   [db db-patch]
@@ -78,22 +79,22 @@
       (update db entity-prefix u/deep-merge entity)
       db)))
 
-(sth/rr reg-event-db ::toggle
+(sth/rr rf/reg-event-db ::toggle
   [trim-v]
   (fn [db [path]] (update-in db path not)))
 
-(sth/rr reg-event-db ::toggle-val
+(sth/rr rf/reg-event-db ::toggle-val
   [trim-v]
   (fn [db [path val]]
     (update-in db path #(if % nil val))))
 
 ;; Toggles set inclusion/exclusion from set
-(sth/rr reg-event-db ::set-toggle
+(sth/rr rf/reg-event-db ::set-toggle
   [trim-v]
   (fn [db [path val]]
     (update-in db path u/set-toggle val)))
 
-(sth/rr reg-event-db ::dissoc-in
+(sth/rr rf/reg-event-db ::dissoc-in
   [trim-v]
   (fn [db [path]]
     (u/dissoc-in db path)))
@@ -108,11 +109,11 @@
   #?(:cljs (doto (Debouncer. rf/dispatch interval)
              (.fire dispatch))))
 
-(reg-fx ::debounce-dispatch
+(sth/rr rf/reg-fx ::debounce-dispatch
   (fn [value]
     (doseq [{:keys [ms id dispatch] :as effect} (remove nil? value)]
       (if (or (empty? dispatch) (not (number? ms)))
-        (console :error "re-frame: ignoring bad :sweet-tooth.frontend.core.flow/debounce-dispatch value:" effect)
+        (rfl/console :error "re-frame: ignoring bad :sweet-tooth.frontend.core.flow/debounce-dispatch value:" effect)
         (if-let [debouncer (get @debouncers id)]
           (.fire debouncer dispatch)
           (swap! debouncers assoc id (new-debouncer ms dispatch)))))))
@@ -120,3 +121,14 @@
 (defmethod ig/init-key ::update-db
   [_ config]
   config)
+
+;; system initialization
+(rf/reg-event-fx ::init-system
+  (fn [db [_ config]]
+    {::init-system config}))
+
+(rf/reg-fx ::init-system
+  (fn [config]
+    (reset! rfdb/app-db {:sweet-tooth/system (-> config
+                                                 ig/prep
+                                                 ig/init)})))

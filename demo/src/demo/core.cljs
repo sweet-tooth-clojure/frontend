@@ -31,17 +31,19 @@
   [:div.container.app "App!"
    @(rf/subscribe [::strf/routed-component :main])])
 
+(def system-config
+  (merge stconfig/default-config
+         {::stsf/sync         {:sync-dispatch-fn (ig/ref ::dsdl/sync)}
+          ::stsdb/req-adapter {:routes routes/api-routes}
+
+          ::dsdl/sync {:delay 500}
+
+          ::strb/match-route {:routes         routes/browser-routes
+                              :param-coercion routes/browser-route-coercion}}))
+
 (defn -main []
-  (rf/dispatch-sync [:init (-> stconfig/default-config
-                               (merge {::stsf/sync         {:sync-dispatch-fn (ig/ref ::dsdl/sync)}
-                                       ::stsdb/req-adapter {:routes routes/api-routes}
-
-                                       ::dsdl/sync {:delay 500}
-
-                                       ::strb/match-route {:routes         routes/browser-routes
-                                                           :param-coercion routes/browser-route-coercion}})
-                               ig/prep
-                               ig/init)])
+  (rf/dispatch-sync [::stcf/init-system system-config])
+  (rf/dispatch-sync [:init])
   (r/render [app] (stcu/el-by-id "app"))
   (goog.events/listen js/window
                       EventType.CLICK

@@ -23,27 +23,6 @@
       (assoc-in [::reqs (req-path req)] {:state :active})
       (update ::active-request-count (fnil inc 0))))
 
-(defn sync-dispatch-fn
-  [cofx]
-  (get-in cofx [:db
-                :sweet-tooth.frontend/config
-                ::sync
-                :sync-dispatch-fn]))
-
-;; TODO update this to include the sync-dispatch-fn rather than all of cofx
-(defn sync-event-fx
-  "In response to a sync event, return an effect map of:
-  a) updated db to track a sync request
-  b) ::sync effect, to be handled by the ::sync effect handler"
-  [cofx req]
-  (-> cofx
-      (dissoc :event)
-      (update :db track-new-request req)
-      (assoc ::sync {:req         req
-                     :cofx        cofx
-                     :dispatch-fn (sync-dispatch-fn cofx)})))
-
-
 ;;------
 ;; dispatch handler wrappers
 ;;------
@@ -109,13 +88,28 @@
   (update req 2 (fn [{:keys [on-success] :as opts}]
                   (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))
 
+(defn sync-dispatch-fn
+  [cofx]
+  (get-in cofx [:db :sweet-tooth/system ::sync :sync-dispatch-fn]))
+
+(defn sync-event-fx
+  "In response to a sync event, return an effect map of:
+  a) updated db to track a sync request
+  b) ::sync effect, to be handled by the ::sync effect handler"
+  [cofx req]
+  (-> cofx
+      (dissoc :event)
+      (dissoc :re-frame.std-interceptors/untrimmed-event)
+      (update :db track-new-request req)
+      (assoc ::sync #((sync-dispatch-fn cofx) req))))
+
 (sth/rr rf/reg-event-fx ::sync
   []
   (fn [cofx [_ req]]
     (sync-event-fx cofx (add-default-success-handler req))))
 
 (sth/rr rf/reg-fx ::sync
-  (fn [{:keys [dispatch-fn req]}] (dispatch-fn req)))
+  (fn [sync-fn] (sync-fn)))
 
 (sth/rr rf/reg-event-db ::sync-success
   []
