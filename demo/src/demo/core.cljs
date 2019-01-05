@@ -1,6 +1,7 @@
 (ns demo.core
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
+            [re-frame.db :as rfdb]
             [sweet-tooth.frontend.core.utils :as stcu]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.nav.routes.bide :as strb]
@@ -50,3 +51,7 @@
                         (fn [] (rf/dispatch-sync [:window-clicked]))))
 
 (-main)
+
+(defn stop [_]
+  (when-let [system (:sweet-tooth/system @rfdb/app-db)]
+    (ig/halt! system)))

@@ -72,10 +72,10 @@ take routes instead... what was the rationale for passing in a router?
 ***** create effect handler that updates history
 **** DONE create new handlers that will check :should-change?
 **** DONE use core-async to convey route info from update-token to dispatch?
-**** TODO try doing an alert for can-exit?
-**** TODO update route utils to use new
-**** TODO decide on namespace name
-**** TODO update to halt! the handler
+**** DONE try doing an alert for can-exit?
+**** DONE update route utils to use new
+**** DONE decide on namespace name
+**** DONE update to halt! the handler
 **** TODO add window.beforeunload handler
 *** units
 **** named route

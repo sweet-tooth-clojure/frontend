@@ -12,7 +12,7 @@
 
                 ;; start a development http server on http://localhost:8020
                 :devtools
-                {:http-root  "public"
-                 :http-port  8020
-                 :preloads   [day8.re-frame-10x.preload]
-                 :after-load demo.core/-main}}}}
+                {:http-root   "public"
+                 :http-port   8020
+                 :preloads    [day8.re-frame-10x.preload]
+                 :before-load demo.core/stop}}}}

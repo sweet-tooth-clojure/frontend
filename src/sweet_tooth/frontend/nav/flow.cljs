@@ -39,7 +39,6 @@
     history
     EventType/NAVIGATE
     (fn [e]
-      (println "GOT NAV EVENT")
       (if-not @app-updated-token?
         (let [token (.-token e)]
           (nav-handler token))
