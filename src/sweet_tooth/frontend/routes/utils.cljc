@@ -27,4 +27,4 @@
   [db entity-key param]
   (get-in db (paths/full-path :entity
                               entity-key
-                              (get-in db (paths/full-path :nav :params param)))))
+                              (get-in db (paths/full-path :nav :route :params param)))))

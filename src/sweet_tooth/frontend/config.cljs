@@ -7,10 +7,9 @@
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
-            [sweet-tooth.frontend.routes.accountant :as stra]
             [sweet-tooth.frontend.routes.bide :as strb]
             [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.nav.handler :as stnh]
+            [sweet-tooth.frontend.nav.flow :as stnf]
             
             [integrant.core :as ig]))
 
@@ -21,8 +20,7 @@
    ::stsf/sync              {:sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
    ::stsda/sync-dispatch-fn {:req-adapter (ig/ref ::stsdb/req-adapter)}
 
-   ::stnh/handler {:match-route (ig/ref ::strb/match-route)} 
-   
+   ::stnf/handler {:match-route (ig/ref ::strb/match-route)} 
    
    ;; User must specify :routes key
    ::strb/match-route {:routes nil}

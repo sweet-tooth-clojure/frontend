@@ -8,7 +8,7 @@
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
             [sweet-tooth.frontend.config :as stconfig]
-            [sweet-tooth.frontend.nav.handler :as stnh]
+            [sweet-tooth.frontend.nav.flow :as stnf]
             [goog.events]
             [integrant.core :as ig]
 
@@ -30,7 +30,7 @@
 (defn app
   []
   [:div.container.app "App!"
-   @(rf/subscribe [::stnh/routed-component :main])])
+   @(rf/subscribe [::stnf/routed-component :main])])
 
 (def system-config
   (merge stconfig/default-config

@@ -7,7 +7,7 @@
             [sweet-tooth.frontend.routes.flow :as strf]
             [sweet-tooth.frontend.routes.utils :as stru]
             [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.nav.handler :as stnh]
+            [sweet-tooth.frontend.nav.flow :as stnf]
 
             [demo.components.home :as h]
             [demo.components.show-topic :as st]))
@@ -33,11 +33,11 @@
   (rf/dispatch [:load-topic params])
   (rf/dispatch [::strf/load route-name {:main [st/component]} params]))
 
-(defmethod stnh/route-lifecycle :home
+(defmethod stnf/route-lifecycle :home
   [route]
   {:components {:main [h/component]}})
 
-(defmethod stnh/route-lifecycle :topic
+(defmethod stnf/route-lifecycle :topic
   [route]
   {:enter      (fn []
                  (println "DISPATCHING!" (:params route))

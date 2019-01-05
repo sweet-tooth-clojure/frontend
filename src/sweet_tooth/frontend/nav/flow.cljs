@@ -1,4 +1,4 @@
-(ns sweet-tooth.frontend.nav.handler
+(ns sweet-tooth.frontend.nav.flow
   "Adapted from Accountant, https://github.com/venantius/accountant
   Accountant is licensed under the EPL v1.0."
   (:require [clojure.string :as str]
@@ -6,6 +6,7 @@
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
+            [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.routes.flow :as strf])
@@ -176,10 +177,10 @@
             {:dispatch [::update-token with-params :set]}))
         (js/console.error "can't navigate until handler is initialized")))))
 
-;; interceptor takes URL
-;; interceptor converts URL to route
-;; interceptor checks that change is allowable
-;; interceptor places results as coeffect
+;; ------
+;; Route change handlers
+;; ------
+
 (defmulti route-lifecycle :route-name)
 
 (defn can-change-route?
@@ -194,11 +195,11 @@
 (def process-new-route
   {:id     ::process-new-route
    :before (fn [ctx]
-             (let [cofx           (:coeffects ctx)
-                   match-route    (get-in cofx [:db :sweet-tooth/system ::handler :match-route])
-                   path           (get-in cofx [:event 1])
-                   new-route      (match-route path (get-in cofx [:db ::route]))
-                   existing-route (get-in cofx [:db ::route])
+             (let [{:keys [db] :as cofx} (:coeffects ctx)
+                   match-route           (get-in cofx [:db :sweet-tooth/system ::handler :match-route])
+                   path                  (get-in cofx [:event 1])
+                   new-route             (match-route path)
+                   existing-route        (get-in db (paths/full-path :nav :route))
                    
                    new-route-lifecycle      (route-lifecycle new-route)
                    existing-route-lifecycle (when existing-route (route-lifecycle existing-route))]
@@ -213,14 +214,14 @@
 ;; ------
 ;; dispatch route
 ;; ------
+
 (defn new-route-fx
   ([cofx _] (new-route-fx cofx))
   ([{:keys [db] :as cofx}]
    (let [{:keys [can-change-route? lifecycle components route]} (::route cofx)]
      (when can-change-route?
-       {:db               (assoc db
-                                 ::route route
-                                 ::routed-components components)
+       {:db               (assoc-in db (paths/full-path :nav) {:route route
+                                                               :routed-components components})
         ::route-lifecycle {:lifecycle lifecycle
                            :route     route}}))))
 
@@ -257,7 +258,6 @@
 ;; update token
 ;; ------
 
-;; TODO do I need to ensure that dispatch-route finished before update-token?
 (sth/rr rf/reg-event-fx ::update-token
   [process-new-route]
   (fn [cofx [_ relative-href op title]]
@@ -280,4 +280,4 @@
 
 (rf/reg-sub ::routed-component
   (fn [db [_ path]]
-    (get-in (::routed-components db) (u/path path))))
+    (get-in db (paths/full-path :nav :routed-components path))))
