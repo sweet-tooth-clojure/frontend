@@ -29,7 +29,6 @@
 
 (defmethod stnf/route-lifecycle :topic
   [route]
-  {:enter      (fn []
-                 (println "DISPATCHING!" (:params route))
-                 (rf/dispatch [:load-topic (:params route)]))
+  {:enter      (fn [] (rf/dispatch [:load-topic (:params route)]))
+   :can-exit?  (fn [] (js/confirm "You sure?"))
    :components {:main [st/component]}})

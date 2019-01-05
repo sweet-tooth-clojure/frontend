@@ -3,5 +3,7 @@
 
 (defn component
   []
-  [:div [:h1 "Showing topic"]
+  [:div
+   [:div [:a {:href "/"} "home"]]
+   [:h1 "Showing topic"]
    (:topic/title @(rf/subscribe [:routed-topic]))])

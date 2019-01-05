@@ -13,6 +13,8 @@
            goog.history.Html5History
            goog.Uri))
 
+(def app-updated-token? (atom false))
+
 (defn- transformer-create-url
   [token path-prefix location]
   (str path-prefix token))
@@ -37,8 +39,11 @@
     history
     EventType/NAVIGATE
     (fn [e]
-      (let [token (.-token e)]
-        (nav-handler token)))))
+      (println "GOT NAV EVENT")
+      (if-not @app-updated-token?
+        (let [token (.-token e)]
+          (nav-handler token))
+        (reset! app-updated-token? false)))))
 
 (defn- get-href-attribute
   "Given a DOM node, if it is an element node, return its href attribute.
@@ -110,6 +115,7 @@
           (when (not= current-relative-href relative-href) ;; do not add duplicate html5 history state
             (rf/dispatch [::update-token relative-href :set title]))
           (.preventDefault e)
+          (.stopPropagation e)
           (when reload-same-path?
             (events/dispatchEvent history (Event. path true))))))))
 
@@ -260,14 +266,15 @@
 (sth/rr rf/reg-event-fx ::update-token
   [process-new-route]
   (fn [cofx [_ relative-href op title]]
-    (merge (new-route-fx cofx)
-           {::update-token {:history       (get-in cofx [:db :sweet-tooth/system ::handler :history])
-                            :relative-href relative-href
-                            :title         title
-                            :op            op}})))
+    (when-let [fx (new-route-fx cofx)]
+      (assoc fx ::update-token {:history       (get-in cofx [:db :sweet-tooth/system ::handler :history])
+                                :relative-href relative-href
+                                :title         title
+                                :op            op}))))
 
 (sth/rr rf/reg-fx ::update-token
   (fn [{:keys [op history relative-href title]}]
+    (reset! app-updated-token? true)
     (if (= op :replace)
       (. history (replaceToken relative-href title))
       (. history (setToken relative-href title)))))
