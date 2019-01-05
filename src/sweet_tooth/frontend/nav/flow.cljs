@@ -3,6 +3,7 @@
   Accountant is licensed under the EPL v1.0."
   (:require [clojure.string :as str]
             [goog.events :as events]
+            [goog.events.EventType]
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
@@ -118,6 +119,12 @@
           (when reload-same-path?
             (events/dispatchEvent history (Event. path true))))))))
 
+(defn- handle-unloading
+  []
+  (let [listener (fn [e] (rf/dispatch-sync [::before-unload e]))]
+    (.addEventListener js/window "beforeunload" listener)
+    listener))
+
 ;; TODO add a window.beforeunload handler
 (defn init-handler
   "Create and configure HTML5 history navigation.
@@ -127,7 +134,7 @@
   new page here.
 
   path-exists?: a fn of one argument, a path. Return truthy if this path is handled by the SPA"
-  [{:keys [match-route reload-same-path?] :as config}]  
+  [{:keys [match-route reload-same-path? check-can-unload?] :as config}]  
   (let [history      (new-history)
         nav-handler  (fn [path] (rf/dispatch [::dispatch-route path]))
         path-exists? (comp :route-name match-route)]
@@ -135,8 +142,9 @@
      :path-exists? path-exists?
      :match-route  match-route
      :history      history
-     :listeners    {:document-click (prevent-reload-on-known-path history path-exists? reload-same-path?)
-                    :navigate       (dispatch-on-navigate history nav-handler)}}))
+     :listeners    (cond-> {:document-click (prevent-reload-on-known-path history path-exists? reload-same-path?)
+                            :navigate       (dispatch-on-navigate history nav-handler)}
+                     check-can-unload? (assoc :before-unload (handle-unloading)))}))
 
 (defmethod ig/init-key ::handler
   [_ config]
@@ -149,8 +157,10 @@
   the call to `configure-navigation!`."
   [handler]
   (.dispose (:history handler))
-  (doseq [key (vals (:listeners handler))]
-    (events/unlistenByKey key)))
+  (doseq [key (vals (:listeners (select-keys handler [:document-click :navigate])))]
+    (events/unlistenByKey key))
+  (when-let [before-unload (get-in handler [:listeners :before-unload])]
+    (.removeEventListener js/window "beforeunload" before-unload)))
 
 (defmethod ig/halt-key! ::handler
   [_ handler]
@@ -277,6 +287,26 @@
     (if (= op :replace)
       (. history (replaceToken relative-href title))
       (. history (setToken relative-href title)))))
+
+
+;; ------
+;; check can unload
+;; ------
+
+(sth/rr rf/reg-event-fx ::before-unload
+  []
+  (fn [{:keys [db] :as cofx} [_ before-unload-event]]
+    (let [existing-route                                 (get-in db (paths/full-path :nav :route))
+          {:keys [can-exit? can-change-params?]
+           :or   {can-exit?          (constantly true)
+                  can-change-params? (constantly true)}} (when existing-route (route-lifecycle existing-route))]
+      (when-not (and (can-exit?) (can-change-params?))
+        {::cancel-unload before-unload-event}))))
+
+(rf/reg-fx ::cancel-unload
+  (fn [before-unload-event]
+    (.preventDefault before-unload-event)
+    (set! (.-returnValue before-unload-event) "")))
 
 
 ;; ------

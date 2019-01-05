@@ -20,7 +20,8 @@
    ::stsf/sync              {:sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
    ::stsda/sync-dispatch-fn {:req-adapter (ig/ref ::stsdb/req-adapter)}
 
-   ::stnf/handler {:match-route (ig/ref ::strb/match-route)} 
+   ::stnf/handler {:check-can-unload? true
+                   :match-route       (ig/ref ::strb/match-route)} 
    
    ;; User must specify :routes key
    ::strb/match-route {:routes nil}
