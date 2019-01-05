@@ -1,6 +1,6 @@
 (ns demo.subs
   (:require [re-frame.core :as rf]
-            [sweet-tooth.frontend.routes.utils :as stru]))
+            [sweet-tooth.frontend.nav.utils :as stnu]))
 
 (rf/reg-sub :topic-count
   (fn [db _]
@@ -12,4 +12,4 @@
 
 (rf/reg-sub :routed-topic
   (fn [db _]
-    (stru/routed-entity db :topic :id)))
+    (stnu/routed-entity db :topic :id)))

@@ -1,7 +1,8 @@
 (ns sweet-tooth.frontend.routes.flow
+  "deprecated"
   (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
-            [sweet-tooth.frontend.routes.utils :as sfru]
+            [sweet-tooth.frontend.nav.utils :as stnu]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.paths :as paths]))
 
@@ -28,6 +29,6 @@
                                      {:components  (merge (:components nav) components)
                                       :page-id     page-id
                                       :params      params
-                                      :page-params (sfru/page-params params)}))))
+                                      :page-params (stnu/page-params params)}))))
 
 (defmulti dispatch-route :route-name)

@@ -1,4 +1,4 @@
-(ns sweet-tooth.frontend.routes.utils
+(ns sweet-tooth.frontend.nav.utils
   (:require [sweet-tooth.frontend.core.utils :as u]
             [cemerick.url :as url]
             [clojure.string :as str]

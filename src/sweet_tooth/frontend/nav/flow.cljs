@@ -8,8 +8,7 @@
             [integrant.core :as ig]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.handlers :as sth]
-            [sweet-tooth.frontend.routes.flow :as strf])
+            [sweet-tooth.frontend.handlers :as sth])
   (:import goog.history.Event
            goog.history.Html5History
            goog.Uri))
@@ -278,6 +277,15 @@
 ;; subscriptions
 ;; ------
 
+(rf/reg-sub ::nav
+  (fn [db _]
+    (get db (paths/prefix :nav))))
+
 (rf/reg-sub ::routed-component
-  (fn [db [_ path]]
-    (get-in db (paths/full-path :nav :routed-components path))))
+  :<- [::nav]
+  (fn [nav [_ path]]
+    (get-in nav (u/flatv :routed-components path))))
+
+(rf/reg-sub ::params
+  :<- [::nav]
+  (fn [nav _] (get-in nav [:route :params])))

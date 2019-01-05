@@ -1,4 +1,4 @@
-(ns sweet-tooth.frontend.routes.bide
+(ns sweet-tooth.frontend.nav.routes.bide
   (:require [bide.core :as bide]
             [integrant.core :as ig]))
 

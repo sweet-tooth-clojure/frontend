@@ -7,7 +7,7 @@
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.sync.dispatch.ajax :as stsda]
             [sweet-tooth.frontend.sync.dispatch.bide :as stsdb]
-            [sweet-tooth.frontend.routes.bide :as strb]
+            [sweet-tooth.frontend.nav.routes.bide :as strb]
             [sweet-tooth.frontend.form.flow :as stff]
             [sweet-tooth.frontend.nav.flow :as stnf]
             
