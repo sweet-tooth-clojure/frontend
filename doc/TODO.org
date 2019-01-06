@@ -65,7 +65,7 @@ take routes instead... what was the rationale for passing in a router?
 *** should store system somewhere
 *** provide system as a coeffect
 *** update sync to use system coeffect
-** navigation
+** DONE navigation
 *** steps
 **** DONE parity with accountant
 ***** add history as a resource to load - coeffect
@@ -76,7 +76,7 @@ take routes instead... what was the rationale for passing in a router?
 **** DONE update route utils to use new
 **** DONE decide on namespace name
 **** DONE update to halt! the handler
-**** TODO add window.beforeunload handler
+**** DONE add window.beforeunload handler
 *** units
 **** named route
 **** params
@@ -100,7 +100,7 @@ or: watch for change on any part of route
 ****** (.history setToken) (effect handler)
 ****** indicate skipping should-exit
 **** other events dispatch NAV
-** TODO examine route dispatching
+** DONE examine route dispatching
 *** display alerts for certain transitions
 - integrate accountant into re-frame? make pushstate an effect?
 *** potential for caching
@@ -118,6 +118,11 @@ or: watch for change on any part of route
 - :nav event interceptor checks for :pre definitions
 - :pre definitions can be effectful and can prevent :nav effect
 - :nav effect is to: call setToken, clean up exits, perform entrances
+** TODO distinguish exit/change from unload
+** TODO route lifecycle hierarchy
+*** register changes to fire on ANY change
+** TODO consider finer-grained route lifecycle
+- can go from route a to route b? (insufficient privileges)
 ** TODO investigate keyword inheritance to specify a sync adapter
 the end result is to have a sync-dispatch function in the config,
 which is then accessible in the db

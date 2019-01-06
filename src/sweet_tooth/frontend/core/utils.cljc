@@ -1,6 +1,7 @@
 (ns sweet-tooth.frontend.core.utils
   (:require [clojure.string :as str]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [clojure.walk :as walk]))
 
 ;;*** DOM utils TODO move to ui.cljs
 #?(:cljs (defn prevent-default
@@ -125,3 +126,15 @@
   "Remove value in `m` at `p`"
   [m p]
   (update-in m (butlast p) dissoc (last p)))
+
+(defn projection?
+  "Is every value in x present in y?"
+  [x y]
+  {:pre [(and (seqable? x) (seqable? y))]}
+  (let [diff (second (clojure.data/diff y x))]
+    (->> (walk/postwalk (fn [x]
+                          (when-not (and (map? x)
+                                         (nil? (first (vals x))))
+                            x))
+                        diff)
+         (every? nil?))))

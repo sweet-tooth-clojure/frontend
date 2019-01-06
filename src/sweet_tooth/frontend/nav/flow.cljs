@@ -157,7 +157,7 @@
   the call to `configure-navigation!`."
   [handler]
   (.dispose (:history handler))
-  (doseq [key (vals (:listeners (select-keys handler [:document-click :navigate])))]
+  (doseq [key (vals (select-keys (:listeners handler) [:document-click :navigate]))]
     (events/unlistenByKey key))
   (when-let [before-unload (get-in handler [:listeners :before-unload])]
     (.removeEventListener js/window "beforeunload" before-unload)))

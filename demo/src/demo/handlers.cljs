@@ -25,10 +25,9 @@
 (rf/reg-event-fx :init
   [rf/trim-v]
   (fn [cofx [config]]
-    (let [effects (stsf/sync-event-fx cofx [:get :init {:on-success [::init-success]}])]
-      (-> effects
-          (update :db assoc :global-handlers {:window-clicked {}})
-          (assoc :dispatch [::stnf/dispatch-current])))))
+    (-> (stsf/sync-event-fx cofx [:get :init {:on-success [::init-success]}])
+        (update :db assoc :global-handlers {:window-clicked {}})
+        (assoc :dispatch [::stnf/dispatch-current]))))
 
 (rf/reg-event-fx :load-topic
   [rf/trim-v]
