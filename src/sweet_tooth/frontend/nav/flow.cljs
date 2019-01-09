@@ -199,11 +199,11 @@
 (defmulti route-lifecycle :route-name)
 
 (defn can-change-route?
-  [db new-route existing-route {:keys [can-exit? can-change-params?]
-                                :or   {can-exit?          (constantly true)
-                                       can-change-params? (constantly true)}}]
+  [db scope {:keys [can-exit? can-change-params?]
+             :or   {can-exit?          (constantly true)
+                    can-change-params? (constantly true)}}]
   ;; are we changing the entire route or just the params?
-  (if (not= (:route-name new-route) (:route-name existing-route))
+  (if (= scope :route)
     (and (can-change-params? db) (can-exit? db))
     (can-change-params? db)))
 
@@ -215,13 +215,17 @@
                    path                  (get-in cofx [:event 1])
                    new-route             (match-route path)
                    existing-route        (get-in db (paths/full-path :nav :route))
+                   scope                 (if (= (:route-name new-route) (:route-name existing-route))
+                                           :params
+                                           :route)
                    
                    new-route-lifecycle      (route-lifecycle new-route)
                    existing-route-lifecycle (when existing-route (route-lifecycle existing-route))]
                (assoc-in ctx [:coeffects ::route]
-                         {:can-change-route? (can-change-route? (:db cofx) new-route existing-route existing-route-lifecycle)
-                          :lifecycle         (merge (select-keys existing-route-lifecycle [:exit :param-change])
-                                                    (select-keys new-route-lifecycle [:enter]))
+                         {:can-change-route? (can-change-route? (:db cofx) scope existing-route-lifecycle)
+                          :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
+                                                    (select-keys new-route-lifecycle [:enter :param-change]))
+                          :scope             scope
                           :components        (:components new-route-lifecycle)
                           :route             new-route})))
    :after identity})
@@ -233,26 +237,26 @@
 (defn new-route-fx
   ([cofx _] (new-route-fx cofx))
   ([{:keys [db] :as cofx}]
-   (let [{:keys [can-change-route? lifecycle components route]} (::route cofx)]
+   (let [{:keys [can-change-route?] :as route-cofx} (::route cofx)]
      (when can-change-route?
-       {:db               (assoc-in db (paths/full-path :nav) {:route route
-                                                               :routed-components components})
-        ::route-lifecycle {:lifecycle lifecycle
-                           :route     route}}))))
+       {:db               (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))
+        ::route-lifecycle (select-keys route-cofx [:lifecycle :scope :route])}))))
 
 (sth/rr rf/reg-event-fx ::dispatch-route
   [process-new-route]
   new-route-fx)
 
 (sth/rr rf/reg-fx ::route-lifecycle
-  (fn [{:keys [lifecycle route]}]
+  (fn [{:keys [lifecycle route scope]}]
     (let [{:keys [params]}                  route
           {:keys [exit param-change enter]} lifecycle]
-      (when exit
+      (when (= scope :route)
+        (when exit (exit))
+        ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :route])
-        (exit))
-      (when enter (enter))
+        (when enter (enter)))
       (when param-change
+        ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :params])
         (param-change)))))
 
@@ -324,7 +328,7 @@
 (rf/reg-sub ::routed-component
   :<- [::nav]
   (fn [nav [_ path]]
-    (get-in nav (u/flatv :routed-components path))))
+    (get-in nav (u/flatv :components path))))
 
 (rf/reg-sub ::params
   :<- [::nav]
