@@ -121,6 +121,9 @@ or: watch for change on any part of route
 ** TODO distinguish exit/change from unload
 ** TODO route lifecycle hierarchy
 *** register changes to fire on ANY change
+** TODO route-specific forms?
+*** auto clean up on route change?
+** TODO add route-specific UI
 ** TODO consider finer-grained route lifecycle
 - can go from route a to route b? (insufficient privileges)
 ** TODO investigate keyword inheritance to specify a sync adapter

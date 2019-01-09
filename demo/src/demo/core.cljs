@@ -50,7 +50,8 @@
                         EventType.CLICK
                         (fn [] (rf/dispatch-sync [:window-clicked]))))
 
-(-main)
+(defonce initial-load (delay (-main)))
+@initial-load
 
 (defn stop [_]
   (when-let [system (:sweet-tooth/system @rfdb/app-db)]

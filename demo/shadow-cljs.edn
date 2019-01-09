@@ -15,4 +15,5 @@
                 {:http-root   "public"
                  :http-port   8020
                  :preloads    [day8.re-frame-10x.preload]
-                 :before-load demo.core/stop}}}}
+                 :before-load demo.core/stop
+                 :after-load  demo.core/-main}}}}

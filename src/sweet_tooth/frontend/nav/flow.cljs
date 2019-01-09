@@ -9,7 +9,8 @@
             [integrant.core :as ig]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.handlers :as sth])
+            [sweet-tooth.frontend.handlers :as sth]
+            [sweet-tooth.frontend.nav.ui.flow :as stnuf])
   (:import goog.history.Event
            goog.history.Html5History
            goog.Uri))
@@ -247,9 +248,13 @@
   (fn [{:keys [lifecycle route]}]
     (let [{:keys [params]}                  route
           {:keys [exit param-change enter]} lifecycle]
-      (when exit (exit))
+      (when exit
+        (rf/dispatch [::stnuf/clear :route])
+        (exit))
       (when enter (enter))
-      (when param-change (param-change)))))
+      (when param-change
+        (rf/dispatch [::stnuf/clear :params])
+        (param-change)))))
 
 ;; ------
 ;; dispatch current
@@ -296,11 +301,10 @@
 (sth/rr rf/reg-event-fx ::before-unload
   []
   (fn [{:keys [db] :as cofx} [_ before-unload-event]]
-    (let [existing-route                                 (get-in db (paths/full-path :nav :route))
-          {:keys [can-exit? can-change-params?]
-           :or   {can-exit?          (constantly true)
-                  can-change-params? (constantly true)}} (when existing-route (route-lifecycle existing-route))]
-      (when-not (and (can-exit?) (can-change-params?))
+    (let [existing-route                          (get-in db (paths/full-path :nav :route))
+          {:keys [can-unload?]
+           :or   {can-unload? (constantly true)}} (when existing-route (route-lifecycle existing-route))]
+      (when-not (can-unload? db)
         {::cancel-unload before-unload-event}))))
 
 (rf/reg-fx ::cancel-unload

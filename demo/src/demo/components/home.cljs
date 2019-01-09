@@ -13,7 +13,7 @@
      [:div [:h2 "Create new topic"]
       (let [form-path [:topic :create]
             {:keys [input form-state form-ui-state]} (stfc/form form-path)]
-        [:form (stfc/on-submit form-path)
+        [:form (stfc/on-submit form-path {:clear :all})
          [:div [input :text :topic/title {:placeholder "Title"}]]
          [:div [:input {:type :submit}]]])]
 
@@ -21,7 +21,7 @@
       (when (->> @(rf/subscribe [::stsf/sync-state-q [:create :topic]])
                  vals
                  (some #(= :active (:state %))))
-        [:span "loading..."])
+        [:span "adding topic..."])
 
       [:div "topic count:" @(rf/subscribe [:topic-count])]
       (doall (map (fn [topic]
