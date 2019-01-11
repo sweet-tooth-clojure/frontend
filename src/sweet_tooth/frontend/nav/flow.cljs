@@ -174,7 +174,7 @@
     (str/join "&" (map #(str/join "=" %) pairs))))
 
 (sth/rr rf/reg-event-fx ::navigate
-  []
+  [rf/trim-v]
   (fn [cofx [route query]]
     (let [{:keys [nav-handler history]} (get-in cofx [:db :sweet-tooth/system ::handler])]
       (if nav-handler

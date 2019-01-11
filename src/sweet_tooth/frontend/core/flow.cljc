@@ -51,13 +51,13 @@
 (defn update-db
   "Takes a db and a vector of db-patches, and applies those patches to
   the db using the udpaters stored in 
-  [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db]
+  [:sweet-tooth/system :sweet-tooth.frontend.core.flow/update-db]
   of the app-db.
 
   If no updaters apply, then just merge the patch in."
   [db [db-patches]]
   {:pre [(vector? db-patches)]}
-  (let [updaters     (get-in db [:sweet-tooth.frontend/config :sweet-tooth.frontend.core.flow/update-db])
+  (let [updaters     (get-in db [:sweet-tooth/system :sweet-tooth.frontend.core.flow/update-db])
         updater-keys (keys updaters)
         updater-fns  (vals updaters)]
     (reduce (fn [db db-patch]

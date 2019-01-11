@@ -119,7 +119,7 @@ or: watch for change on any part of route
 - :pre definitions can be effectful and can prevent :nav effect
 - :nav effect is to: call setToken, clean up exits, perform entrances
 ** DONE distinguish exit/change from unload
-** TODO clearer change scope
+** DONE clearer change scope
 *** only handle params when it's just a param change
 *** don't fire every lifecycle handler
 ** TODO route lifecycle hierarchy
