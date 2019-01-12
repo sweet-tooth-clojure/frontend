@@ -330,6 +330,6 @@
   (fn [nav [_ path]]
     (get-in nav (u/flatv :components path))))
 
-(rf/reg-sub ::params
+(rf/reg-sub ::route-name
   :<- [::nav]
-  (fn [nav _] (get-in nav [:route :params])))
+  (fn [nav _] (get-in nav [:route :route-name])))
