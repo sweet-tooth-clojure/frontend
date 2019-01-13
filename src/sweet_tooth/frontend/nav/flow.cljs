@@ -105,7 +105,9 @@
             current-host js/window.location.hostname
             current-port js/window.location.port
             loc js/window.location
-            current-relative-href (str (.-pathname loc) (.-query loc) (.-hash loc))]
+            current-relative-href (str (.-pathname loc)
+                                       (or (.-query loc) (.-search loc))
+                                       (.-hash loc))]
         (when (and (not any-key)
                    (#{"" "_self"} link-target)
                    (= button 0)
@@ -176,21 +178,18 @@
 (sth/rr rf/reg-event-fx ::navigate
   [rf/trim-v]
   (fn [cofx [route query]]
-    (let [{:keys [nav-handler history]} (get-in cofx [:db :sweet-tooth/system ::handler])]
-      (if nav-handler
-        (let [token (.getToken history)
-              old-route (first (str/split token "?"))
-              query-string (map->params (reduce-kv (fn [valid k v]
-                                                     (if v
-                                                       (assoc valid k v)
-                                                       valid)) {} query))
-              with-params (if (empty? query-string)
-                            route
-                            (str route "?" query-string))]
-          (if (= old-route route)
-            {:dispatch [::update-token with-params :replace]}
-            {:dispatch [::update-token with-params :set]}))
-        (js/console.error "can't navigate until handler is initialized")))))
+    (let [{:keys [nav-handler history]} (get-in cofx [:db :sweet-tooth/system ::handler])
+          token (.getToken history)
+          query-string (map->params (reduce-kv (fn [valid k v]
+                                                 (if v
+                                                   (assoc valid k v)
+                                                   valid)) {} query))
+          with-params (if (empty? query-string)
+                        route
+                        (str route "?" query-string))]
+      (if (= token with-params)
+        {:dispatch [::update-token with-params :replace]}
+        {:dispatch [::update-token with-params :set]}))))
 
 ;; ------
 ;; Route change handlers
@@ -296,7 +295,6 @@
     (if (= op :replace)
       (. history (replaceToken relative-href title))
       (. history (setToken relative-href title)))))
-
 
 ;; ------
 ;; check can unload
