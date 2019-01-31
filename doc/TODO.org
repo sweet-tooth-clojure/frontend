@@ -122,10 +122,25 @@ or: watch for change on any part of route
 ** DONE clearer change scope
 *** only handle params when it's just a param change
 *** don't fire every lifecycle handler
+** TODO demo a list
+*** edit multiple in place
+*** delete
 ** TODO route lifecycle hierarchy
 *** register changes to fire on ANY change
 ** TODO route-specific forms?
 *** auto clean up on route change?
+** TODO better route story
+*** it should be obvious if you're using a nonexistent route
+*** it should be possible to closely tie routes to nav lifecycles
+*** route prefixing should be part of ST
+*** TODO update forms + routing can be annoying
+if i'm updating a user, I have to include code like this:
+
+(stfc/on-submit form-path {:clear  [:buffer :ui-state]
+                           :data   {:db/id (last form-path)}
+                           :expire {:state 3000}})
+
+I shouldn't have to include :db/id in the data
 ** TODO add route-specific UI
 ** TODO consider finer-grained route lifecycle
 - can go from route a to route b? (insufficient privileges)

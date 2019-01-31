@@ -238,26 +238,27 @@
   ([{:keys [db] :as cofx}]
    (let [{:keys [can-change-route?] :as route-cofx} (::route cofx)]
      (when can-change-route?
-       {:db               (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))
-        ::route-lifecycle (select-keys route-cofx [:lifecycle :scope :route])}))))
+       (let [db (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))]
+         {:db               db
+          ::route-lifecycle (merge {:db db} (select-keys route-cofx [:lifecycle :scope :route]))})))))
 
 (sth/rr rf/reg-event-fx ::dispatch-route
   [process-new-route]
   new-route-fx)
 
 (sth/rr rf/reg-fx ::route-lifecycle
-  (fn [{:keys [lifecycle route scope]}]
+  (fn [{:keys [lifecycle route scope db]}]
     (let [{:keys [params]}                  route
           {:keys [exit param-change enter]} lifecycle]
       (when (= scope :route)
-        (when exit (exit))
+        (when exit (exit db))
         ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :route])
-        (when enter (enter)))
+        (when enter (enter db)))
       (when param-change
         ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :params])
-        (param-change)))))
+        (param-change db)))))
 
 ;; ------
 ;; dispatch current
