@@ -10,7 +10,7 @@
   '[adzerk.boot-test :as boot-test]
   '[boot-tools-deps.core :refer [deps]])
 
-(def +version+ "0.6.1")
+(def +version+ "0.6.2")
 (bootlaces/bootlaces! +version+)
 
 (task-options!
@@ -25,16 +25,14 @@
 (deftask push-release-without-gpg
   "Deploy release version to Clojars without gpg signature."
   [f file PATH str "The jar file to deploy."]
-  (comp (deps)
-        (#'adzerk.bootlaces/collect-clojars-credentials)
-        (push
-          :file           file
-          :tag            (boolean #'adzerk.bootlaces/+last-commit+)
-          :gpg-sign       false
-          :ensure-release true
-          :repo           "deploy-clojars")))
+  (comp (#'adzerk.bootlaces/collect-clojars-credentials)
+        (push :file           file
+              :tag            (boolean #'adzerk.bootlaces/+last-commit+)
+              :gpg-sign       false
+              :ensure-release true
+              :repo           "deploy-clojars")))
 
 (deftask build-jar
   ""
   []
-  (comp (deps) (bootlaces/build-jar)))
+  (comp (deps :overwrite-boot-deps true) (bootlaces/build-jar)))
