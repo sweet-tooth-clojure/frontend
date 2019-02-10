@@ -14,6 +14,10 @@
                               res
                               (route-param-fn method res params)
                               (query-param-fn method res params))]
-        (if-not uri
-          (log/warn "Could not resolve route" :sync-dispatch/route-not-found {:params params})
-          [method res (assoc opts :uri uri)])))))
+        (if uri
+          (let [match (bide/match router uri)
+                opts  (update opts :params #(apply dissoc % (keys (second match))))]
+            [method res (-> opts
+                            (assoc :uri uri)
+                            (cond-> (empty? (:params opts)) (dissoc :params)))])
+          (log/warn "Could not resolve route" :sync-dispatch/route-not-found {:params params}))))))
