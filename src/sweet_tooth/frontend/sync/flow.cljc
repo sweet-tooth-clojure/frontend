@@ -3,6 +3,7 @@
   data and the mechanism for handling the request. It also provides a
   common interface across those mechanisms."
   (:require [re-frame.core :as rf]
+            [taoensso.timbre :as timbre]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.core.utils :as stcu]
@@ -86,7 +87,8 @@
   b) ::sync effect, to be handled by the ::sync effect handler"
   [{:keys [db] :as cofx} req]
   {:db    (track-new-request db req)
-   ::sync #((sync-dispatch-fn cofx) req)})
+   ::sync {:dispatch-fn (sync-dispatch-fn cofx)
+           :req         req}})
 
 (sth/rr rf/reg-event-fx ::sync
   []
@@ -94,7 +96,9 @@
     (sync-event-fx cofx (add-default-success-handler req))))
 
 (sth/rr rf/reg-fx ::sync
-  (fn [sync-fn] (sync-fn)))
+  (fn [{:keys [dispatch-fn req]}]
+    (timbre/debug "sync effect" ::sync {:req req})
+    (dispatch-fn req)))
 
 (sth/rr rf/reg-event-db ::sync-success
   []

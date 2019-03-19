@@ -324,6 +324,10 @@
   (fn [db _]
     (get db (paths/prefix :nav))))
 
+(rf/reg-sub ::params
+  :<- [::nav]
+  (fn [nav _] (:params nav)))
+
 (rf/reg-sub ::routed-component
   :<- [::nav]
   (fn [nav [_ path]]

@@ -5,7 +5,6 @@
             [sweet-tooth.frontend.filter.flow]
             [sweet-tooth.frontend.form.flow]
             [sweet-tooth.frontend.pagination.flow]
-            [sweet-tooth.frontend.routes.flow]
             [sweet-tooth.frontend.sync.flow]
             [sweet-tooth.frontend.nav.flow]
             [sweet-tooth.frontend.nav.ui.flow]))

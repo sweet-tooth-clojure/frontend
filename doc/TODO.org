@@ -122,13 +122,17 @@ or: watch for change on any part of route
 ** DONE clearer change scope
 *** only handle params when it's just a param change
 *** don't fire every lifecycle handler
+** TODO route lifecycle hierarchy
+*** register changes to fire on ANY change
 ** TODO demo a list
 *** edit multiple in place
 *** delete
-** TODO route lifecycle hierarchy
-*** register changes to fire on ANY change
 ** TODO route-specific forms?
 *** auto clean up on route change?
+** TODO make it easy to iterate on form submission
+for example, if I want to handle the login form in a special way, make
+it easy to handle that without having to log back out and start the
+process all over again
 ** TODO better route story
 *** it should be obvious if you're using a nonexistent route
 *** it should be possible to closely tie routes to nav lifecycles
@@ -142,6 +146,7 @@ if i'm updating a user, I have to include code like this:
 
 I shouldn't have to include :db/id in the data
 ** TODO add route-specific UI
+** TODO write shadow-friendly stop function
 ** TODO consider finer-grained route lifecycle
 - can go from route a to route b? (insufficient privileges)
 ** TODO investigate keyword inheritance to specify a sync adapter
@@ -161,9 +166,9 @@ which is then accessible in the db
 *** update to indicate deleting
 *** update with response
 ** TODO document sweet-tooth.frontend.core
-** TODO config
+** DONE config
 *** does it make sense to use duct for config?
-** TODO make routed entity a sub
+** DONE make routed entity a sub
 [[file:~/projects/web/sweet-tooth/frontend/src/sweet_tooth/frontend/routes/utils.cljc::(defn%20routed-entity][routed entity code]]
 ** DONE routed entity parseInt is a code smell, should only have to call once
 subscribers should not have to know how to parse routed vars
