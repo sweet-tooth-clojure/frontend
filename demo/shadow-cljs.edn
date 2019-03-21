@@ -16,4 +16,6 @@
                  :http-port   8020
                  :preloads    [day8.re-frame-10x.preload]
                  :before-load demo.core/stop
-                 :after-load  demo.core/-main}}}}
+                 :after-load  demo.core/-main}}}
+ 
+ :nrepl {:middleware [refactor-nrepl.middleware/wrap-refactor]}}

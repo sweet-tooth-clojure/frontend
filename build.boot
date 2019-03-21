@@ -14,13 +14,12 @@
 (bootlaces/bootlaces! +version+)
 
 (task-options!
- pom  {:project     'sweet-tooth/sweet-tooth-frontend
-       :version     +version+
-       :description "Some opinions on top of re-frame"
-       :url         "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"
-       :scm         {:url "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"}
-       :license     {"MIT" "https://opensource.org/licenses/MIT"}})
-
+  pom  {:project     'sweet-tooth/sweet-tooth-frontend
+        :version     +version+
+        :description "Some opinions on top of re-frame"
+        :url         "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"
+        :scm         {:url "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"}
+        :license     {"MIT" "https://opensource.org/licenses/MIT"}})
 
 (deftask push-release-without-gpg
   "Deploy release version to Clojars without gpg signature."

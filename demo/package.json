@@ -6,6 +6,7 @@
     "create-react-class": "^15.6.3",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
-    "react-flip-move": "^3.0.3"
+    "react-flip-move": "^3.0.3",
+    "react-highlight.js": "^1.0.7"
   }
 }

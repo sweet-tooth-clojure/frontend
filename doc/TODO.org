@@ -124,6 +124,9 @@ or: watch for change on any part of route
 *** don't fire every lifecycle handler
 ** TODO route lifecycle hierarchy
 *** register changes to fire on ANY change
+** TODO add datomic id coercion helpers
+** TODO consider adding a window click handler
+** TODO move utils in from gp3
 ** TODO demo a list
 *** edit multiple in place
 *** delete
