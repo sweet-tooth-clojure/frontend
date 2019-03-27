@@ -32,7 +32,7 @@
 (defn filter-attr-compare
   "Compares x val to form val"
   [form-attr attr-val [comp-fn key-fn] xs]
-  (if attr-val
+  (if (some? attr-val)
     (let [key-fn (or key-fn form-attr)]
       (filter #(let [x-val (key-fn %)]
                  (comp-fn x-val attr-val)) xs))
@@ -57,6 +57,10 @@
 (defn filter-attr<=
   [form-attr attr-val [key-fn] xs]
   (filter-attr-compare form-attr attr-val [<= key-fn] xs))
+
+(defn filter-set
+  [form-attr attr-val [key-fn] xs]
+  (filter-attr-compare form-attr attr-val [#(contains? %2 %1) key-fn] xs))
 
 (defn reg-filtered-sub
   [sub-name source-sub filter-form-path filter-fns]

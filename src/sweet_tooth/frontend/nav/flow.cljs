@@ -240,16 +240,15 @@
      (when can-change-route?
        (let [db (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))]
          {:db               db
-          ::route-lifecycle (merge {:db db} (select-keys route-cofx [:lifecycle :scope :route]))})))))
+          ::route-lifecycle (merge {:db db} (select-keys route-cofx [:lifecycle :scope]))})))))
 
 (sth/rr rf/reg-event-fx ::dispatch-route
   [process-new-route]
   new-route-fx)
 
 (sth/rr rf/reg-fx ::route-lifecycle
-  (fn [{:keys [lifecycle route scope db]}]
-    (let [{:keys [params]}                  route
-          {:keys [exit param-change enter]} lifecycle]
+  (fn [{:keys [lifecycle scope db]}]
+    (let [{:keys [exit param-change enter]} lifecycle]
       (when (= scope :route)
         (when exit (exit db))
         ;; TODO make this configurable
@@ -276,6 +275,18 @@
 (sth/rr rf/reg-event-fx ::dispatch-current
   [add-current-path process-new-route]
   new-route-fx)
+
+;; force the param change and enter lifecycle methods of the current
+;; route to run again.
+(sth/rr rf/reg-event-fx ::perform-current-lifecycle
+  []
+  (fn [{:keys [db] :as cofx} _]
+    {::route-lifecycle {:db        db
+                        :scope     :route
+                        :lifecycle (-> db
+                                       (get-in (paths/full-path :nav :route))
+                                       route-lifecycle
+                                       (select-keys [:enter :param-change]))}}))
 
 ;; ------
 ;; update token
