@@ -42,11 +42,9 @@
   "Attempts to look up a req-path-fn, falls back on efault method for
   getting 'address' of a request in the app-db"
   [db [method resource opts :as req]]
-  (let [x (if-let [req-path-f (req-path-fn db)]
-            (req-path-f req)
-            [method resource (res-id opts)])]
-    (println "REQ PATH" x)
-    x))
+  (if-let [req-path-f (req-path-fn db)]
+    (req-path-f req)
+    [method resource (res-id opts)]))
 
 ;;--------------------
 ;; request tracking
