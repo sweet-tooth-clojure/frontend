@@ -10,7 +10,8 @@
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.handlers :as sth]
-            [sweet-tooth.frontend.nav.ui.flow :as stnuf])
+            [sweet-tooth.frontend.nav.ui.flow :as stnuf]
+            [sweet-tooth.frontend.sync.flow :as stsf])
   (:import goog.history.Event
            goog.history.Html5History
            goog.Uri))
@@ -331,13 +332,17 @@
 ;; subscriptions
 ;; ------
 
+(defn nav
+  [db]
+  (get db (paths/prefix :nav)))
+
 (rf/reg-sub ::nav
   (fn [db _]
-    (get db (paths/prefix :nav))))
+    (nav db)))
 
 (rf/reg-sub ::params
   :<- [::nav]
-  (fn [nav _] (:params nav)))
+  (fn [nav _] (:params (:route nav))))
 
 (rf/reg-sub ::routed-component
   :<- [::nav]
@@ -347,3 +352,8 @@
 (rf/reg-sub ::route-name
   :<- [::nav]
   (fn [nav _] (get-in nav [:route :route-name])))
+
+;; uses value of param-key to form request signature
+(rf/reg-sub ::route-sync-state
+  (fn [db [_ path-prefix param-key]]
+    (stsf/sync-state db (conj path-prefix (when param-key {:params {:id (-> db nav :route :params param-key)}})))))

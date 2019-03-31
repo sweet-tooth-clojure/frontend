@@ -122,6 +122,35 @@ or: watch for change on any part of route
 ** DONE clearer change scope
 *** only handle params when it's just a param change
 *** don't fire every lifecycle handler
+** TODO sync state tracking and outgoing requests
+the overall goal is to make it easy to determine the state of a
+relevant sync request
+
+examples:
+- loading a route
+- deleting an item - progress indicator for deletion
+- submitting a form
+
+routing as a kind of serialization: take an object, transform it into
+a string
+
+routing as identifier - URL is an address after all
+
+sync state as a way of asking, what is the sync state of this
+resource?
+
+store sync state as path? - can't because sync is unaware of path
+
+*** route loading?
+unlikely - routes can trigger other syncs, but there's no way to look
+up the relationship between the two
+*** but 
+** TODO better route handling
+*** check out reitit
+*** revisit the entire system: sync, sync adapter, ajax, etc
+
+** TODO form checking for routes
+
 ** TODO route lifecycle hierarchy
 *** register changes to fire on ANY change
 ** TODO add datomic id coercion helpers

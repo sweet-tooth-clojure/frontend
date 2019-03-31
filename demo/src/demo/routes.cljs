@@ -30,5 +30,5 @@
 (defmethod stnf/route-lifecycle :topic
   [route]
   {:enter      (fn [] (rf/dispatch [:load-topic (:params route)]))
-   :can-exit?  (fn [] (js/confirm "You sure?"))
+   ;; :can-exit?  (fn [] (js/confirm "You sure?"))
    :components {:main [st/component]}})

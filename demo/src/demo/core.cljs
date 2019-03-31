@@ -37,7 +37,7 @@
          {::stsf/sync         {:sync-dispatch-fn (ig/ref ::dsdl/sync)}
           ::stsdb/req-adapter {:routes routes/api-routes}
 
-          ::dsdl/sync {:delay 500}
+          ::dsdl/sync {:delay 1000}
 
           ::strb/match-route {:routes         routes/browser-routes
                               :param-coercion routes/browser-route-coercion}}))
@@ -45,10 +45,7 @@
 (defn -main []
   (rf/dispatch-sync [::stcf/init-system system-config])
   (rf/dispatch-sync [:init])
-  (r/render [app] (stcu/el-by-id "app"))
-  #_(goog.events/listen js/window
-                        EventType.CLICK
-                        (fn [] (rf/dispatch-sync [:window-clicked]))))
+  (r/render [app] (stcu/el-by-id "app")))
 
 (defonce initial-load (delay (-main)))
 @initial-load

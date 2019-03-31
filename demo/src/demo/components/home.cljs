@@ -18,9 +18,7 @@
          [:div [:input {:type :submit}]]])]
 
      [:div [:h2 "topics:"]
-      (when (->> @(rf/subscribe [::stsf/sync-state-q [:create :topic]])
-                 vals
-                 (some #(= :active (:state %))))
+      (when (= :active @(rf/subscribe [::stsf/sync-state [:create :topic]]))
         [:span "adding topic..."])
 
       [:div "topic count:" @(rf/subscribe [:topic-count])]

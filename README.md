@@ -8,8 +8,6 @@
 
 ## Sync
 
-
-
 ## Flows (organization)
 
 ## Dev
@@ -19,4 +17,5 @@
 ```shell
 cd demo
 shadow-cljs watch app
+open http://localhost:8020/
 ```

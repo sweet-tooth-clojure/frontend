@@ -11,17 +11,41 @@
             [medley.core :as medley]
             [clojure.data :as data]))
 
-(defn req-path
-  "Get the 'address' for a request in the app-db"
-  [[method resource opts]]
-  [method resource (or (select-keys opts [:params]) {})])
+;;--------------------
+;; configured behavior
+;;--------------------
+;;
+;; these functions are defined in the integrant, which is stored in the db
 
+(defn sync-dispatch-fn
+  [cofx]
+  (get-in cofx [:db :sweet-tooth/system ::sync :sync-dispatch-fn]))
+
+(defn req-path-fn
+  "Returns a function the can be used to identify a request. Identifying
+  requests is used to track request state: active, success, failure"
+  [db]
+  (get-in db [:sweet-tooth/system ::sync :req-path-fn]))
+
+(defn req-path
+  "Attempts to look up a req-path-fn, falls back on efault method for
+  getting 'address' of a request in the app-db"
+  [db [method resource opts :as req]]
+  (if-let [req-path-f (req-path-fn db)]
+    (req-path-f req)
+    [method resource (if-let [params (:params opts)]
+                       (or (:db/id params) (:id params) nil)
+                       nil)]))
+
+;;--------------------
+;; request tracking
+;;--------------------
 (defn track-new-request
   "Adds a request's state te the app-db and increments the activ request
   count"
   [db req]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state :active})
+      (assoc-in [::reqs (req-path db req)] {:state :active})
       (update ::active-request-count (fnil inc 0))))
 
 ;;------
@@ -30,7 +54,7 @@
 (defn sync-finished
   [db req status]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state status})
+      (assoc-in [::reqs (req-path db req)] {:state status})
       (update ::active-request-count dec)))
 
 (defn sync-success
@@ -62,7 +86,7 @@
 
 (defn sync-state
   [db req]
-  (get-in db [::reqs (req-path req) :state]))
+  (get-in db [::reqs (req-path db req) :state]))
 
 (rf/reg-sub ::sync-state
   (fn [db [_ req]]
@@ -76,10 +100,6 @@
   [req]
   (update req 2 (fn [{:keys [on-success] :as opts}]
                   (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))
-
-(defn sync-dispatch-fn
-  [cofx]
-  (get-in cofx [:db :sweet-tooth/system ::sync :sync-dispatch-fn]))
 
 (defn sync-event-fx
   "In response to a sync event, return an effect map of:
