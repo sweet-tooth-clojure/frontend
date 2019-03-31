@@ -356,4 +356,4 @@
 ;; uses value of param-key to form request signature
 (rf/reg-sub ::route-sync-state
   (fn [db [_ path-prefix param-key]]
-    (stsf/sync-state db (conj path-prefix (when param-key {:params {:id (-> db nav :route :params param-key)}})))))
+    (stsf/sync-state db (conj path-prefix (-> db nav :route :params param-key)))))

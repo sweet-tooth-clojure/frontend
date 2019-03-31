@@ -27,15 +27,22 @@
   [db]
   (get-in db [:sweet-tooth/system ::sync :req-path-fn]))
 
+(defn res-id
+  [opts]
+  (or (and (map? opts) ((some-fn #(get-in % [:params :db/id])
+                                 #(get-in % [:params :id])
+                                 #(get-in % [:db/id])
+                                 #(get-in % [:id]))
+                        opts))
+      opts))
+
 (defn req-path
   "Attempts to look up a req-path-fn, falls back on efault method for
   getting 'address' of a request in the app-db"
   [db [method resource opts :as req]]
   (if-let [req-path-f (req-path-fn db)]
     (req-path-f req)
-    [method resource (if-let [params (:params opts)]
-                       (or (:db/id params) (:id params) nil)
-                       nil)]))
+    [method resource (res-id opts)]))
 
 ;;--------------------
 ;; request tracking
