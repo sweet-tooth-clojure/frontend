@@ -29,20 +29,24 @@
 
 (defn res-id
   [opts]
-  (or (and (map? opts) ((some-fn #(get-in % [:params :db/id])
-                                 #(get-in % [:params :id])
-                                 #(get-in % [:db/id])
-                                 #(get-in % [:id]))
-                        opts))
-      opts))
+  (if (map? opts)
+    (or ((some-fn #(get-in % [:params :db/id])
+                  #(get-in % [:params :id])
+                  #(get-in % [:db/id])
+                  #(get-in % [:id]))
+         opts)
+        nil)
+    opts))
 
 (defn req-path
   "Attempts to look up a req-path-fn, falls back on efault method for
   getting 'address' of a request in the app-db"
   [db [method resource opts :as req]]
-  (if-let [req-path-f (req-path-fn db)]
-    (req-path-f req)
-    [method resource (res-id opts)]))
+  (let [x (if-let [req-path-f (req-path-fn db)]
+            (req-path-f req)
+            [method resource (res-id opts)])]
+    (println "REQ PATH" x)
+    x))
 
 ;;--------------------
 ;; request tracking
