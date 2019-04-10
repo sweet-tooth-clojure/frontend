@@ -7,4 +7,5 @@
             [sweet-tooth.frontend.pagination.flow]
             [sweet-tooth.frontend.sync.flow]
             [sweet-tooth.frontend.nav.flow]
-            [sweet-tooth.frontend.nav.ui.flow]))
+            [sweet-tooth.frontend.nav.ui.flow]
+            [sweet-tooth.frontend.js-event-handlers.flow]))

@@ -1,4 +1,5 @@
 (ns sweet-tooth.frontend.nav.ui.flow
+  "Add ui-controlling state should be cleared on navigation changes"
   (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.paths :as paths]))

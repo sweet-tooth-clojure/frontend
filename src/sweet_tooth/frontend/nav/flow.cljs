@@ -157,8 +157,8 @@
 (defn halt-handler!
   "Teardown HTML5 history navigation.
 
-  Undoes all of the stateful changes, including unlistening to events, that are setup as part of
-  the call to `configure-navigation!`."
+  Undoes all of the stateful changes, including unlistening to events,
+  that are setup as part of the call to `configure-navigation!`."
   [handler]
   (.dispose (:history handler))
   (doseq [key (vals (select-keys (:listeners handler) [:document-click :navigate]))]
@@ -252,7 +252,9 @@
     (let [{:keys [exit param-change enter]} lifecycle]
       (when (= scope :route)
         (when exit (exit db))
-        ;; TODO make this configurable
+        ;; TODO make this configurable: it should be possible for the
+        ;; ui name space to opt in to nav flow lifecycle hooks, as
+        ;; opposed to nav flow having to know about UI
         (rf/dispatch [::stnuf/clear :route])
         (when enter (enter db)))
       (when param-change
