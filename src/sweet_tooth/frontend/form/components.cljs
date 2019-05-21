@@ -327,7 +327,7 @@
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
-  [partial-form-path & [opts]]
+  [partial-form-path]
   (let [input-opts-fn (partial all-input-opts partial-form-path)]
     {:form-path     partial-form-path
      :form-state    (subscribe [::stff/state partial-form-path])
@@ -338,4 +338,3 @@
      :input-opts    input-opts-fn
      :input         (input-component input-opts-fn)
      :field         (field-component input-opts-fn)}))
-

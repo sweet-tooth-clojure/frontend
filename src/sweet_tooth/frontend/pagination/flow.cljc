@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.pagination.flow
-  (:require [re-frame.core :refer [reg-sub reg-event-db reg-event-fx trim-v]]
+  (:require [re-frame.core :as rf :refer [reg-sub reg-event-db reg-event-fx trim-v]]
             [cemerick.url :as url]
             [ajax.core :refer [GET]]
             [sweet-tooth.frontend.core.utils :as u]
@@ -60,10 +60,15 @@
   [db {:keys [query-id] :as page-query}]
   (assoc-in db (paths/full-path :page query-id :query) page-query))
 
+(rf/reg-event-db ::update-db-page-loading
+  [rf/trim-v]
+  (fn [db [page-query]]
+    (update-db-page-loading db page-query)))
+
 (defn GET-page-fx
   [endpoint page-defaults & [opts]]
   (fn [{:keys [db] :as cofx} [page-params]]
     (let [page-query (merge page-defaults page-params)]
-      {:dispatch [::stsf/sync [:get endpoint {:params     page-query
-                                              :on-success (get opts :on-success [::stcf/update-db])}]]
-       :db       (update-db-page-loading db page-query)})))
+      {:dispatch-n [[::stsf/sync [:get endpoint {:params     page-query
+                                                 :on-success (get opts :on-success [::stcf/update-db])}]]
+                    [::update-db-page-loading page-query]]})))

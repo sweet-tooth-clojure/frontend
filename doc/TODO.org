@@ -122,6 +122,14 @@ or: watch for change on any part of route
 ** DONE clearer change scope
 *** only handle params when it's just a param change
 *** don't fire every lifecycle handler
+** TODO input, disable while submitting
+update input component so that it can have disabled: true when form
+state is submitting 
+** TODO rename :data-path in stff/initialize-form-from-path
+:data-path is confusing because it doesn't tell you what the path is
+relative to
+
+some reference to the re-frame db might be better
 ** TODO sync state tracking and outgoing requests
 the overall goal is to make it easy to determine the state of a
 relevant sync request
