@@ -239,7 +239,8 @@
   ([{:keys [db] :as cofx}]
    (let [{:keys [can-change-route?] :as route-cofx} (::route cofx)]
      (when can-change-route?
-       (let [db (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))]
+       (let [db (-> (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))
+                    (assoc-in (paths/full-path :nav :state) :loading))]
          {:db               db
           ::route-lifecycle (merge {:db db} (select-keys route-cofx [:lifecycle :scope]))})))))
 
@@ -260,7 +261,13 @@
       (when param-change
         ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :params])
-        (param-change db)))))
+        (param-change db)))
+    (rf/dispatch [::nav-loaded])))
+
+(sth/rr rf/reg-event-db ::nav-loaded
+  [rf/trim-v]
+  (fn [db _]
+    (assoc-in db (paths/full-path :nav :state) :loaded)))
 
 ;; ------
 ;; dispatch current
@@ -341,6 +348,10 @@
 (rf/reg-sub ::nav
   (fn [db _]
     (nav db)))
+
+(rf/reg-sub ::nav-state
+  :<- [::nav]
+  (fn [nav _] (:state nav)))
 
 (rf/reg-sub ::params
   :<- [::nav]
