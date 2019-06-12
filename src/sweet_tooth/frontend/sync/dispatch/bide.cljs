@@ -20,5 +20,5 @@
             [method res (-> opts
                             (assoc :uri uri)
                             (cond-> (empty? (:params opts)) (dissoc :params)))])
-          (log/warn "Could not resolve route" :sync-dispatch/route-not-found {:res    res
-                                                                              :params params}))))))
+          (log/warn "Could not resolve route" ::route-not-found {:res    res
+                                                                 :params params}))))))

@@ -3,6 +3,7 @@
             [taoensso.timbre :as timbre]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.sync.flow :as stsf]
+            [sweet-tooth.frontend.routes.protocol :as strp]
             [integrant.core :as ig]))
 
 (def request-methods
@@ -14,10 +15,19 @@
    :create POST
    :delete DELETE})
 
+(defn adapt-req
+  [[method route-name opts :as res] router]
+  (if-let [path (strp/path router route-name (:route-params opts) (:query-params opts))]
+    [method route-name (-> opts
+                           (assoc :uri path)
+                           (cond-> (empty? (:params opts)) (dissoc :params)))]
+    (timbre/warn "Could not resolve route" ::route-not-found {:res          res
+                                                              :route-params (:route-params opts)})))
+
 (defn sync-dispatch-fn
-  [req-adapter global-opts]
+  [router global-opts]
   (fn [req]
-    (let [[method res {:keys [uri on-success on-fail] :as opts} :as req-sig] (req-adapter req)
+    (let [[method res {:keys [uri on-success on-fail] :as opts} :as req-sig] (adapt-req req router)
           request-method (get request-methods method)]
 
       (when-not req-sig
@@ -41,5 +51,5 @@
            (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
 
 (defmethod ig/init-key ::sync-dispatch-fn
-  [_ {:keys [req-adapter global-opts]}]
-  (sync-dispatch-fn (or req-adapter identity) global-opts))
+  [_ {:keys [req-adapter global-opts router]}]
+  (sync-dispatch-fn router global-opts))

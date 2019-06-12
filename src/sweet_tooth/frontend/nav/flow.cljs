@@ -11,7 +11,9 @@
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.nav.ui.flow :as stnuf]
-            [sweet-tooth.frontend.sync.flow :as stsf])
+            [sweet-tooth.frontend.nav.utils :as stnu]
+            [sweet-tooth.frontend.sync.flow :as stsf]
+            [sweet-tooth.frontend.routes.protocol :as strp])
   (:import goog.history.Event
            goog.history.Html5History
            goog.Uri))
@@ -80,7 +82,7 @@
 
 (defn- prevent-reload-on-known-path
   "Create a click handler that blocks page reloads for known routes"
-  [history path-exists? reload-same-path?]
+  [history router reload-same-path?]
   (events/listen
     js/document
     "click"
@@ -115,7 +117,7 @@
                    (= host current-host)
                    (or (not port)
                        (= (str port) (str current-port)))
-                   (path-exists? path))
+                   (strp/route router path))
           (when (not= current-relative-href relative-href) ;; do not add duplicate html5 history state
             (rf/dispatch [::update-token relative-href :set title]))
           (.preventDefault e)
@@ -129,7 +131,6 @@
     (.addEventListener js/window "beforeunload" listener)
     listener))
 
-;; TODO add a window.beforeunload handler
 (defn init-handler
   "Create and configure HTML5 history navigation.
 
@@ -138,17 +139,15 @@
   new page here.
 
   path-exists?: a fn of one argument, a path. Return truthy if this path is handled by the SPA"
-  [{:keys [match-route reload-same-path? check-can-unload?] :as config}]  
-  (let [history      (new-history)
-        nav-handler  (fn [path] (rf/dispatch [::dispatch-route path]))
-        path-exists? (comp :route-name match-route)]
-    {:nav-handler  nav-handler
-     :path-exists? path-exists?
-     :match-route  match-route
-     :history      history
-     :listeners    (cond-> {:document-click (prevent-reload-on-known-path history path-exists? reload-same-path?)
-                            :navigate       (dispatch-on-navigate history nav-handler)}
-                     check-can-unload? (assoc :before-unload (handle-unloading)))}))
+  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload?] :as config}]  
+  (let [history     (new-history)
+        nav-handler (fn [path] (rf/dispatch [dispatch-route-handler path]))]
+    {:nav-handler nav-handler
+     :router      router
+     :history     history
+     :listeners   (cond-> {:document-click (prevent-reload-on-known-path history router reload-same-path?)
+                           :navigate       (dispatch-on-navigate history nav-handler)}
+                    check-can-unload? (assoc :before-unload (handle-unloading)))}))
 
 (defmethod ig/init-key ::handler
   [_ config]
@@ -170,21 +169,16 @@
   [_ handler]
   (halt-handler! handler))
 
-(defn map->params [query]
-  (let [params (map #(name %) (keys query))
-        values (vals query)
-        pairs (partition 2 (interleave params values))]
-    (str/join "&" (map #(str/join "=" %) pairs))))
-
+;; Used for synthetic navigation events
 (sth/rr rf/reg-event-fx ::navigate
   [rf/trim-v]
   (fn [cofx [route query]]
     (let [{:keys [nav-handler history]} (get-in cofx [:db :sweet-tooth/system ::handler])
           token (.getToken history)
-          query-string (map->params (reduce-kv (fn [valid k v]
-                                                 (if v
-                                                   (assoc valid k v)
-                                                   valid)) {} query))
+          query-string (u/map->params (reduce-kv (fn [valid k v]
+                                                   (if v
+                                                     (assoc valid k v)
+                                                     valid)) {} query))
           with-params (if (empty? query-string)
                         route
                         (str route "?" query-string))]
@@ -207,13 +201,14 @@
     (and (can-change-params? db) (can-exit? db))
     (can-change-params? db)))
 
+;; Intercepor that interprets new route, adding a ::route coeffect
 (def process-new-route
   {:id     ::process-new-route
    :before (fn [ctx]
              (let [{:keys [db] :as cofx} (:coeffects ctx)
-                   match-route           (get-in cofx [:db :sweet-tooth/system ::handler :match-route])
+                   router                (get-in db [:sweet-tooth/system ::handler :router])
                    path                  (get-in cofx [:event 1])
-                   new-route             (match-route path)
+                   new-route             (strp/route router path)
                    existing-route        (get-in db (paths/full-path :nav :route))
                    scope                 (if (= (:route-name new-route) (:route-name existing-route))
                                            :params
@@ -222,7 +217,7 @@
                    new-route-lifecycle      (route-lifecycle new-route)
                    existing-route-lifecycle (when existing-route (route-lifecycle existing-route))]
                (assoc-in ctx [:coeffects ::route]
-                         {:can-change-route? (can-change-route? (:db cofx) scope existing-route-lifecycle)
+                         {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
                           :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
                                                     (select-keys new-route-lifecycle [:enter :param-change]))
                           :scope             scope
@@ -242,26 +237,28 @@
        (let [db (-> (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))
                     (assoc-in (paths/full-path :nav :state) :loading))]
          {:db               db
-          ::route-lifecycle (merge {:db db} (select-keys route-cofx [:lifecycle :scope]))})))))
+          ::route-lifecycle (assoc cofx :db db)})))))
 
+;; Default handler for new routes
 (sth/rr rf/reg-event-fx ::dispatch-route
   [process-new-route]
   new-route-fx)
 
 (sth/rr rf/reg-fx ::route-lifecycle
-  (fn [{:keys [lifecycle scope db]}]
-    (let [{:keys [exit param-change enter]} lifecycle]
+  (fn [cofx]
+    (let [{:keys [lifecycle scope] :as route} (::route cofx)
+          {:keys [exit param-change enter]} lifecycle]
       (when (= scope :route)
-        (when exit (exit db))
+        (when exit (exit cofx route))
         ;; TODO make this configurable: it should be possible for the
         ;; ui name space to opt in to nav flow lifecycle hooks, as
         ;; opposed to nav flow having to know about UI
         (rf/dispatch [::stnuf/clear :route])
-        (when enter (enter db)))
+        (when enter (enter cofx route)))
       (when param-change
         ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :params])
-        (param-change db)))
+        (param-change cofx route)))
     (rf/dispatch [::nav-loaded])))
 
 (sth/rr rf/reg-event-db ::nav-loaded
@@ -365,6 +362,10 @@
 (rf/reg-sub ::route-name
   :<- [::nav]
   (fn [nav _] (get-in nav [:route :route-name])))
+
+(rf/reg-sub ::routed-entity
+  (fn [db [entity-key param]]
+    (stnu/routed-entity db entity-key param)))
 
 ;; uses value of param-key to form request signature
 (rf/reg-sub ::route-sync-state

@@ -138,3 +138,9 @@
                             x))
                         diff)
          (every? nil?))))
+
+(defn map->params [query]
+  (let [params (map #(name %) (keys query))
+        values (vals query)
+        pairs (partition 2 (interleave params values))]
+    (str/join "&" (map #(str/join "=" %) pairs))))

@@ -10,6 +10,7 @@
             [sweet-tooth.frontend.nav.routes.bide :as strb]
             [sweet-tooth.frontend.form.flow :as stff]
             [sweet-tooth.frontend.nav.flow :as stnf]
+            [sweet-tooth.frontend.routes :as stfr]
             
             [integrant.core :as ig]))
 
@@ -18,10 +19,11 @@
   {::sth/register-handlers []
    
    ::stsf/sync              {:sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
-   ::stsda/sync-dispatch-fn {:req-adapter (ig/ref ::stsdb/req-adapter)}
+   ::stsda/sync-dispatch-fn {:router (ig/ref ::stfr/api-router)}
 
-   ::stnf/handler {:check-can-unload? true
-                   :match-route       (ig/ref ::strb/match-route)} 
+   ::stnf/handler {:dispatch-route-handler ::stnf/dispatch-route
+                   :check-can-unload?      true
+                   :router                 (ig/ref ::stfr/frontend-router)} 
    
    ;; User must specify :routes key
    ::strb/match-route {:routes nil}
