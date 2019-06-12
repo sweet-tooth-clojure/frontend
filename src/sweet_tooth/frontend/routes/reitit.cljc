@@ -1,6 +1,7 @@
 (ns sweet-tooth.frontend.routes.reitit
   (:require [reitit.core :as rc]
             [reitit.frontend :as reif]
+            [reitit.coercion :as coercion]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.routes.protocol :as strp]
             [clojure.set :as set]))
@@ -31,7 +32,7 @@
 
 (defmethod strp/router :reitit
   [{:keys [routes on-no-match] :as config}]
-  (let [router (rc/router routes)]
+  (let [router (rc/router routes {:compile coercion/compile-request-coercers})]
     (map->ReititRouter {:routes      routes
                         :router      router
                         :on-no-match on-no-match})))

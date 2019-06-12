@@ -18,8 +18,12 @@
 (def api-router (atom nil))
 
 (defn path
-  [name route-params query-params]
+  [name & [route-params query-params]]
   (strp/path @frontend-router name route-params query-params))
+
+(defn api-path
+  [name & [route-params query-params]]
+  (strp/path @api-router name route-params query-params))
 
 (defmethod ig/init-key ::frontend-router [_ config]
   (reset! frontend-router (strp/router config)))

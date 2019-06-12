@@ -214,14 +214,14 @@
                                            :params
                                            :route)
                    
-                   new-route-lifecycle      (route-lifecycle new-route)
-                   existing-route-lifecycle (when existing-route (route-lifecycle existing-route))]
+                   new-route-lifecycle      (:lifecycle new-route)
+                   existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
                (assoc-in ctx [:coeffects ::route]
                          {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
                           :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
                                                     (select-keys new-route-lifecycle [:enter :param-change]))
                           :scope             scope
-                          :components        (:components new-route-lifecycle)
+                          :components        (:components new-route)
                           :route             new-route})))
    :after identity})
 
@@ -324,7 +324,7 @@
   (fn [{:keys [db] :as cofx} [_ before-unload-event]]
     (let [existing-route                          (get-in db (paths/full-path :nav :route))
           {:keys [can-unload?]
-           :or   {can-unload? (constantly true)}} (when existing-route (route-lifecycle existing-route))]
+           :or   {can-unload? (constantly true)}} (when existing-route (:lifecycle existing-route))]
       (when-not (can-unload? db)
         {::cancel-unload before-unload-event}))))
 
