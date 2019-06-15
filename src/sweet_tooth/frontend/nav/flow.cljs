@@ -247,7 +247,8 @@
 (sth/rr rf/reg-fx ::route-lifecycle
   (fn [cofx]
     (let [{:keys [lifecycle scope] :as route} (::route cofx)
-          {:keys [exit param-change enter]} lifecycle]
+          {:keys [exit param-change enter]}   lifecycle
+          route                               (:route route)]
       (when (= scope :route)
         (when exit (exit cofx route))
         ;; TODO make this configurable: it should be possible for the

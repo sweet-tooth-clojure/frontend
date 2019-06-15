@@ -9,7 +9,8 @@
             [sweet-tooth.frontend.core.utils :as stcu]
             [integrant.core :as ig]
             [medley.core :as medley]
-            [clojure.data :as data]))
+            [clojure.data :as data]
+            [meta-merge.core :refer [meta-merge]]))
 
 ;;--------------------
 ;; configured behavior
@@ -143,8 +144,10 @@
 (defn sync-fx
   "Returns an effect handler that dispatches a sync event"
   [[method endpoint & [opts]]]
-  (fn [cofx [params]]
-    {:dispatch [::sync [method endpoint (update opts :params merge params)]]}))
+  (fn [cofx [call-opts]]
+    {:dispatch [::sync [method
+                        endpoint
+                        (meta-merge opts call-opts)]]}))
 
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
