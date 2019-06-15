@@ -2,6 +2,7 @@
 
 (defprotocol Router
   (path
+    [this name]
     [this name route-params]
     [this name route-params query-params])
   (route

@@ -51,5 +51,5 @@
            (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
 
 (defmethod ig/init-key ::sync-dispatch-fn
-  [_ {:keys [req-adapter global-opts router]}]
+  [_ {:keys [global-opts router]}]
   (sync-dispatch-fn router global-opts))

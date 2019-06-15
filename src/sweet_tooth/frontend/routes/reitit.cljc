@@ -9,16 +9,21 @@
 (defrecord ReititRouter [routes router on-no-match]
   strp/Router
   (strp/path
+    [this name]
+    (strp/path this name {} {}))
+  (strp/path
     [this name route-params]
     (strp/path this name route-params {}))
   (strp/path
     [{:keys [router]} name route-params query-params]
-    (or (cond-> (rc/match-by-name router name route-params)
-          true                     (rc/match->path)
-          (not-empty query-params) (str "?" (u/map->params query-params)))
-        (when on-no-match
-          (on-no-match name route-params)
-          nil)))
+    (let [{{:keys [prefix]} :data :as match} (rc/match-by-name router name route-params)]
+      (or (cond-> match
+            true                     (rc/match->path)
+            (not-empty query-params) (str "?" (u/map->params query-params))
+            prefix                   (as-> p (str prefix  p)))
+          (when on-no-match
+            (on-no-match name route-params)
+            nil))))
 
   (strp/route
     [this path]
