@@ -261,7 +261,11 @@
         ;; TODO make this configurable
         (rf/dispatch [::stnuf/clear :params])
         (param-change cofx route)))
-    (rf/dispatch [::nav-loaded])))
+    (rf/dispatch [::queue-nav-loaded])))
+
+(sth/rr rf/reg-event-fx ::queue-nav-loaded
+  [rf/trim-v]
+  (constantly {:dispatch-later [{:ms 0 :dispatch [::nav-loaded]}]}))
 
 (sth/rr rf/reg-event-db ::nav-loaded
   [rf/trim-v]
