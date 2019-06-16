@@ -29,12 +29,13 @@
 
   (strp/route
     [this path]
-    (if-let [{:keys [data] :as m} (reif/match-by-path router path)]
+    (if-let [{:keys [data query-params] :as m} (reif/match-by-path router path)]
       (-> data
           (merge (dissoc m :data))
           (set/rename-keys {:name       :route-name
                             :parameters :params})
-          (update :params (fn [{:keys [path query]}] (merge path query))))
+          (update :params (fn [{:keys [path query] :as params}]
+                            (merge path query query-params))))
       (when on-no-match
         (on-no-match path)
         nil))))

@@ -349,6 +349,10 @@
   (fn [db _]
     (nav db)))
 
+(rf/reg-sub ::route
+  :<- [::nav]
+  (fn [nav_] (:route nav)))
+
 (rf/reg-sub ::nav-state
   :<- [::nav]
   (fn [nav _] (:state nav)))
