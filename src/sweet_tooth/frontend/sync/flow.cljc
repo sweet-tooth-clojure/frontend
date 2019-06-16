@@ -109,7 +109,7 @@
 (defn add-default-success-handler
   [req]
   (update req 2 (fn [{:keys [on-success] :as opts}]
-                  (if on-success opts (merge opts {:on-success [::stcf/update-db]})))))
+                  (if on-success opts (merge opts {:on-success [::default-success-handler req]})))))
 
 (defn sync-event-fx
   "In response to a sync event, return an effect map of:
@@ -119,6 +119,13 @@
   {:db    (track-new-request db req)
    ::sync {:dispatch-fn (sync-dispatch-fn cofx)
            :req         req}})
+
+(sth/rr rf/reg-event-db ::default-success-handler
+  []
+  (fn [db [_ resp req]]
+    (if (vector? resp)
+      (stcf/update-db db [resp])
+      (timbre/warn "Response was not a vector:" {:resp resp :req (into [] (take 2 req))}))))
 
 (sth/rr rf/reg-event-fx ::sync
   []
