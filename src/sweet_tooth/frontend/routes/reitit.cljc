@@ -2,7 +2,6 @@
   (:require [reitit.core :as rc]
             [reitit.frontend :as reif]
             [reitit.coercion :as coercion]
-            [ajax.url :as url]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.routes.protocol :as strp]
             [clojure.set :as set]))
@@ -21,7 +20,7 @@
       (if-not (:required match)
         (cond-> match
           true                     (rc/match->path)
-          (not-empty query-params) (str "?" (url/params-to-str :java query-params))
+          (not-empty query-params) (str "?" (u/params-to-str query-params))
           prefix                   (as-> p (str prefix  p)))
         (when on-no-match
           (on-no-match name route-params)

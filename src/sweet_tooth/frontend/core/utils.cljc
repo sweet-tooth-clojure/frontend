@@ -1,7 +1,9 @@
 (ns sweet-tooth.frontend.core.utils
   (:require [clojure.string :as str]
             [clojure.set :as set]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [ajax.url :as url]
+            [medley.core :as medley]))
 
 ;;*** DOM utils TODO move to ui.cljs
 #?(:cljs (defn prevent-default
@@ -137,4 +139,13 @@
                                          (nil? (first (vals x))))
                             x))
                         diff)
-         (every? nil?))))
+         (every? nil?))))>
+
+(defn params-to-str
+  [m]
+  (->> m
+       (map (fn [[k v]]
+              [(if (keyword? k) (subs (str k) 1) k)
+               (if (keyword? v) (subs (str v) 1) v)]))
+       (into {})
+       (url/params-to-str :java)))

@@ -7,7 +7,6 @@
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
-            [ajax.url :as url]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.handlers :as sth]
@@ -177,10 +176,10 @@
     (let [{:keys [nav-handler history]} (get-in cofx [:db :sweet-tooth/system ::handler])
           
           token        (.getToken history)
-          query-string (url/params-to-str (reduce-kv (fn [valid k v]
-                                                       (if v
-                                                         (assoc valid k v)
-                                                         valid)) {} query))
+          query-string (u/params-to-str (reduce-kv (fn [valid k v]
+                                                     (if v
+                                                       (assoc valid k v)
+                                                       valid)) {} query))
           with-params  (if (empty? query-string)
                          route
                          (str route "?" query-string))]

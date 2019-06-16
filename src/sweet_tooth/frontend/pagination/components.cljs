@@ -1,6 +1,5 @@
 (ns sweet-tooth.frontend.pagination.components
   (:require [re-frame.core :refer [subscribe]]
-            [ajax.url :as url]
             [sweet-tooth.frontend.pagination.flow :as stpf]
             [sweet-tooth.frontend.nav.flow :as stnf]
             [sweet-tooth.frontend.routes :as stfr]))
