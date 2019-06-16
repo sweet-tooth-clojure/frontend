@@ -220,7 +220,8 @@
                (assoc-in ctx [:coeffects ::route]
                          {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
                           :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
-                                                    (select-keys new-route-lifecycle [:enter :param-change]))
+                                                    (select-keys new-route-lifecycle [:enter :param-change])
+                                                    (get-in db [:sweet-tooth/system ::handler :global-lifecycle]))
                           :scope             scope
                           :components        (:components new-route)
                           :route             new-route})))
@@ -247,20 +248,25 @@
 
 (sth/rr rf/reg-fx ::route-lifecycle
   (fn [cofx]
-    (let [{:keys [lifecycle scope] :as route} (::route cofx)
-          {:keys [exit param-change enter]}   lifecycle
-          route                               (:route route)]
+    (let [{:keys [lifecycle scope] :as route}      (::route cofx)
+          {:keys [exit before-exit after-exit
+                  param-change before-param-change after-param-change
+                  enter before-enter after-enter]} lifecycle
+          route                                    (:route route)]
       (when (= scope :route)
+        (when before-exit (before-exit cofx route))
         (when exit (exit cofx route))
+        (when after-exit (after-exit cofx route))
         ;; TODO make this configurable: it should be possible for the
         ;; ui name space to opt in to nav flow lifecycle hooks, as
         ;; opposed to nav flow having to know about UI
-        (rf/dispatch [::stnuf/clear :route])
-        (when enter (enter cofx route)))
-      (when param-change
-        ;; TODO make this configurable
-        (rf/dispatch [::stnuf/clear :params])
-        (param-change cofx route)))
+        (when before-enter (before-enter cofx route))
+        (when enter (enter cofx route))
+        (when after-enter (after-enter cofx route)))
+
+      (when before-param-change (before-param-change cofx route))
+      (when param-change (param-change cofx route))
+      (when after-param-change (after-param-change cofx route)))
     (rf/dispatch [::queue-nav-loaded])))
 
 (sth/rr rf/reg-event-fx ::queue-nav-loaded
@@ -339,6 +345,21 @@
     (.preventDefault before-unload-event)
     (set! (.-returnValue before-unload-event) "")))
 
+
+;; ------
+;; nav flow components
+;; ------
+
+(def default-global-lifecycle
+  {:before-exit         nil
+   :after-exit          nil
+   :before-enter        #(rf/dispatch [::stnuf/clear :route])
+   :after-enter         nil
+   :before-param-change #(rf/dispatch [::stnuf/clear :params]) 
+   :after-param-change  nil})
+
+(defmethod ig/init-key ::global-lifecycle [_ lifecycle]
+  lifecycle)
 
 ;; ------
 ;; subscriptions
