@@ -21,7 +21,10 @@
 
    ::stnf/handler {:dispatch-route-handler ::stnf/dispatch-route
                    :check-can-unload?      true
-                   :router                 (ig/ref ::stfr/frontend-router)}
+                   :router                 (ig/ref ::stfr/frontend-router)
+                   :global-lifecycle       (ig/ref ::stnf/global-lifecycle)}
+
+   ::stnf/global-lifecycle stnf/default-global-lifecycle
 
    ;;::stff/config {:data-id :db/id}
    ::stcf/update-db {(paths/prefix :entity) stcf/db-patch-handle-entity
