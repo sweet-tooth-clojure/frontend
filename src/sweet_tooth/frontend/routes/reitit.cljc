@@ -2,11 +2,25 @@
   (:require [reitit.core :as rc]
             [reitit.frontend :as reif]
             [reitit.coercion :as coercion]
+            [taoensso.timbre :as log]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.routes.protocol :as strp]
             [clojure.set :as set]))
 
-(defrecord ReititRouter [routes router on-no-match]
+(defn on-no-path-default
+  [name match route-params]
+  (log/warn "reitit could not generate path" name match route-params))
+
+(defn on-no-route-default
+  [path]
+  (log/warn "reitit could not match route" path))
+
+(def config-defaults
+  {:use         :reitit
+   :on-no-path  on-no-path-default
+   :on-no-route on-no-route-default})
+
+(defrecord ReititRouter [routes router on-no-path on-no-route]
   strp/Router
   (strp/path
     [this name]
@@ -22,8 +36,8 @@
           true                     (rc/match->path)
           (not-empty query-params) (str "?" (u/params-to-str query-params))
           prefix                   (as-> p (str prefix  p)))
-        (when on-no-match
-          (on-no-match name route-params)
+        (when on-no-path
+          (on-no-path name match route-params)
           nil))))
 
   (strp/route
@@ -35,13 +49,13 @@
                             :parameters :params})
           (update :params (fn [{:keys [path query] :as params}]
                             (merge path query query-params))))
-      (when on-no-match
-        (on-no-match path)
+      (when on-no-route
+        (on-no-route path)
         nil))))
 
 (defmethod strp/router :reitit
-  [{:keys [routes on-no-match] :as config}]
+  [{:keys [routes] :as config}]
   (let [router (rc/router routes {:compile coercion/compile-request-coercers})]
-    (map->ReititRouter {:routes      routes
-                        :router      router
-                        :on-no-match on-no-match})))
+    (map->ReititRouter (merge {:routes      routes
+                               :router      router}
+                              (select-keys config [:on-no-path :on-no-route])))))

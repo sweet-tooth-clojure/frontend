@@ -9,6 +9,7 @@
             [sweet-tooth.frontend.form.flow :as stff]
             [sweet-tooth.frontend.nav.flow :as stnf]
             [sweet-tooth.frontend.routes :as stfr]
+            [sweet-tooth.frontend.routes.reitit :as strr]
             
             [integrant.core :as ig]))
 
@@ -23,6 +24,9 @@
                    :check-can-unload?      true
                    :router                 (ig/ref ::stfr/frontend-router)
                    :global-lifecycle       (ig/ref ::stnf/global-lifecycle)}
+
+   ::stfr/frontend-router strr/config-defaults
+   ::stfr/api-router      strr/config-defaults
 
    ::stnf/global-lifecycle stnf/default-global-lifecycle
 

@@ -134,7 +134,6 @@
 
 (sth/rr rf/reg-fx ::sync
   (fn [{:keys [dispatch-fn req]}]
-    (timbre/debug "sync effect" ::sync {:req req})
     (dispatch-fn req)))
 
 (sth/rr rf/reg-event-db ::sync-success

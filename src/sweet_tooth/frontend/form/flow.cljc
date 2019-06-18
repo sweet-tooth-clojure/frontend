@@ -155,12 +155,14 @@
                         :or   {success ::submit-form-success
                                error   ::submit-form-error}
                         :as   form-spec}]
-  (let [[_ endpoint action] full-form-path]
+  (let [[_ endpoint action] full-form-path
+        payload             (merge params data)]
     [action
      (get form-spec :route-name endpoint)
-     (merge {:params     (merge params data)
-             :on-success [success full-form-path form-spec]
-             :on-fail    [error full-form-path form-spec]}
+     (merge {:params       payload
+             :on-success   [success full-form-path form-spec]
+             :on-fail      [error full-form-path form-spec]
+             :route-params payload}
             (:request-opts form-spec))]))
 
 ;; update db to indicate form's submitting, clear old errors

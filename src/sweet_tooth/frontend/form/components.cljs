@@ -6,7 +6,8 @@
             [cljs-time.core :as ct]
             [sweet-tooth.frontend.paths :as p]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.form.flow :as stff]))
+            [sweet-tooth.frontend.form.flow :as stff])
+  (:require-macros [sweet-tooth.frontend.form.components]))
 
 (defn progress-indicator
   "Show a progress indicator when a form is submitted"
@@ -318,23 +319,25 @@
              (all-input-opts-fn input-type attr-path input-opts))]))
 
 (defn on-submit-handler
-  [form-path & [submit-opts]]
-  (u/prevent-default #(dispatch [::stff/submit-form form-path submit-opts])))
+  [partial-form-path & [submit-opts]]
+  (u/prevent-default #(dispatch [::stff/submit-form partial-form-path submit-opts])))
 
 (defn on-submit
-  [form-path & [submit-opts]]
-  {:on-submit (on-submit-handler form-path submit-opts)})
+  [partial-form-path & [submit-opts]]
+  {:on-submit (on-submit-handler partial-form-path submit-opts)})
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
   [partial-form-path]
   (let [input-opts-fn (partial all-input-opts partial-form-path)]
-    {:form-path     partial-form-path
-     :form-state    (subscribe [::stff/state partial-form-path])
-     :form-ui-state (subscribe [::stff/ui-state partial-form-path])
-     :form-errors   (subscribe [::stff/errors partial-form-path])
-     :form-buffer   (subscribe [::stff/buffer partial-form-path])
-     :form-dirty?   (subscribe [::stff/form-dirty? partial-form-path])
-     :input-opts    input-opts-fn
-     :input         (input-component input-opts-fn)
-     :field         (field-component input-opts-fn)}))
+    {:form-path         partial-form-path
+     :form-state        (subscribe [::stff/state partial-form-path])
+     :form-ui-state     (subscribe [::stff/ui-state partial-form-path])
+     :form-errors       (subscribe [::stff/errors partial-form-path])
+     :form-buffer       (subscribe [::stff/buffer partial-form-path])
+     :form-dirty?       (subscribe [::stff/form-dirty? partial-form-path])
+     :on-submit         (partial on-submit partial-form-path)
+     :on-submit-handler (partial on-submit-handler partial-form-path)
+     :input-opts        input-opts-fn
+     :input             (input-component input-opts-fn)
+     :field             (field-component input-opts-fn)}))

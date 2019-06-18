@@ -64,10 +64,6 @@ requests (obviously) need a URI. The request adapter takes the request
 as an argument, and adds a URI to the last element of the request,
 `opts`.
 
-`sweet-tooth.frontend.sync.dispatch.bide` includes the default request
-adapter that comes bundled with Sweet Tooth. It uses routes to update
-the request by adding `:uri` to `opts`.
-
 ### TODO
 
 - how to handle offline

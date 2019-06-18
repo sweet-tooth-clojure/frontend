@@ -14,9 +14,7 @@
                     [com.cemerick/url            "0.1.1"]
                     [venantius/accountant        "0.2.4"]
                     [integrant                   "0.8.0-alpha2"]
-                    [funcool/bide "1.6.0"]
 
-                    
                     [adzerk/boot-cljs        "RELEASE" :scope "test"]
                     [adzerk/boot-reload      "RELEASE" :scope "test"]
                     [pandeiro/boot-http      "RELEASE" :scope "test"]

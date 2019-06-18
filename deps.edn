@@ -9,7 +9,6 @@
          com.cemerick/url            {:mvn/version "0.1.1"}
          venantius/accountant        {:mvn/version "0.2.4"}
          integrant                   {:mvn/version "0.8.0-alpha2"}
-         funcool/bide                {:mvn/version "1.6.0"}
          metosin/reitit-core         {:mvn/version "0.3.7"}
          metosin/reitit-frontend     {:mvn/version "0.3.7"}
          metosin/reitit-spec         {:mvn/version "0.3.7"}
