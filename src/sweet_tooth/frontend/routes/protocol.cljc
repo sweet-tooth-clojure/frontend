@@ -5,6 +5,9 @@
     [this name]
     [this name route-params]
     [this name route-params query-params])
+  (match
+    [this name]
+    [this name route-params])
   (route
     [this path]))
 

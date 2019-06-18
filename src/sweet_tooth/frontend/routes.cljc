@@ -25,6 +25,14 @@
   [name & [route-params query-params]]
   (strp/path @api-router name route-params query-params))
 
+(defn match
+  [name & [route-params]]
+  (strp/match @frontend-router name route-params))
+
+(defn api-match
+  [name & [route-params]]
+  (strp/path @api-router name route-params))
+
 (defmethod ig/init-key ::frontend-router [_ config]
   (reset! frontend-router (strp/router config)))
 

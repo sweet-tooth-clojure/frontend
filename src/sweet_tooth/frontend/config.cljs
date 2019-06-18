@@ -15,10 +15,12 @@
 
 
 (def default-config
-  {::sth/register-handlers []
+  {::sth/register-handlers {}
    
-   ::stsf/sync              {:sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
-   ::stsda/sync-dispatch-fn {:router (ig/ref ::stfr/api-router)}
+   ::stsf/sync {:router           (ig/ref ::stfr/api-router)
+                :sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
+   
+   ::stsda/sync-dispatch-fn {}
 
    ::stnf/handler {:dispatch-route-handler ::stnf/dispatch-route
                    :check-can-unload?      true

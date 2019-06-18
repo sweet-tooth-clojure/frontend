@@ -40,6 +40,13 @@
           (on-no-path name match route-params)
           nil))))
 
+  (strp/match
+    [this name]
+    (strp/match this name {}))
+  (strp/match
+    [this name route-params]
+    (strp/match this name route-params))
+  
   (strp/route
     [this path]
     (if-let [{:keys [data query-params] :as m} (reif/match-by-path router path)]

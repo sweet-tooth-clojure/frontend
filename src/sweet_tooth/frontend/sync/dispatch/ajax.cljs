@@ -16,8 +16,8 @@
    :delete DELETE})
 
 (defn adapt-req
-  [[method route-name opts :as res] router]
-  (if-let [path (strp/path router route-name (:route-params opts) (:query-params opts))]
+  [[method route-name opts :as res]]
+  (if-let [path (:path opts)]
     [method route-name (-> opts
                            (assoc :uri path)
                            (cond-> (empty? (:params opts)) (dissoc :params)))]
@@ -25,9 +25,9 @@
                                                               :route-params (:route-params opts)})))
 
 (defn sync-dispatch-fn
-  [router global-opts]
+  [global-opts]
   (fn [req]
-    (let [[method res {:keys [uri on-success on-fail] :as opts} :as req-sig] (adapt-req req router)
+    (let [[method res {:keys [uri on-success on-fail] :as opts} :as req-sig] (adapt-req req)
           request-method (get request-methods method)]
 
       (when-not req-sig
@@ -51,5 +51,5 @@
            (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
 
 (defmethod ig/init-key ::sync-dispatch-fn
-  [_ {:keys [global-opts router]}]
-  (sync-dispatch-fn router global-opts))
+  [_ {:keys [global-opts]}]
+  (sync-dispatch-fn global-opts))
