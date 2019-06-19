@@ -40,12 +40,16 @@
           (on-no-path name match route-params)
           nil))))
 
-  (strp/match
+  (strp/req-id
     [this name]
-    (strp/match this name {}))
-  (strp/match
-    [this name route-params]
-    (strp/match this name route-params))
+    (strp/req-id this name {}))
+  (strp/req-id
+    [this name opts]
+    (when (and (some? opts) (not (map? opts)))
+      (log/error "req-id opts should be a map" {:opts opts}))
+    (:path-params (rc/match-by-name router name (or (:route-params opts)
+                                                    (:params opts)
+                                                    opts))))
   
   (strp/route
     [this path]
@@ -61,8 +65,9 @@
         nil))))
 
 (defmethod strp/router :reitit
-  [{:keys [routes] :as config}]
-  (let [router (rc/router routes {:compile coercion/compile-request-coercers})]
+  [{:keys [routes router-opts] :as config}]
+  (let [router (rc/router routes (merge {:compile coercion/compile-request-coercers}
+                                        router-opts))]
     (map->ReititRouter (merge {:routes      routes
                                :router      router}
                               (select-keys config [:on-no-path :on-no-route])))))

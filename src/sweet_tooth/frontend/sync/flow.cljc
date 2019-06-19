@@ -21,7 +21,7 @@
   "Attempts to look up a req-path-fn, falls back on default method for
   getting 'address' of a request in the app-db"
   [[method resource opts :as req]]
-  [method resource (:path-params (stfr/api-match resource (:route-params opts)))])
+  [method resource (stfr/req-id resource opts)])
 
 (defn track-new-request
   "Adds a request's state te the app-db and increments the activ request
@@ -87,7 +87,12 @@
 
 (defn adapt-req
   [[method route-name opts :as res] router]
-  (when-let [path (strp/path router route-name (:route-params opts) (:query-params opts))]
+  (when-let [path (strp/path router
+                             route-name
+                             (or (:route-params opts)
+                                 (:params opts)
+                                 opts)
+                             (:query-params opts))]
     [method route-name (assoc opts :path path)]))
 
 (defn sync-event-fx
@@ -96,11 +101,11 @@
   b) ::sync effect, to be handled by the ::sync effect handler"
   [{:keys [db] :as cofx} req]
   (let [{:keys [router sync-dispatch-fn]} (get-in cofx [:db :sweet-tooth/system ::sync])
-        req                               (adapt-req req router)]
-    (if req
-      {:db             (track-new-request db req)
+        adapted-req                       (adapt-req req router)]
+    (if adapted-req
+      {:db             (track-new-request db adapted-req)
        ::dispatch-sync {:dispatch-fn sync-dispatch-fn
-                        :req         req}}
+                        :req         adapted-req}}
       (log/warn "sync could not match req" {:req req}))))
 
 (sth/rr rf/reg-event-db ::default-success-handler

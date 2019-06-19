@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.form.flow
-  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe]]
+  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe] :as rf]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as c]
@@ -137,11 +137,6 @@
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
-
-(defmulti url-prefix
-  "Customize url prefix, e.g. \"/api/v1\""
-  (fn [endpoint action] [endpoint action]))
-
 (def form-states #{nil :submitting :success :sleeping})
 
 (defn submit-form
@@ -266,3 +261,22 @@
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
+
+(defn sync-state
+  [db [_ [endpoint action] entity]]
+  (stsf/sync-state db [action endpoint {:route-params entity}]))
+
+(rf/reg-sub ::sync-state sync-state)
+
+(rf/reg-sub ::sync-active?
+  (fn [db args]
+    (= (sync-state db args) :active)))
+
+(rf/reg-sub ::sync-success?
+  (fn [db args]
+    (= (sync-state db args) :success)))
+
+(rf/reg-sub ::sync-fail?
+  (fn [db args]
+    (= (sync-state db args) :fail)))
+
