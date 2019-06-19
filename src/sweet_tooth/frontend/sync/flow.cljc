@@ -135,13 +135,18 @@
 ;;------
 ;; event helpers
 ;;------
+(defn build-opts
+  [opts call-opts params]
+  (let [{:keys [route-params params] :as new-opts} (-> (meta-merge opts call-opts)
+                                                       (update :params meta-merge params))]
+    (cond-> new-opts
+      (not route-params) (assoc :route-params params))))
+
 (defn sync-fx
   "Returns an effect handler that dispatches a sync event"
   [[method endpoint & [opts]]]
-  (fn [cofx [call-opts]]
-    {:dispatch [::sync [method
-                        endpoint
-                        (meta-merge opts call-opts)]]}))
+  (fn [cofx [call-opts params]]
+    {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]}))
 
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
