@@ -47,9 +47,10 @@
     [this name opts]
     (when (and (some? opts) (not (map? opts)))
       (log/error "req-id opts should be a map" {:opts opts}))
-    (:path-params (rc/match-by-name router name (or (:route-params opts)
-                                                    (:params opts)
-                                                    opts))))
+    (let [params (or (:route-params opts)
+                     (:params opts)
+                     opts)]
+      (select-keys params (:required (rc/match-by-name router name)))))
   
   (strp/route
     [this path]

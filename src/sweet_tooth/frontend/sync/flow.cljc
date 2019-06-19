@@ -21,7 +21,7 @@
   "Attempts to look up a req-path-fn, falls back on default method for
   getting 'address' of a request in the app-db"
   [[method resource opts :as req]]
-  [method resource (stfr/req-id resource opts)])
+  [method resource (or (::req-id opts) (stfr/req-id resource opts))])
 
 (defn track-new-request
   "Adds a request's state te the app-db and increments the activ request
