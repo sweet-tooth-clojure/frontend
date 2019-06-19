@@ -11,7 +11,7 @@
             [demo.components.home :as h]
             [demo.components.show-topic :as st]))
 
-(def api-routes
+(def sync-routes
   [["/init" :init]
    ["/topic/:id" :topic]])
 

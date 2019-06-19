@@ -35,7 +35,7 @@
 (def system-config
   (merge stconfig/default-config
          {::stsf/sync         {:sync-dispatch-fn (ig/ref ::dsdl/sync)}
-          ::stsdb/req-adapter {:routes routes/api-routes}
+          ::stsdb/req-adapter {:routes routes/sync-routes}
 
           ::dsdl/sync {:delay 1000}
 

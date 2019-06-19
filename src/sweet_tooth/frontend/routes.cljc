@@ -15,7 +15,7 @@
 (s/def ::router (s/keys :req-un [::routes]))
 
 (def frontend-router (atom nil))
-(def api-router (atom nil))
+(def sync-router (atom nil))
 
 (defn path
   [name & [route-params query-params]]
@@ -23,14 +23,14 @@
 
 (defn api-path
   [name & [route-params query-params]]
-  (strp/path @api-router name route-params query-params))
+  (strp/path @sync-router name route-params query-params))
 
 (defn req-id
   [name & [route-params]]
-  (strp/req-id @api-router name route-params))
+  (strp/req-id @sync-router name route-params))
 
 (defmethod ig/init-key ::frontend-router [_ config]
   (reset! frontend-router (strp/router config)))
 
-(defmethod ig/init-key ::api-router [_ config]
-  (reset! api-router (strp/router config)))
+(defmethod ig/init-key ::sync-router [_ config]
+  (reset! sync-router (strp/router config)))

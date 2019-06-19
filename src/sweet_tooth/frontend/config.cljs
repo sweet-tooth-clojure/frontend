@@ -17,7 +17,7 @@
 (def default-config
   {::sth/register-handlers {}
    
-   ::stsf/sync {:router           (ig/ref ::stfr/api-router)
+   ::stsf/sync {:router           (ig/ref ::stfr/sync-router)
                 :sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
    
    ::stsda/sync-dispatch-fn {}
@@ -28,7 +28,7 @@
                    :global-lifecycle       (ig/ref ::stnf/global-lifecycle)}
 
    ::stfr/frontend-router strr/config-defaults
-   ::stfr/api-router      strr/config-defaults
+   ::stfr/sync-router     strr/config-defaults
 
    ::stnf/global-lifecycle stnf/default-global-lifecycle
 
