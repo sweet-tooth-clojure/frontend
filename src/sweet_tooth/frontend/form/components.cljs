@@ -329,7 +329,7 @@
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
-  [partial-form-path & [entity]]
+  [partial-form-path]
   (let [input-opts-fn (partial all-input-opts partial-form-path)]
     {:form-path         partial-form-path
      :form-state        (subscribe [::stff/state partial-form-path])
@@ -343,7 +343,7 @@
      :input             (input-component input-opts-fn)
      :field             (field-component input-opts-fn)
 
-     :sync-state    (subscribe [::stff/sync-state partial-form-path entity])
-     :sync-active?  (subscribe [::stff/sync-active? partial-form-path entity])
-     :sync-success? (subscribe [::stff/sync-success? partial-form-path entity])
-     :sync-fail?    (subscribe [::stff/sync-fail? partial-form-path entity])}))
+     :sync-state    (subscribe [::stff/sync-state partial-form-path])
+     :sync-active?  (subscribe [::stff/sync-active? partial-form-path])
+     :sync-success? (subscribe [::stff/sync-success? partial-form-path])
+     :sync-fail?    (subscribe [::stff/sync-fail? partial-form-path])}))

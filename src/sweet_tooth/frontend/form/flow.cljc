@@ -263,7 +263,7 @@
                                                   form-spec))]})))
 
 (defn sync-state
-  [db [_ [endpoint action] entity]]
+  [db [_ [endpoint action entity]]]
   (stsf/sync-state db [action endpoint {:route-params entity}]))
 
 (rf/reg-sub ::sync-state sync-state)
