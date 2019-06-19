@@ -49,7 +49,7 @@
 
 (reg-sub ::sync-state
   (fn [db [_ endpoint query-id]]
-    (stsf/sync-state db [:get endpoint {:params (:query (pager db query-id))}])))
+    (stsf/sync-state db [:get endpoint {::stsf/req-id query-id}])))
 
 ;;---------
 ;; Helpers
@@ -71,4 +71,5 @@
     (let [page-query (merge page-defaults page-params)]
       {:dispatch-n [[::update-db-page-loading page-query]
                     [::stsf/sync [:get endpoint {:query-params page-query
-                                                 :on-success   (get opts :on-success [::stcf/update-db])}]]]})))
+                                                 :on-success   (get opts :on-success [::stcf/update-db])
+                                                 ::stsf/req-id (:query-id page-query)}]]]})))
