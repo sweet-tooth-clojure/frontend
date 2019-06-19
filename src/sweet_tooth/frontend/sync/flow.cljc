@@ -120,6 +120,12 @@
   (fn [cofx [_ req]]
     (sync-event-fx cofx (add-default-success-handler req))))
 
+(sth/rr rf/reg-event-fx ::sync-once
+  []
+  (fn [cofx [_ req]]
+    (when-not (= :success (sync-state (:db cofx) req))
+      (sync-event-fx cofx (add-default-success-handler req)))))
+
 (sth/rr rf/reg-fx ::dispatch-sync
   (fn [{:keys [dispatch-fn req]}]
     (dispatch-fn req)))
@@ -147,6 +153,12 @@
   [[method endpoint & [opts]]]
   (fn [cofx [call-opts params]]
     {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]}))
+
+(defn sync-once-fx
+  "Returns an effect handler that dispatches a sync event"
+  [[method endpoint & [opts]]]
+  (fn [cofx [call-opts params]]
+    {:dispatch [::sync-once [method endpoint (build-opts opts call-opts params)]]}))
 
 ;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
