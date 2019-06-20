@@ -190,9 +190,6 @@
 ;; ------
 ;; Route change handlers
 ;; ------
-
-(defmulti route-lifecycle :route-name)
-
 (defn can-change-route?
   [db scope {:keys [can-exit? can-change-params?]
              :or   {can-exit?          (constantly true)
@@ -304,7 +301,7 @@
                         :scope     :route
                         :lifecycle (-> db
                                        (get-in (paths/full-path :nav :route))
-                                       route-lifecycle
+                                       :lifecycle
                                        (select-keys [:enter :param-change]))}}))
 
 ;; ------
