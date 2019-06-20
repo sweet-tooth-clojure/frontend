@@ -347,3 +347,9 @@
      :sync-active?  (subscribe [::stff/sync-active? partial-form-path])
      :sync-success? (subscribe [::stff/sync-success? partial-form-path])
      :sync-fail?    (subscribe [::stff/sync-fail? partial-form-path])}))
+
+
+{:params {:user/preferences #{:user-preference/receive-notification-emails}}
+ :on-success [:sweet-tooth.frontend.form.flow/submit-form-success [:form :user :update {:db/id 17592186050508}] {:route-params {:db/id 17592186050508}}]
+ :on-fail [:sweet-tooth.frontend.form.flow/submit-form-error [:form :user :update {:db/id 17592186050508}] {:route-params {:db/id 17592186050508}}]
+ :route-params {:user/preferences #{:user-preference/receive-notification-emails}}}
