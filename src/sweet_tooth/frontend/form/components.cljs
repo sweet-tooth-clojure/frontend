@@ -36,7 +36,7 @@
   (dispatch-sync [::stff/update-attr-errors partial-form-path attr-path validation-fn]))
 
 (defn handle-change
-  "Meant for input fields, where your keystrokes should update the
+  "Meant for input fields where your keystrokes should update the
   field. Gets new value from event."
   [event partial-form-path attr-path]
   (dispatch-change partial-form-path attr-path (u/tv event)))
@@ -75,10 +75,11 @@
 (def field-opts #{:tip :before-input :after-input :after-errors :label :no-label})
 
 ;; react doesn't recognize these and hates them
-(def input-opts #{:attr-buffer :attr-path :attr-errors
+(def input-opts #{:attr-buffer :attr-path :attr-errors :attr-touched?
                   :label :no-label :options
                   :partial-form-path :input-type
-                  :format-read :format-write})
+                  :format-read :format-write
+                  :validate-with})
 
 (defn dissoc-input-opts
   [x]
@@ -91,20 +92,32 @@
 
 (defn framework-input-opts
   [{:keys [partial-form-path attr-path] :as opts}]
-  (merge {:attr-buffer  (subscribe [::stff/attr-buffer partial-form-path attr-path])
-          :attr-errors  (subscribe [::stff/attr-errors partial-form-path attr-path])
-          :format-read  identity
-          :format-write identity}
+  (merge {:attr-buffer   (subscribe [::stff/attr-buffer partial-form-path attr-path])
+          :attr-errors   (subscribe [::stff/attr-errors partial-form-path attr-path])
+          :attr-touched? (subscribe [::stff/attr-touched? partial-form-path attr-path])
+          :format-read   identity
+          :format-write  identity}
          opts))
 
 (defn on-change-fn
-  [{:keys [attr-path partial-form-path format-write]
+  [{:keys [attr-path partial-form-path format-write validate-with attr-touched?]
     :or   {format-write identity}}]
-  #(dispatch-change partial-form-path attr-path (format-write (u/tv %))))
+  (letfn [(dc [e] (dispatch-change partial-form-path attr-path (format-write (u/tv e))))]
+    (if validate-with
+      (fn [e]
+        (dc e)
+        (when @attr-touched?
+          (dispatch-validation partial-form-path attr-path validate-with)))
+      dc)))
 
 (defn on-blur-fn
-  [{:keys [attr-path partial-form-path]}]
-  #(dispatch-touch partial-form-path attr-path))
+  [{:keys [attr-path partial-form-path validate-with]}]
+  (letfn [(dt [& _] (dispatch-touch partial-form-path attr-path))]
+    (if validate-with
+      (fn []
+        (dt)
+        (dispatch-validation partial-form-path attr-path validate-with))
+      dt)))
 
 (defn input-type-opts-default
   [{:keys [form-id attr-path attr-buffer format-read input-type]
@@ -292,10 +305,11 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 (defn all-input-opts
-  [partial-form-path input-type attr-path & [opts]]
+  [partial-form-path formwide-input-opts input-type attr-path & [opts]]
   (-> {:partial-form-path partial-form-path
        :input-type        input-type
        :attr-path         attr-path}
+      (merge formwide-input-opts)
       (merge opts)
       (framework-input-opts)
       (input-type-opts)))
@@ -329,8 +343,8 @@
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
-  [partial-form-path]
-  (let [input-opts-fn (partial all-input-opts partial-form-path)]
+  [partial-form-path & [formwide-input-opts]]
+  (let [input-opts-fn (partial all-input-opts partial-form-path formwide-input-opts)]
     {:form-path         partial-form-path
      :form-state        (subscribe [::stff/state partial-form-path])
      :form-ui-state     (subscribe [::stff/ui-state partial-form-path])
