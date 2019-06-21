@@ -31,6 +31,11 @@
     (fn [form _]
       (get form attr))))
 
+(rf/reg-sub ::state-success?
+  form-signal
+  (fn [form _]
+    (= :success (:state form))))
+
 ;; Value for a specific form attribute
 (defn attr-facet-sub
   [facet]
@@ -60,6 +65,25 @@
      (subscribe [::buffer partial-form-path])])
   (fn [[base data]]
     (not= base data)))
+
+;; sync states
+(defn sync-state
+  [db [_ [endpoint action entity]]]
+  (stsf/sync-state db [action endpoint {:route-params entity}]))
+
+(rf/reg-sub ::sync-state sync-state)
+
+(rf/reg-sub ::sync-active?
+  (fn [db args]
+    (= (sync-state db args) :active)))
+
+(rf/reg-sub ::sync-success?
+  (fn [db args]
+    (= (sync-state db args) :success)))
+
+(rf/reg-sub ::sync-fail?
+  (fn [db args]
+    (= (sync-state db args) :fail)))
 
 ;;------
 ;; Interacting with forms
@@ -261,22 +285,3 @@
                                            data
                                            (merge {:success ::delete-item-success}
                                                   form-spec))]})))
-
-(defn sync-state
-  [db [_ [endpoint action entity]]]
-  (stsf/sync-state db [action endpoint {:route-params entity}]))
-
-(rf/reg-sub ::sync-state sync-state)
-
-(rf/reg-sub ::sync-active?
-  (fn [db args]
-    (= (sync-state db args) :active)))
-
-(rf/reg-sub ::sync-success?
-  (fn [db args]
-    (= (sync-state db args) :success)))
-
-(rf/reg-sub ::sync-fail?
-  (fn [db args]
-    (= (sync-state db args) :fail)))
-

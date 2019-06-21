@@ -13,6 +13,8 @@
         input-opts        'input-opts
         input             'input
         field             'field
+
+        state-success? 'state-success?
         
         sync-state    'sync-state
         sync-active?  'sync-active?
@@ -31,6 +33,8 @@
                    ~input-opts
                    ~input
                    ~field
+
+                   ~state-success?
 
                    ~sync-state
                    ~sync-active?
