@@ -10,7 +10,7 @@
   '[adzerk.boot-test :as boot-test]
   '[boot-tools-deps.core :refer [deps]])
 
-(def +version+ "0.8.0")
+(def +version+ "0.8.1-SNAPSHOT")
 (bootlaces/bootlaces! +version+)
 
 (task-options!
