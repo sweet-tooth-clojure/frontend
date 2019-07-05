@@ -172,17 +172,16 @@
 ;; Used for synthetic navigation events
 (sth/rr rf/reg-event-fx ::navigate
   [rf/trim-v]
-  (fn [cofx [route query]]
-    (let [{:keys [nav-handler history]} (get-in cofx [:db :sweet-tooth/system ::handler])
-          
-          token        (.getToken history)
-          query-string (u/params-to-str (reduce-kv (fn [valid k v]
-                                                     (if v
-                                                       (assoc valid k v)
-                                                       valid)) {} query))
-          with-params  (if (empty? query-string)
-                         route
-                         (str route "?" query-string))]
+  (fn [{:keys [db] :as cofx} [route query]]
+    (let [{:keys [nav-handler history]} (paths/get-path db :system ::handler)
+          token                         (.getToken history)
+          query-string                  (u/params-to-str (reduce-kv (fn [valid k v]
+                                                                      (if v
+                                                                        (assoc valid k v)
+                                                                        valid)) {} query))
+          with-params                   (if (empty? query-string)
+                                          route
+                                          (str route "?" query-string))]
       (if (= token with-params)
         {:dispatch [::update-token with-params :replace]}
         {:dispatch [::update-token with-params :set]}))))
@@ -199,18 +198,18 @@
     (and (can-change-params? db) (can-exit? db))
     (can-change-params? db)))
 
-;; Intercepor that interprets new route, adding a ::route coeffect
 (def process-new-route
+  "Intercepor that interprets new route, adding a ::route coeffect"
   {:id     ::process-new-route
-   :before (fn [ctx]
-             (let [{:keys [db] :as cofx} (:coeffects ctx)
-                   router                (get-in db [:sweet-tooth/system ::handler :router])
-                   path                  (get-in cofx [:event 1])
-                   new-route             (strp/route router path)
-                   existing-route        (get-in db (paths/full-path :nav :route))
-                   scope                 (if (= (:route-name new-route) (:route-name existing-route))
-                                           :params
-                                           :route)
+   :before (fn [{{:keys [db event]} :coeffects
+                 :as                ctx}]
+             (let [router         (paths/get-path db :system ::handler :router)
+                   path           (get event 1)
+                   new-route      (strp/route router path)
+                   existing-route (paths/get-path db :nav :route)
+                   scope          (if (= (:route-name new-route) (:route-name existing-route))
+                                    :params
+                                    :route)
                    
                    new-route-lifecycle      (:lifecycle new-route)
                    existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
@@ -218,7 +217,7 @@
                          {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
                           :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
                                                     (select-keys new-route-lifecycle [:enter :param-change])
-                                                    (get-in db [:sweet-tooth/system ::handler :global-lifecycle]))
+                                                    (paths/get-path db :system ::handler :global-lifecycle))
                           :scope             scope
                           :components        (:components new-route)
                           :route             new-route})))
@@ -243,6 +242,9 @@
   [process-new-route]
   new-route-fx)
 
+;; TODO look into making this configurable
+;; TODO look into defining the flow with data, like
+;; [[:before :route] [:before :params] [:change :route] [:change :params] [:after :params] [:after :route]]
 (sth/rr rf/reg-fx ::route-lifecycle
   (fn [cofx]
     (let [{:keys [lifecycle scope] :as route}      (::route cofx)
@@ -310,9 +312,9 @@
 
 (sth/rr rf/reg-event-fx ::update-token
   [process-new-route]
-  (fn [cofx [_ relative-href op title]]
+  (fn [{:keys [db] :as cofx} [_ relative-href op title]]
     (when-let [fx (new-route-fx cofx)]
-      (assoc fx ::update-token {:history       (get-in cofx [:db :sweet-tooth/system ::handler :history])
+      (assoc fx ::update-token {:history       (paths/get-path db :system ::handler :history)
                                 :relative-href relative-href
                                 :title         title
                                 :op            op}))))
@@ -331,7 +333,7 @@
 (sth/rr rf/reg-event-fx ::before-unload
   []
   (fn [{:keys [db] :as cofx} [_ before-unload-event]]
-    (let [existing-route                          (get-in db (paths/full-path :nav :route))
+    (let [existing-route                          (paths/get-path db :nav :route)
           {:keys [can-unload?]
            :or   {can-unload? (constantly true)}} (when existing-route (:lifecycle existing-route))]
       (when-not (can-unload? db)

@@ -14,7 +14,7 @@
 
 (reg-sub ::form
   (fn [db [_ partial-form-path]]
-    (get-in db (p/full-path :form partial-form-path))))
+    (p/get-path db :form partial-form-path)))
 
 (defn form-signal
   [[_ partial-form-path]]
@@ -102,7 +102,7 @@
   [trim-v]
   (fn [db [partial-form-path attr-path validation-fn]]
     (let [attr-path (u/path attr-path)
-          form-data (get-in db (p/full-path :form partial-form-path :buffer))]
+          form-data (p/get-path db :form partial-form-path :buffer)]
       (assoc-in db
                 (p/full-path :form partial-form-path :errors attr-path)
                 (validation-fn form-data attr-path (get-in form-data attr-path))))))

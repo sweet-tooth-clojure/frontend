@@ -8,6 +8,7 @@
             [sweet-tooth.frontend.core.utils :as stcu]
             [sweet-tooth.frontend.routes :as stfr]
             [sweet-tooth.frontend.routes.protocol :as strp]
+            [sweet-tooth.frontend.paths :as paths]
             [integrant.core :as ig]
             [medley.core :as medley]
             [clojure.data :as data]
@@ -100,7 +101,7 @@
   a) updated db to track a sync request
   b) ::sync effect, to be handled by the ::sync effect handler"
   [{:keys [db] :as cofx} req]
-  (let [{:keys [router sync-dispatch-fn]} (get-in cofx [:db :sweet-tooth/system ::sync])
+  (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
         adapted-req                       (adapt-req req router)]
     (if adapted-req
       {:db             (track-new-request db adapted-req)

@@ -6,7 +6,7 @@
 
 (rf/reg-sub ::ui
   (fn [db [_ & path]]
-    (get-in db (paths/full-path :nav :ui path))))
+    (paths/get-path db :nav :ui path)))
 
 (defn assoc-in-ui
   [db path val]

@@ -28,14 +28,14 @@
 (defn pager
   "Retrieve a query and its results"
   [db query-id]
-  (get-in db (paths/full-path :page query-id)))
+  (paths/get-path db :page query-id))
 
 (reg-sub ::pager (fn [db [_ query-id]] (pager db query-id)))
 
 (reg-sub ::page-data
   (fn [db [_ query-id]]
     (let [{:keys [query result]} (pager db query-id)]
-      (map #(get-in db (paths/full-path :entity (:type query) %))
+      (map #(paths/get-path db :entity (:type query) %)
            (:ordered-ids (get result query))))))
 
 (reg-sub ::page-result

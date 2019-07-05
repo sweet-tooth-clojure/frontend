@@ -25,6 +25,4 @@
 
 (defn routed-entity
   [db entity-key param]
-  (get-in db (paths/full-path :entity
-                              entity-key
-                              (get-in db (paths/full-path :nav :route :params param)))))
+  (paths/get-path db :entity entity-key (paths/get-path db :nav :route :params param)))

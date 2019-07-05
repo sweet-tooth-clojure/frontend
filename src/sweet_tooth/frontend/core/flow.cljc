@@ -36,7 +36,7 @@
   deep-merge)
 
 ;; whereas deep merge will merge new entities with old, this replaces
-;; old entities withnew
+;; old entities with new.
 (sth/rr reg-event-db ::replace-entities
   [trim-v]
   (fn [db [patches]]
@@ -57,7 +57,7 @@
   If no updaters apply, then just merge the patch in."
   [db [db-patches]]
   {:pre [(vector? db-patches)]}
-  (let [updaters     (get-in db [:sweet-tooth/system :sweet-tooth.frontend.core.flow/update-db])
+  (let [updaters     (paths/get-path db :system ::update-db)
         updater-keys (keys updaters)
         updater-fns  (vals updaters)]
     (reduce (fn [db db-patch]
