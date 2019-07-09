@@ -299,12 +299,13 @@
 (sth/rr rf/reg-event-fx ::perform-current-lifecycle
   []
   (fn [{:keys [db] :as cofx} _]
-    {::route-lifecycle {:db     db
-                        ::route {:scope     :route
-                                 :lifecycle (-> db
-                                                (get-in (paths/full-path :nav :route))
-                                                :lifecycle
-                                                (select-keys [:enter :param-change]))}}}))
+    (let [current-route (get-in db (paths/full-path :nav :route))]
+      {::route-lifecycle {:db     db
+                          ::route {:scope     :route
+                                   :lifecycle (-> current-route
+                                                  :lifecycle
+                                                  (select-keys [:enter :param-change]))
+                                   :route     current-route}}})))
 
 ;; ------
 ;; update token
