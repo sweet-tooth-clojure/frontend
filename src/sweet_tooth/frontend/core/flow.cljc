@@ -55,7 +55,7 @@
   of the app-db.
 
   If no updaters apply, then just merge the patch in."
-  [db [db-patches]]
+  [db db-patches]
   {:pre [(vector? db-patches)]}
   (let [updaters     (paths/get-path db :system ::update-db)
         updater-keys (keys updaters)
@@ -70,7 +70,11 @@
             db
             db-patches)))
 
-(sth/rr rf/reg-event-db ::update-db [trim-v] update-db)
+(sth/rr rf/reg-event-db ::update-db
+  [trim-v]
+  (fn [db [db-patches]]
+    (update-db db db-patches)))
+
 
 (defn db-patch-handle-entity
   [db db-patch]

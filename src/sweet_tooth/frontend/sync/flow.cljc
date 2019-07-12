@@ -36,33 +36,23 @@
 ;; dispatch handler wrappers
 ;;------
 (defn sync-finished
-  [db req status]
+  "Update sync bookkeeping"
+  [db [_ req resp]]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state status})
+      (assoc-in [::reqs (req-path req)] {:state (:type resp)})
       (update ::active-request-count dec)))
 
-(defn sync-success
-  [db [_ req]]
-  (sync-finished db req :success))
+(sth/rr rf/reg-event-db ::sync-finished
+  []
+  sync-finished)
 
-(defn sync-fail
-  [db [_ req]]
-  (sync-finished db req :fail))
-
-(defn sync-success-handler
-  [req [handler-key & args :as dispatch-sig]]
-  (fn [resp]
-    (rf/dispatch [::sync-success req resp])
-    (when dispatch-sig
+(defn sync-response-handler
+  "Returns a function to handle sync responses"
+  [req]
+  (fn [{:keys [type] :as resp}]
+    (rf/dispatch [::sync-finished req resp])
+    (when-let [[handler-key & args] (get-in req [2 :on type])]
       (rf/dispatch (into [handler-key resp] args)))))
-
-(defn sync-fail-handler
-  [req [handler-key & args :as dispatch-sig]]
-  (fn [resp]
-    (rf/dispatch [::sync-fail req resp])
-    (when dispatch-sig
-      ;; TODO this is cljs-ajax specific
-      (rf/dispatch (into [handler-key (get-in resp [:response :errors])] args)))))
 
 ;;------
 ;; registrations
@@ -81,10 +71,9 @@
   (fn [db [_ query]]
     (medley/filter-keys (partial stcu/projection? query) (::reqs db))))
 
-(defn add-default-success-handler
+(defn add-default-sync-response-handlers
   [req]
-  (update req 2 (fn [{:keys [on-success] :as opts}]
-                  (if on-success opts (merge opts {:on-success [::default-success-handler req]})))))
+  (update-in req [2 :on :success] #(or % [::default-success-handler req])))
 
 (defn adapt-req
   [[method route-name opts :as res] router]
@@ -99,7 +88,7 @@
 (defn sync-event-fx
   "In response to a sync event, return an effect map of:
   a) updated db to track a sync request
-  b) ::sync effect, to be handled by the ::sync effect handler"
+  b) ::dispatch-sync effect, to be handled by the ::dispatch-sync effect handler"
   [{:keys [db] :as cofx} req]
   (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
         adapted-req                       (adapt-req req router)]
@@ -107,37 +96,35 @@
       {:db             (track-new-request db adapted-req)
        ::dispatch-sync {:dispatch-fn sync-dispatch-fn
                         :req         adapted-req}}
-      (log/warn "sync could not match req" {:req req}))))
+      (log/warn "sync router could not match req" {:req req}))))
 
 (sth/rr rf/reg-event-db ::default-success-handler
   []
-  (fn [db [_ resp req]]
-    (if (vector? resp)
-      (stcf/update-db db [resp])
-      (log/warn "Response was not a vector:" {:resp resp :req (into [] (take 2 req))}))))
+  (fn [db [_ {:keys [response-data]} req]]
+    (if (vector? response-data)
+      (stcf/update-db db [response-data])
+      (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
 
 (sth/rr rf/reg-event-fx ::sync
   []
   (fn [cofx [_ req]]
-    (sync-event-fx cofx (add-default-success-handler req))))
+    (sync-event-fx cofx (add-default-sync-response-handlers req))))
 
 (sth/rr rf/reg-event-fx ::sync-once
   []
   (fn [cofx [_ req]]
     (when-not (= :success (sync-state (:db cofx) req))
-      (sync-event-fx cofx (add-default-success-handler req)))))
+      (sync-event-fx cofx (add-default-sync-response-handlers req)))))
 
 (sth/rr rf/reg-fx ::dispatch-sync
   (fn [{:keys [dispatch-fn req]}]
     (dispatch-fn req)))
 
-(sth/rr rf/reg-event-db ::sync-success
-  []
-  sync-success)
-
-(sth/rr rf/reg-event-db ::sync-fail
-  []
-  sync-fail)
+;; Unwraps response-data for update-db
+(sth/rr rf/reg-event-db ::update-db
+  [rf/trim-v]
+  (fn [db [{:keys [response-data]}]]
+    (stcf/update-db db response-data)))
 
 ;;------
 ;; event helpers

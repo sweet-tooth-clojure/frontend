@@ -4,6 +4,7 @@
             [sweet-tooth.frontend.nav.flow :as stnf]))
 
 (defn loadable-component
+  "Easy way to show appropriate component based on sync and nav load state"
   [sync-state-sub loading-component empty-component loaded-component]
   (let [sync-state @(rf/subscribe sync-state-sub)
         nav-state  @(rf/subscribe [::stnf/nav-state])]

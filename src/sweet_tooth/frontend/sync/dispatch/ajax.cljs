@@ -4,7 +4,8 @@
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.routes.protocol :as strp]
-            [integrant.core :as ig]))
+            [integrant.core :as ig]
+            [clojure.set :as set]))
 
 (def request-methods
   {:query  GET
@@ -27,8 +28,8 @@
 (defn sync-dispatch-fn
   [global-opts]
   (fn [req]
-    (let [[method res {:keys [uri on-success on-fail] :as opts} :as req-sig] (adapt-req req)
-          request-method (get request-methods method)]
+    (let [[method res {:keys [uri] :as opts} :as req-sig] (adapt-req req)
+          request-method                                  (get request-methods method)]
 
       (when-not req-sig
         (timbre/error "could not find route for request"
@@ -39,7 +40,7 @@
       (when-not request-method
         (timbre/error (str "request method did not map to an HTTP request function. valid methods are " (keys request-methods))
                       ::ajax-dispatch-no-request-method
-                      {:req req
+                      {:req    req
                        :method method})
         (throw (js/Error. "Invalid request: no request method found")))
       
@@ -47,8 +48,15 @@
        uri
        (-> global-opts
            (merge opts)
-           (assoc :handler       (stsf/sync-success-handler req on-success))
-           (assoc :error-handler (stsf/sync-fail-handler req on-fail)))))))
+           (assoc :handler       (fn [resp]
+                                   ((stsf/sync-response-handler req)
+                                    {:type          :success
+                                     :response-data resp})))
+           (assoc :error-handler (fn [resp]
+                                   ((stsf/sync-response-handler req)
+                                    (-> resp
+                                        (assoc :type :fail)
+                                        (set/rename-keys {:response :response-data}))))))))))
 
 (defmethod ig/init-key ::sync-dispatch-fn
   [_ {:keys [global-opts]}]

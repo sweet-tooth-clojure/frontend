@@ -166,23 +166,22 @@
 (defn submit-form
   "Returns a request that the sync handler can use
 
-  - `success` and `error` are the handlers for request completion.
+  - `success` and `fail` are the handlers for request completion.
   - `form-spec` is a way to pass on whatevs data to the request 
     completion handler.
-  - the `:request-opts` key of form spec can customize the ajax request"
-  [full-form-path data {:keys [success error params]
+  - the `:sync-opts` key of form spec can customize the sync request"
+  [full-form-path data {:keys [sync-opts success fail]
                         :or   {success ::submit-form-success
-                               error   ::submit-form-error}
+                               fail    ::submit-form-fail}
                         :as   form-spec}]
-  (let [[_ endpoint action route-params] full-form-path
-        payload             (merge params data)]    
+  (let [[_ endpoint action route-params] full-form-path]    
     [action
      (get form-spec :route-name endpoint)
-     (merge {:params       payload
-             :on-success   [success full-form-path form-spec]
-             :on-fail      [error full-form-path form-spec]
-             :route-params (or route-params payload)}
-            (:request-opts form-spec))]))
+     (-> (merge {:params       data
+                 :route-params (or route-params data)}
+                sync-opts)
+         (update-in [:on :success] #(or % [success full-form-path form-spec]))
+         (update-in [:on :fail] #(or % [fail full-form-path form-spec])))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
@@ -194,7 +193,8 @@
                      (assoc-in (conj full-form-path :state) :submitting)
                      (assoc-in (conj full-form-path :errors) nil))
        :dispatch [::stsf/sync (submit-form full-form-path
-                                           (merge (:data form-spec) (get-in db (conj full-form-path :buffer)))
+                                           (merge (:data form-spec)
+                                                  (get-in db (conj full-form-path :buffer)))
                                            form-spec)]})))
 
 (defn success-base
@@ -211,14 +211,15 @@
   TODO investigate useing the `after` interceptor"
   [db-update]
   (fn [{:keys [db]} args]
-    (let [[data full-form-path form-spec] args]
+    (let [[resp full-form-path form-spec] args
+          {:keys [response-data]}         resp]
       (if-let [callback (:callback form-spec)]
         (callback db args))
-      (cond-> {:db (let [updated-db (db-update db args)]
+      (cond-> {:db (let [updated-db (db-update db response-data)]
                      (if (= :all (:clear form-spec))
                        (assoc-in updated-db full-form-path {})
                        (update-in updated-db full-form-path merge
-                                  {:state :success :response data}
+                                  {:state :success :response response-data}
                                   (zipmap (:clear form-spec) (repeat nil)))))}
         (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
                                                                 {:ms       v
@@ -233,15 +234,15 @@
   [trim-v]
   submit-form-success)
 
-(defn submit-form-error
+(defn submit-form-fail
   [db [errors full-form-path form-spec]]
-  (timbre/info "form error:" errors full-form-path)
+  (timbre/info "form submit fail:" errors full-form-path)
   (-> (assoc-in db (conj full-form-path :errors) (or errors {:cause :unknown}))
       (assoc-in (conj full-form-path :state) :sleeping)))
 
-(sth/rr reg-event-db ::submit-form-error
+(sth/rr reg-event-db ::submit-form-fail
   [trim-v]
-  submit-form-error)
+  submit-form-fail)
 
 ;; for cases where you can edit or manipulate many items in a list
 (sth/rr reg-event-fx ::submit-item
