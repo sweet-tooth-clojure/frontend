@@ -16,6 +16,15 @@
    :create POST
    :delete DELETE})
 
+(def fails
+  {400 :bad-request
+   401 :unauthenticated
+   403 :unauthorized
+   404 :not-found
+   405 :method-not-allowed
+   500 :unknown-error
+   503 :service-unavailable})
+
 (defn adapt-req
   [[method route-name opts :as res]]
   (if-let [path (:path opts)]

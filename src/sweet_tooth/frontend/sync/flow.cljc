@@ -51,7 +51,7 @@
   [req]
   (fn [{:keys [type] :as resp}]
     (rf/dispatch [::sync-finished req resp])
-    (when-let [[handler-key & args] (get-in req [2 :on type])]
+    (when-let [[handler-key & args] (get-in req [2 :on type] :fail)]
       (rf/dispatch (into [handler-key resp] args)))))
 
 ;;------
