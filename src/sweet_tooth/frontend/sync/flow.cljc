@@ -57,6 +57,14 @@
 ;;------
 ;; registrations
 ;;------
+(defn default-sync-handlers
+  "Updates request opts to include default handlers, plus adds common
+  args to all handlers"
+  [req-opts handler-defaults & [common-args]]
+  (let [req-opts (or req-opts {:on {}})]
+    (update req-opts :on (fn [handlers]
+                           (->> (merge handler-defaults handlers)
+                                (medley/map-vals #(into (vec %) common-args)))))))
 
 (defn sync-state
   [db req]
@@ -73,7 +81,11 @@
 
 (defn add-default-sync-response-handlers
   [req]
-  (update-in req [2 :on :success] #(or % [::default-success-handler req])))
+  (update req 2
+          default-sync-handlers
+          {:success [::default-success-handler]
+           :fail    [::default-failure-handler]}
+          [req]))
 
 (defn adapt-req
   [[method route-name opts :as res] router]
@@ -99,6 +111,13 @@
       (log/warn "sync router could not match req" {:req req}))))
 
 (sth/rr rf/reg-event-db ::default-success-handler
+  []
+  (fn [db [_ {:keys [response-data]} req]]
+    (if (vector? response-data)
+      (stcf/update-db db [response-data])
+      (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
+
+(sth/rr rf/reg-event-db ::default-failure-handler
   []
   (fn [db [_ {:keys [response-data]} req]]
     (if (vector? response-data)

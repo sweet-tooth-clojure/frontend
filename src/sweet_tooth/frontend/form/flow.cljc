@@ -6,6 +6,7 @@
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.paths :as p]
+            [medley.core :as medley]
             [taoensso.timbre :as timbre]))
 
 ;;------
@@ -171,17 +172,16 @@
     completion handler.
   - the `:sync-opts` key of form spec can customize the sync request"
   [full-form-path data {:keys [sync-opts success fail]
-                        :or   {success ::submit-form-success
-                               fail    ::submit-form-fail}
                         :as   form-spec}]
-  (let [[_ endpoint action route-params] full-form-path]    
+  (let [[_ endpoint action route-params] full-form-path]
     [action
      (get form-spec :route-name endpoint)
      (-> (merge {:params       data
                  :route-params (or route-params data)}
                 sync-opts)
-         (update-in [:on :success] #(or % [success full-form-path form-spec]))
-         (update-in [:on :fail] #(or % [fail full-form-path form-spec])))]))
+         (stsf/default-sync-handlers {:success [::submit-form-success]
+                                      :fail    [::submit-form-fail] }
+                                     [full-form-path form-spec]))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
