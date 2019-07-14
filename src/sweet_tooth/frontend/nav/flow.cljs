@@ -198,9 +198,9 @@
     (and (can-change-params? db) (can-exit? db))
     (can-change-params? db)))
 
-(def process-new-route
+(def process-route-change
   "Intercepor that interprets new route, adding a ::route coeffect"
-  {:id     ::process-new-route
+  {:id     ::process-route-change
    :before (fn [{{:keys [db event]} :coeffects
                  :as                ctx}]
              (let [router         (paths/get-path db :system ::handler :router)
@@ -213,44 +213,45 @@
                    
                    new-route-lifecycle      (:lifecycle new-route)
                    existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
-               (assoc-in ctx [:coeffects ::route]
+               (assoc-in ctx [:coeffects ::route-change]
                          {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
                           :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
                                                     (select-keys new-route-lifecycle [:enter :param-change])
                                                     (paths/get-path db :system ::handler :global-lifecycle))
                           :scope             scope
-                          :route             new-route})))
+                          :old-route         existing-route
+                          :new-route         new-route})))
    :after identity})
 
 ;; ------
 ;; dispatch route
 ;; ------
 
-(defn new-route-fx
-  ([cofx _] (new-route-fx cofx))
+(defn change-route-fx
+  ([cofx _] (change-route-fx cofx))
   ([{:keys [db] :as cofx}]
-   (let [{:keys [can-change-route?] :as route-cofx} (::route cofx)]
+   (let [{:keys [can-change-route?] :as route-change-cofx} (::route-change cofx)]
      (when can-change-route?
-       (let [db (-> (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route]))
+       (let [db (-> (assoc-in db (paths/full-path :nav :route) (:new-route route-change-cofx))
                     (assoc-in (paths/full-path :nav :state) :loading))]
          {:db               db
-          ::route-lifecycle (assoc cofx :db db)})))))
+          ::change-route (assoc cofx :db db)})))))
 
 ;; Default handler for new routes
 (sth/rr rf/reg-event-fx ::dispatch-route
-  [process-new-route]
-  new-route-fx)
+  [process-route-change]
+  change-route-fx)
 
 ;; TODO look into making this configurable
 ;; TODO look into defining the flow with data, like
 ;; [[:before :route] [:before :params] [:change :route] [:change :params] [:after :params] [:after :route]]
-(sth/rr rf/reg-fx ::route-lifecycle
+(sth/rr rf/reg-fx ::change-route
   (fn [cofx]
-    (let [{:keys [lifecycle scope] :as route}      (::route cofx)
+    (let [{:keys [lifecycle scope] :as route-change} (::route-change cofx)
           {:keys [exit before-exit after-exit
                   param-change before-param-change after-param-change
-                  enter before-enter after-enter]} lifecycle
-          route                                    (:route route)]
+                  enter before-enter after-enter]}   lifecycle
+          route                                      (:new-route route-change)]
       (when (= scope :route)
         (when before-exit (before-exit cofx route))
         (when exit (exit cofx route))
@@ -290,8 +291,8 @@
    :after  identity})
 
 (sth/rr rf/reg-event-fx ::dispatch-current
-  [add-current-path process-new-route]
-  new-route-fx)
+  [add-current-path process-route-change]
+  change-route-fx)
 
 ;; force the param change and enter lifecycle methods of the current
 ;; route to run again.
@@ -311,9 +312,9 @@
 ;; ------
 
 (sth/rr rf/reg-event-fx ::update-token
-  [process-new-route]
+  [process-route-change]
   (fn [{:keys [db] :as cofx} [_ relative-href op title]]
-    (when-let [fx (new-route-fx cofx)]
+    (when-let [fx (change-route-fx cofx)]
       (assoc fx ::update-token {:history       (paths/get-path db :system ::handler :history)
                                 :relative-href relative-href
                                 :title         title
