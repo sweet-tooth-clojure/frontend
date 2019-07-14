@@ -219,7 +219,6 @@
                                                     (select-keys new-route-lifecycle [:enter :param-change])
                                                     (paths/get-path db :system ::handler :global-lifecycle))
                           :scope             scope
-                          :components        (:components new-route)
                           :route             new-route})))
    :after identity})
 
@@ -232,7 +231,7 @@
   ([{:keys [db] :as cofx}]
    (let [{:keys [can-change-route?] :as route-cofx} (::route cofx)]
      (when can-change-route?
-       (let [db (-> (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route :components]))
+       (let [db (-> (assoc-in db (paths/full-path :nav) (select-keys route-cofx [:route]))
                     (assoc-in (paths/full-path :nav :state) :loading))]
          {:db               db
           ::route-lifecycle (assoc cofx :db db)})))))
@@ -375,7 +374,7 @@
 
 (rf/reg-sub ::route
   :<- [::nav]
-  (fn [nav_] (:route nav)))
+  (fn [nav _] (:route nav)))
 
 (rf/reg-sub ::nav-state
   :<- [::nav]
@@ -386,9 +385,9 @@
   (fn [nav _] (:params (:route nav))))
 
 (rf/reg-sub ::routed-component
-  :<- [::nav]
-  (fn [nav [_ path]]
-    (get-in nav (u/flatv :components path))))
+  :<- [::route]
+  (fn [route [_ path]]
+    (get-in route (u/flatv :components path))))
 
 (rf/reg-sub ::route-name
   :<- [::nav]
