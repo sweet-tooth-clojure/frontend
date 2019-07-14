@@ -231,7 +231,7 @@
      (when can-change-route?
        (let [db (-> (assoc-in db (paths/full-path :nav :route) (:new-route route-change-cofx))
                     (assoc-in (paths/full-path :nav :state) :loading))]
-         {:db               db
+         {:db            db
           ::change-route (assoc cofx :db db)})))))
 
 ;; Default handler for new routes
@@ -239,6 +239,10 @@
   [process-route-change]
   change-route-fx)
 
+(defn do-route-lifecycle-hooks
+  [hooks cofx new-route old-route]
+  (doseq [hook hooks]
+    (when hook (hook cofx new-route old-route))))
 
 ;; TODO look into defining the flow with data, like
 ;; [[:before :route] [:before :params] [:change :route] [:change :params] [:after :params] [:after :route]]
@@ -250,17 +254,17 @@
                 enter before-enter after-enter]}      (:lifecycle new-route)]
     
     (when (= scope :route)
-      (when before-exit (before-exit cofx new-route old-route))
-      (when exit (exit cofx new-route old-route))
-      (when after-exit (after-exit cofx new-route old-route))
-      
-      (when before-enter (before-enter cofx new-route old-route))
-      (when enter (enter cofx new-route old-route))
-      (when after-enter (after-enter cofx new-route old-route)))
+      (do-route-lifecycle-hooks [before-exit exit after-exit
+                                 before-enter enter after-enter]
+                                cofx
+                                new-route
+                                old-route))
 
-    (when before-param-change (before-param-change cofx new-route old-route))
-    (when param-change (param-change cofx new-route old-route))
-    (when after-param-change (after-param-change cofx new-route old-route)))
+    (do-route-lifecycle-hooks [before-param-change param-change after-param-change]
+                              cofx
+                              new-route
+                              old-route))
+  
   (rf/dispatch [::queue-nav-loaded]))
 
 (sth/rr rf/reg-fx ::change-route change-route)
