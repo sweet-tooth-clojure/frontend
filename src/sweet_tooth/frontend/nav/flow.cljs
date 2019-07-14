@@ -215,9 +215,6 @@
                    existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
                (assoc-in ctx [:coeffects ::route-change]
                          {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
-                          :lifecycle         (merge (select-keys existing-route-lifecycle [:exit])
-                                                    (select-keys new-route-lifecycle [:enter :param-change])
-                                                    (paths/get-path db :system ::handler :global-lifecycle))
                           :scope             scope
                           :old-route         existing-route
                           :new-route         new-route})))
@@ -247,25 +244,23 @@
 ;; [[:before :route] [:before :params] [:change :route] [:change :params] [:after :params] [:after :route]]
 (sth/rr rf/reg-fx ::change-route
   (fn [cofx]
-    (let [{:keys [lifecycle scope] :as route-change} (::route-change cofx)
-          {:keys [exit before-exit after-exit
-                  param-change before-param-change after-param-change
-                  enter before-enter after-enter]}   lifecycle
-          route                                      (:new-route route-change)]
+    (let [{:keys [lifecycle scope old-route new-route]} (::route-change cofx)
+          {:keys [exit before-exit after-exit]}         (:lifecycle old-route)
+          {:keys [param-change before-param-change after-param-change
+                  enter before-enter after-enter]}      (:lifecycle new-route)]
+      
       (when (= scope :route)
-        (when before-exit (before-exit cofx route))
-        (when exit (exit cofx route))
-        (when after-exit (after-exit cofx route))
-        ;; TODO make this configurable: it should be possible for the
-        ;; ui name space to opt in to nav flow lifecycle hooks, as
-        ;; opposed to nav flow having to know about UI
-        (when before-enter (before-enter cofx route))
-        (when enter (enter cofx route))
-        (when after-enter (after-enter cofx route)))
+        (when before-exit (before-exit cofx new-route old-route))
+        (when exit (exit cofx new-route old-route))
+        (when after-exit (after-exit cofx new-route old-route))
+        
+        (when before-enter (before-enter cofx new-route old-route))
+        (when enter (enter cofx new-route old-route))
+        (when after-enter (after-enter cofx new-route old-route)))
 
-      (when before-param-change (before-param-change cofx route))
-      (when param-change (param-change cofx route))
-      (when after-param-change (after-param-change cofx route)))
+      (when before-param-change (before-param-change cofx new-route old-route))
+      (when param-change (param-change cofx new-route old-route))
+      (when after-param-change (after-param-change cofx new-route old-route)))
     (rf/dispatch [::queue-nav-loaded])))
 
 (sth/rr rf/reg-event-fx ::queue-nav-loaded
