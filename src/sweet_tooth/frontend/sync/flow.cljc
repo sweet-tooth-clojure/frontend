@@ -51,8 +51,9 @@
   [req]
   (fn [{:keys [type] :as resp}]
     (rf/dispatch [::sync-finished req resp])
-    (when-let [[handler-key & args] (get-in req [2 :on type] :fail)]
-      (rf/dispatch (into [handler-key resp] args)))))
+    (let [handlers (get-in req [2 :on])]
+      (when-let [[handler-key & args] (or (get handlers type) (:fail handlers))]
+        (rf/dispatch (into [handler-key resp] args))))))
 
 ;;------
 ;; registrations

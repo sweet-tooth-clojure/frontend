@@ -5,7 +5,8 @@
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.routes.protocol :as strp]
             [integrant.core :as ig]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [cognitect.anomalies :as anom]))
 
 (def request-methods
   {:query  GET
@@ -17,13 +18,13 @@
    :delete DELETE})
 
 (def fails
-  {400 :bad-request
-   401 :unauthenticated
-   403 :unauthorized
-   404 :not-found
-   405 :method-not-allowed
-   500 :unknown-error
-   503 :service-unavailable})
+  {400 ::anom/incorrect
+   401 ::anom/forbidden
+   403 ::anom/forbidden
+   404 ::anom/not-found
+   405 ::anom/unsupported
+   500 ::anom/fault
+   503 ::anom/unavailable})
 
 (defn adapt-req
   [[method route-name opts :as res]]
@@ -35,7 +36,9 @@
                                                               :route-params (:route-params opts)})))
 
 (defn sync-dispatch-fn
-  [global-opts]
+  [{:keys [fail-map]
+    :or {fail-map fails}
+    :as global-opts}]
   (fn [req]
     (let [[method res {:keys [uri] :as opts} :as req-sig] (adapt-req req)
           request-method                                  (get request-methods method)]
@@ -64,7 +67,7 @@
            (assoc :error-handler (fn [resp]
                                    ((stsf/sync-response-handler req)
                                     (-> resp
-                                        (assoc :type :fail)
+                                        (assoc :type (get fail-map (:status resp) :fail))
                                         (set/rename-keys {:response :response-data}))))))))))
 
 (defmethod ig/init-key ::sync-dispatch-fn

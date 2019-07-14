@@ -180,7 +180,7 @@
                  :route-params (or route-params data)}
                 sync-opts)
          (stsf/default-sync-handlers {:success [::submit-form-success]
-                                      :fail    [::submit-form-fail] }
+                                      :fail    [::submit-form-fail]}
                                      [full-form-path form-spec]))]))
 
 ;; update db to indicate form's submitting, clear old errors
@@ -235,9 +235,9 @@
   submit-form-success)
 
 (defn submit-form-fail
-  [db [errors full-form-path form-spec]]
-  (timbre/info "form submit fail:" errors full-form-path)
-  (-> (assoc-in db (conj full-form-path :errors) (or errors {:cause :unknown}))
+  [db [{:keys [response-data] :as response} full-form-path form-spec]]
+  (timbre/info "form submit fail:" response full-form-path)
+  (-> (assoc-in db (conj full-form-path :errors) (or (:errors response-data) {:cause :unknown}))
       (assoc-in (conj full-form-path :state) :sleeping)))
 
 (sth/rr reg-event-db ::submit-form-fail
