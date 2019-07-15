@@ -139,15 +139,16 @@
   new page here.
 
   path-exists?: a fn of one argument, a path. Return truthy if this path is handled by the SPA"
-  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload?] :as config}]  
+  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload? global-lifecycle] :as config}]  
   (let [history     (new-history)
         nav-handler (fn [path] (rf/dispatch [dispatch-route-handler path]))]
-    {:nav-handler nav-handler
-     :router      router
-     :history     history
-     :listeners   (cond-> {:document-click (prevent-reload-on-known-path history router reload-same-path?)
-                           :navigate       (dispatch-on-navigate history nav-handler)}
-                    check-can-unload? (assoc :before-unload (handle-unloading)))}))
+    {:nav-handler      nav-handler
+     :router           router
+     :history          history
+     :global-lifecycle global-lifecycle
+     :listeners        (cond-> {:document-click (prevent-reload-on-known-path history router reload-same-path?)
+                                :navigate       (dispatch-on-navigate history nav-handler)}
+                         check-can-unload? (assoc :before-unload (handle-unloading)))}))
 
 (defmethod ig/init-key ::handler
   [_ config]
@@ -203,13 +204,14 @@
   {:id     ::process-route-change
    :before (fn [{{:keys [db event]} :coeffects
                  :as                ctx}]
-             (let [router         (paths/get-path db :system ::handler :router)
-                   path           (get event 1)
-                   new-route      (strp/route router path)
-                   existing-route (paths/get-path db :nav :route)
-                   scope          (if (= (:route-name new-route) (:route-name existing-route))
-                                    :params
-                                    :route)
+             (let [global-lifecycle (paths/get-path db :system ::handler :global-lifecycle)
+                   router           (paths/get-path db :system ::handler :router)
+                   path             (get event 1)
+                   new-route        (strp/route router path)
+                   existing-route   (paths/get-path db :nav :route)
+                   scope            (if (= (:route-name new-route) (:route-name existing-route))
+                                      :params
+                                      :route)
                    
                    new-route-lifecycle      (:lifecycle new-route)
                    existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
@@ -217,7 +219,8 @@
                          {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
                           :scope             scope
                           :old-route         existing-route
-                          :new-route         new-route})))
+                          :new-route         new-route
+                          :global-lifecycle  global-lifecycle})))
    :after identity})
 
 ;; ------
@@ -240,30 +243,32 @@
   change-route-fx)
 
 (defn do-route-lifecycle-hooks
-  [hooks cofx new-route old-route]
-  (doseq [hook hooks]
-    (when hook (hook cofx new-route old-route))))
+  [cofx lifecycle hook-names]
+  (let [{:keys [new-route old-route global-lifecycle]} (::route-change cofx)]
+    (println "GLOBAL LIFECYCLE" global-lifecycle)
+    (doseq [hook-name hook-names]
+      (when-let [hook (or (and (contains? lifecycle hook-name)
+                               (hook-name lifecycle))
+                          (hook-name global-lifecycle))]
+        (hook cofx new-route old-route)))))
 
 ;; TODO look into defining the flow with data, like
 ;; [[:before :route] [:before :params] [:change :route] [:change :params] [:after :params] [:after :route]]
 (defn change-route
   [cofx]
-  (let [{:keys [lifecycle scope old-route new-route]} (::route-change cofx)
-        {:keys [exit before-exit after-exit]}         (:lifecycle old-route)
+  (let [{:keys [scope old-route new-route]}      (::route-change cofx)
+        {:keys [exit before-exit after-exit]}    (:lifecycle old-route)
         {:keys [param-change before-param-change after-param-change
-                enter before-enter after-enter]}      (:lifecycle new-route)]
+                enter before-enter after-enter]} (:lifecycle new-route)]
     
     (when (= scope :route)
-      (do-route-lifecycle-hooks [before-exit exit after-exit
-                                 before-enter enter after-enter]
-                                cofx
-                                new-route
-                                old-route))
+      (do-route-lifecycle-hooks cofx (:lifecycle old-route)
+                                [:before-exit :exit :after-exit])
+      (do-route-lifecycle-hooks cofx (:lifecycle new-route)
+                                [:before-enter :enter :after-enter]))
 
-    (do-route-lifecycle-hooks [before-param-change param-change after-param-change]
-                              cofx
-                              new-route
-                              old-route))
+    (do-route-lifecycle-hooks cofx (:lifecycle new-route)
+                              [:before-param-change :param-change :after-param-change]))
   
   (rf/dispatch [::queue-nav-loaded]))
 
