@@ -7,6 +7,7 @@
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
+            [sweet-tooth.frontend.nav.accountant :as accountant]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.handlers :as sth]
@@ -18,113 +19,6 @@
            goog.history.Html5History
            goog.Uri))
 
-(def app-updated-token? (atom false))
-
-(defn- transformer-create-url
-  [token path-prefix location]
-  (str path-prefix token))
-
-(defn- transformer-retrieve-token
-  [path-prefix location]
-  (str (.-pathname location) (.-search location) (.-hash location)))
-
-(defn new-history
-  []
-  (let [transformer (goog.history.Html5History.TokenTransformer.)]
-    (set! (.. transformer -retrieveToken) transformer-retrieve-token)
-    (set! (.. transformer -createUrl) transformer-create-url)
-    (doto (Html5History. js/window transformer)
-      (.setUseFragment false)
-      (.setPathPrefix "")
-      (.setEnabled true))))
-
-(defn- dispatch-on-navigate
-  [history nav-handler]
-  (events/listen
-    history
-    EventType/NAVIGATE
-    (fn [e]
-      (if-not @app-updated-token?
-        (let [token (.-token e)]
-          (nav-handler token))
-        (reset! app-updated-token? false)))))
-
-(defn- get-href-attribute
-  "Given a DOM node, if it is an element node, return its href attribute.
-  Otherwise, return nil."
-  [node]
-  (when (and node (= (.-nodeType node) js/Node.ELEMENT_NODE))
-    (.getAttribute node "href")))
-
-(defn- find-href-node
-  "Given a DOM element that may or may not be a link, traverse up the DOM tree
-  to see if any of its parents are links. If so, return the href content, if
-  it does not have an explicit `data-trigger` attribute to signify a non-navigational
-  link element."
-  [e]
-  (let [href (get-href-attribute e)
-        attrs (.-attributes e)
-        navigation-link? (and href attrs (-> attrs (aget "data-trigger") not))]
-    (if navigation-link?
-      e
-      (when-let [parent (.-parentNode e)]
-        (recur parent)))))
-
-(defn- uri->query [uri]
-  (let [query (.getQuery uri)]
-    (when-not (empty? query)
-      (str "?" query))))
-
-(defn- uri->fragment [uri]
-  (let [fragment (.getFragment uri)]
-    (when-not (empty? fragment)
-      (str "#" fragment))))
-
-(defn- prevent-reload-on-known-path
-  "Create a click handler that blocks page reloads for known routes"
-  [history router reload-same-path?]
-  (events/listen
-    js/document
-    "click"
-    (fn [e]
-      (let [target (.-target e)
-            button (.-button e)
-            meta-key (.-metaKey e)
-            alt-key (.-altKey e)
-            ctrl-key (.-ctrlKey e)
-            shift-key (.-shiftKey e)
-            any-key (or meta-key alt-key ctrl-key shift-key)
-            href-node (find-href-node target)
-            href (when href-node (.-href href-node))
-            link-target (when href-node (.-target href-node))
-            uri (.parse Uri href)
-            path (.getPath uri)
-            query (uri->query uri)
-            fragment (uri->fragment uri)
-            relative-href (str path query fragment)
-            title (.-title target)
-            host (.getDomain uri)
-            port (.getPort uri)
-            current-host js/window.location.hostname
-            current-port js/window.location.port
-            loc js/window.location
-            current-relative-href (str (.-pathname loc)
-                                       (or (.-query loc) (.-search loc))
-                                       (.-hash loc))]
-        (when (and (not any-key)
-                   (#{"" "_self"} link-target)
-                   (= button 0)
-                   (= host current-host)
-                   (or (not port)
-                       (= (str port) (str current-port)))
-                   (strp/route router path))
-          (when (not= current-relative-href relative-href) ;; do not add duplicate html5 history state
-            (rf/dispatch [::update-token relative-href :set title]))
-          (.preventDefault e)
-          (.stopPropagation e)
-          (when reload-same-path?
-            (events/dispatchEvent history (Event. path true))))))))
-
 (defn- handle-unloading
   []
   (let [listener (fn [e] (rf/dispatch-sync [::before-unload e]))]
@@ -132,22 +26,21 @@
     listener))
 
 (defn init-handler
-  "Create and configure HTML5 history navigation.
-
-  nav-handler: a fn of one argument, a path. Called when we've decided
-  to navigate to another page. You'll want to make your app draw the
-  new page here.
-
-  path-exists?: a fn of one argument, a path. Return truthy if this path is handled by the SPA"
+  "Configures accountant, window unloading, keeps track of event
+  handlers for integrant teardown"
   [{:keys [router dispatch-route-handler reload-same-path? check-can-unload? global-lifecycle] :as config}]  
-  (let [history     (new-history)
-        nav-handler (fn [path] (rf/dispatch [dispatch-route-handler path]))]
-    {:nav-handler      nav-handler
-     :router           router
+  (let [history      (accountant/new-history)
+        nav-handler  (fn [path] (rf/dispatch [dispatch-route-handler path]))
+        update-token (fn [relative-href title] (rf/dispatch [::update-token relative-href :set title]))
+        path-exists? #(strp/route router %)]
+    {:router           router
      :history          history
      :global-lifecycle global-lifecycle
-     :listeners        (cond-> {:document-click (prevent-reload-on-known-path history router reload-same-path?)
-                                :navigate       (dispatch-on-navigate history nav-handler)}
+     :listeners        (cond-> {:document-click (accountant/prevent-reload-on-known-path history
+                                                                                         path-exists?
+                                                                                         reload-same-path?
+                                                                                         update-token)
+                                :navigate       (accountant/dispatch-on-navigate history nav-handler)}
                          check-can-unload? (assoc :before-unload (handle-unloading)))}))
 
 (defmethod ig/init-key ::handler
@@ -158,7 +51,7 @@
   "Teardown HTML5 history navigation.
 
   Undoes all of the stateful changes, including unlistening to events,
-  that are setup as part of the call to `configure-navigation!`."
+  that are setup when init'd"
   [handler]
   (.dispose (:history handler))
   (doseq [key (vals (select-keys (:listeners handler) [:document-click :navigate]))]
@@ -174,15 +67,17 @@
 (sth/rr rf/reg-event-fx ::navigate
   [rf/trim-v]
   (fn [{:keys [db] :as cofx} [route query]]
-    (let [{:keys [nav-handler history]} (paths/get-path db :system ::handler)
-          token                         (.getToken history)
-          query-string                  (u/params-to-str (reduce-kv (fn [valid k v]
-                                                                      (if v
-                                                                        (assoc valid k v)
-                                                                        valid)) {} query))
-          with-params                   (if (empty? query-string)
-                                          route
-                                          (str route "?" query-string))]
+    (let [{:keys [history]} (paths/get-path db :system ::handler)
+          token             (.getToken history)
+          query-string      (u/params-to-str (reduce-kv (fn [valid k v]
+                                                          (if v
+                                                            (assoc valid k v)
+                                                            valid))
+                                                        {}
+                                                        query))
+          with-params       (if (empty? query-string)
+                              route
+                              (str route "?" query-string))]
       (if (= token with-params)
         {:dispatch [::update-token with-params :replace]}
         {:dispatch [::update-token with-params :set]}))))
@@ -200,7 +95,7 @@
     (can-change-params? db)))
 
 (def process-route-change
-  "Intercepor that interprets new route, adding a ::route coeffect"
+  "Intercepor that interprets new route, adding a ::route-change coeffect"
   {:id     ::process-route-change
    :before (fn [{{:keys [db event]} :coeffects
                  :as                ctx}]
@@ -228,11 +123,14 @@
 ;; ------
 
 (defn change-route-fx
+  "Generates :db effect with with the new route and produces
+  the ::change-route effect"
   ([cofx _] (change-route-fx cofx))
   ([{:keys [db] :as cofx}]
    (let [{:keys [can-change-route?] :as route-change-cofx} (::route-change cofx)]
      (when can-change-route?
-       (let [db (-> (assoc-in db (paths/full-path :nav :route) (:new-route route-change-cofx))
+       (let [db (-> db
+                    (assoc-in (paths/full-path :nav :route) (:new-route route-change-cofx))
                     (assoc-in (paths/full-path :nav :state) :loading))]
          {:db            db
           ::change-route (assoc cofx :db db)})))))
@@ -245,7 +143,6 @@
 (defn do-route-lifecycle-hooks
   [cofx lifecycle hook-names]
   (let [{:keys [new-route old-route global-lifecycle]} (::route-change cofx)]
-    (println "GLOBAL LIFECYCLE" global-lifecycle)
     (doseq [hook-name hook-names]
       (when-let [hook (or (and (contains? lifecycle hook-name)
                                (hook-name lifecycle))
@@ -328,7 +225,7 @@
 
 (sth/rr rf/reg-fx ::update-token
   (fn [{:keys [op history relative-href title]}]
-    (reset! app-updated-token? true)
+    (reset! accountant/app-updated-token? true)
     (if (= op :replace)
       (. history (replaceToken relative-href title))
       (. history (setToken relative-href title)))))
@@ -397,8 +294,8 @@
     (get-in route (u/flatv :components path))))
 
 (rf/reg-sub ::route-name
-  :<- [::nav]
-  (fn [nav _] (get-in nav [:route :route-name])))
+  :<- [::route]
+  (fn [route _] (:route-name route)))
 
 (rf/reg-sub ::routed-entity
   (fn [db [entity-key param]]
