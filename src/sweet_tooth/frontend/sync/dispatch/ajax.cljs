@@ -27,6 +27,8 @@
    503 ::anom/unavailable})
 
 (defn adapt-req
+  "Adapts the req opts as passed in by sync so that they'll work with
+  cljs-ajax"
   [[method route-name opts :as res]]
   (if-let [path (:path opts)]
     [method route-name (-> opts

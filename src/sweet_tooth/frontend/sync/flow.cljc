@@ -115,14 +115,14 @@
   []
   (fn [db [_ {:keys [response-data]} req]]
     (if (vector? response-data)
-      (stcf/update-db db [response-data])
+      (stcf/update-db db response-data)
       (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
 
 (sth/rr rf/reg-event-db ::default-failure-handler
   []
   (fn [db [_ {:keys [response-data]} req]]
     (if (vector? response-data)
-      (stcf/update-db db [response-data])
+      (stcf/update-db db response-data)
       (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
 
 (sth/rr rf/reg-event-fx ::sync
@@ -145,6 +145,11 @@
   [rf/trim-v]
   (fn [db [{:keys [response-data]}]]
     (stcf/update-db db response-data)))
+
+(sth/rr rf/reg-event-db ::replace-entities
+  [rf/trim-v]
+  (fn [db [{:keys [response-data]}]]
+    (stcf/replace-entities db response-data)))
 
 ;;------
 ;; event helpers

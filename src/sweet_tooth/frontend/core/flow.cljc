@@ -35,18 +35,22 @@
   [trim-v]
   deep-merge)
 
-;; whereas deep merge will merge new entities with old, this replaces
-;; old entities with new.
+(defn replace-entities
+  "whereas deep merge will merge new entities with old, this replaces
+  old entities with new."
+  [db patches]
+  (reduce (fn [db patch]
+            (reduce-kv (fn [db entity-type entities]
+                         (update-in db (paths/full-path :entity entity-type) merge entities))
+                       db
+                       (:entity patch)))
+          db
+          patches))
+
 (sth/rr reg-event-db ::replace-entities
   [trim-v]
   (fn [db [patches]]
-    (reduce (fn [db patch]
-              (reduce-kv (fn [db entity-type entities]
-                           (update-in db (paths/full-path :entity entity-type) merge entities))
-                         db
-                         (:entity patch)))
-            db
-            patches)))
+    (replace-entities db patches)))
 
 (defn update-db
   "Takes a db and a vector of db-patches, and applies those patches to
