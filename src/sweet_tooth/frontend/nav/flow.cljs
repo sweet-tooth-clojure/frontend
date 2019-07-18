@@ -301,7 +301,7 @@
   (fn [db [entity-key param]]
     (stnu/routed-entity db entity-key param)))
 
-;; uses value of param-key to form request signature
+;; uses routed path params to get sync state
 (rf/reg-sub ::route-sync-state
-  (fn [db [_ path-prefix param-key]]
-    (stsf/sync-state db (conj path-prefix (-> db nav :route :path-params)))))
+  (fn [db [_ path-prefix]]
+    (stsf/sync-state db (conj path-prefix (-> db nav :route :params)))))

@@ -19,8 +19,7 @@
 ;; request tracking
 ;;--------------------
 (defn req-path
-  "Attempts to look up a req-path-fn, falls back on default method for
-  getting 'address' of a request in the app-db"
+  "returns a 'normalized' req path for a request"
   [[method resource opts :as req]]
   [method resource (or (::req-id opts) (stfr/req-id resource opts))])
 
