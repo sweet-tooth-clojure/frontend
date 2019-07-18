@@ -163,7 +163,7 @@
 (defn toggle-set-membership
   [s v]
   (let [new-s ((if (s v) disj conj) s v)]
-    (if (empty? new-s) nil new-s)))
+    (if (empty? new-s) #{} new-s)))
 
 (defmethod input-type-opts :checkbox-set
   [{:keys [attr-buffer partial-form-path attr-path value format-read] :as opts}]

@@ -46,15 +46,21 @@
   []
   sync-finished)
 
+(defn dispatch-lifecycle
+  [resp stage lifecycle-name fallback-lifecycle-name]
+  (when-let [dispatch-sig (or (get stage lifecycle-name)
+                              (get stage fallback-lifecycle-name))]
+    (rf/dispatch (conj dispatch-sig (with-meta resp {:sweet-tooth true ::resp true})))))
+
 (defn sync-response-handler
   "Returns a function to handle sync responses"
   [req]
   (fn [{:keys [type] :as resp}]
     (rf/dispatch [::sync-finished req resp])
-    (let [handlers (get-in req [2 :on])]
-      (if-let [dispatch-sig (or (get handlers type) (:fail handlers))]
-        (rf/dispatch (conj dispatch-sig (with-meta resp {:sweet-tooth true ::resp true})))
-        (log/warn "could not find handler for response" {:req req :response-type type})))))
+    (let [{:keys [bf on af]} (get req 2)]
+      (dispatch-lifecycle resp bf type :fail)
+      (dispatch-lifecycle resp on type :fail)
+      (dispatch-lifecycle resp af type :fail))))
 
 ;;------
 ;; registrations

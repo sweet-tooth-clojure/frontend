@@ -132,7 +132,7 @@
   [db [partial-form-path {:keys [buffer] :as form}]]
   (assoc-in db
             (p/full-path :form partial-form-path)
-            (update form :base #(if % % buffer))))
+            (update form :base #(or % buffer))))
 
 ;; Populate form initial state
 (sth/rr reg-event-db ::initialize-form
