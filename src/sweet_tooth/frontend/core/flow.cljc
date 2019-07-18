@@ -79,7 +79,6 @@
   (fn [db [db-patches]]
     (update-db db db-patches)))
 
-
 (defn db-patch-handle-entity
   [db db-patch]
   (let [entity-prefix (paths/prefix :entity)]

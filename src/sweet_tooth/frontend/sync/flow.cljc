@@ -52,8 +52,9 @@
   (fn [{:keys [type] :as resp}]
     (rf/dispatch [::sync-finished req resp])
     (let [handlers (get-in req [2 :on])]
-      (when-let [[handler-key & args] (or (get handlers type) (:fail handlers))]
-        (rf/dispatch (into [handler-key resp] args))))))
+      (if-let [dispatch-sig (or (get handlers type) (:fail handlers))]
+        (rf/dispatch (conj dispatch-sig (with-meta resp {:sweet-tooth true ::resp true})))
+        (log/warn "could not find handler for response" {:req req :response-type type})))))
 
 ;;------
 ;; registrations
@@ -84,9 +85,9 @@
   [req]
   (update req 2
           default-sync-handlers
-          {:success [::default-success-handler]
-           :fail    [::default-failure-handler]}
-          [req]))
+          {:success [::default-sync-response-handler]
+           :fail    [::default-sync-response-handler]}
+          [(with-meta req {:sweet-tooth true ::req true})]))
 
 (defn adapt-req
   [[method route-name opts :as res] router]
@@ -98,57 +99,58 @@
                              (:query-params opts))]
     [method route-name (assoc opts :path path)]))
 
+(sth/rr rf/reg-event-db ::default-sync-response-handler
+  [rf/trim-v]
+  (fn [db [req {:keys [response-data]}]]
+    (if (vector? response-data)
+      (stcf/update-db db response-data)
+      (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
+
+;;-----------------------
+;; dispatch sync requests
+;;-----------------------
 (defn sync-event-fx
   "In response to a sync event, return an effect map of:
   a) updated db to track a sync request
   b) ::dispatch-sync effect, to be handled by the ::dispatch-sync effect handler"
   [{:keys [db] :as cofx} req]
   (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
-        adapted-req                       (adapt-req req router)]
+        adapted-req                       (-> req
+                                              (add-default-sync-response-handlers)
+                                              (adapt-req router))]
     (if adapted-req
       {:db             (track-new-request db adapted-req)
        ::dispatch-sync {:dispatch-fn sync-dispatch-fn
                         :req         adapted-req}}
       (log/warn "sync router could not match req" {:req req}))))
 
-(sth/rr rf/reg-event-db ::default-success-handler
-  []
-  (fn [db [_ {:keys [response-data]} req]]
-    (if (vector? response-data)
-      (stcf/update-db db response-data)
-      (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
-
-(sth/rr rf/reg-event-db ::default-failure-handler
-  []
-  (fn [db [_ {:keys [response-data]} req]]
-    (if (vector? response-data)
-      (stcf/update-db db response-data)
-      (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
-
 (sth/rr rf/reg-event-fx ::sync
   []
   (fn [cofx [_ req]]
-    (sync-event-fx cofx (add-default-sync-response-handlers req))))
+    (sync-event-fx cofx req)))
 
 (sth/rr rf/reg-event-fx ::sync-once
   []
   (fn [cofx [_ req]]
     (when-not (= :success (sync-state (:db cofx) req))
-      (sync-event-fx cofx (add-default-sync-response-handlers req)))))
+      (sync-event-fx cofx req))))
 
 (sth/rr rf/reg-fx ::dispatch-sync
   (fn [{:keys [dispatch-fn req]}]
     (dispatch-fn req)))
 
+;;---------------
+;; sync responses
+;;---------------
 ;; Unwraps response-data for update-db
 (sth/rr rf/reg-event-db ::update-db
   [rf/trim-v]
-  (fn [db [{:keys [response-data]}]]
+  (fn [db [_ {:keys [response-data]}]]
     (stcf/update-db db response-data)))
 
 (sth/rr rf/reg-event-db ::replace-entities
   [rf/trim-v]
-  (fn [db [{:keys [response-data]}]]
+  (fn [db [_ {:keys [response-data]}]]
     (stcf/replace-entities db response-data)))
 
 ;;------

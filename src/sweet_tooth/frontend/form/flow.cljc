@@ -181,7 +181,8 @@
                 sync-opts)
          (stsf/default-sync-handlers {:success [::submit-form-success]
                                       :fail    [::submit-form-fail]}
-                                     [full-form-path form-spec]))]))
+                                     [(with-meta full-form-path {:sweet-tooth true ::full-form-path true})
+                                      (with-meta form-spec {:sweet-tooth true ::form-spec true})]))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
@@ -210,9 +211,8 @@
 
   TODO investigate useing the `after` interceptor"
   [db-update]
-  (fn [{:keys [db]} args]
-    (let [[resp full-form-path form-spec] args
-          {:keys [response-data]}         resp]
+  (fn [{:keys [db]} [full-form-path form-spec _ resp :as args]]
+    (let [{:keys [response-data]} resp]
       (if-let [callback (:callback form-spec)]
         (callback db args))
       (cond-> {:db (let [updated-db (db-update db response-data)]
@@ -235,7 +235,7 @@
   submit-form-success)
 
 (defn submit-form-fail
-  [db [{:keys [response-data] :as response} full-form-path form-spec]]
+  [db [full-form-path form-spec _ {:keys [response-data] :as response}]]
   (timbre/info "form submit fail:" response full-form-path)
   (-> (assoc-in db (conj full-form-path :errors) (or (:errors response-data) {:cause :unknown}))
       (assoc-in (conj full-form-path :state) :sleeping)))
