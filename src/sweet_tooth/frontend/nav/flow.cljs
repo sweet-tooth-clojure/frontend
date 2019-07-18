@@ -10,6 +10,7 @@
             [sweet-tooth.frontend.nav.accountant :as accountant]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
+            [sweet-tooth.frontend.core.compose :as stcc]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.nav.ui.flow :as stnuf]
             [sweet-tooth.frontend.nav.utils :as stnu]
@@ -121,10 +122,31 @@
 ;; ------
 ;; dispatch route
 ;; ------
+(defn compose-route-lifecycle
+  [cofx lifecycle hook-names fx]
+  (let [{:keys [new-route old-route global-lifecycle]} (::route-change cofx)]
+    (->> hook-names
+         (map (fn [hook-name]
+                (when-let [hook (or (and (contains? lifecycle hook-name)
+                                         (hook-name lifecycle))
+                                    (hook-name global-lifecycle))]
+                  (if (fn? hook)
+                    (hook cofx new-route old-route)
+                    hook))))
+         (filter identity)
+         (into fx))))
+
+(defn route-effects
+  [cofx]
+  (let [{:keys [scope old-route new-route]} (::route-change cofx)]
+    (cond->> []
+      (= scope :route) (compose-route-lifecycle cofx (:lifecycle old-route) [:before-exit :exit :after-exit])
+      (= scope :route) (compose-route-lifecycle cofx (:lifecycle new-route) [:before-enter :enter :after-enter])
+      true             (compose-route-lifecycle cofx (:lifecycle new-route) [:before-param-change :param-change :after-param-change])
+      true             (into [{:dispatch-later [{:ms 0 :dispatch [::nav-loaded]}]}]))))
 
 (defn change-route-fx
-  "Generates :db effect with with the new route and produces
-  the ::change-route effect"
+  "Composes all effects returned by lifecycle methods"
   ([cofx _] (change-route-fx cofx))
   ([{:keys [db] :as cofx}]
    (let [{:keys [can-change-route?] :as route-change-cofx} (::route-change cofx)]
@@ -132,48 +154,13 @@
        (let [db (-> db
                     (assoc-in (paths/full-path :nav :route) (:new-route route-change-cofx))
                     (assoc-in (paths/full-path :nav :state) :loading))]
-         {:db            db
-          ::change-route (assoc cofx :db db)})))))
+         (let [updated-cofx (assoc cofx :db db)]
+           (stcc/compose-fx (into [{:db db}] (route-effects updated-cofx)))))))))
 
 ;; Default handler for new routes
 (sth/rr rf/reg-event-fx ::dispatch-route
   [process-route-change]
   change-route-fx)
-
-(defn do-route-lifecycle-hooks
-  [cofx lifecycle hook-names]
-  (let [{:keys [new-route old-route global-lifecycle]} (::route-change cofx)]
-    (doseq [hook-name hook-names]
-      (when-let [hook (or (and (contains? lifecycle hook-name)
-                               (hook-name lifecycle))
-                          (hook-name global-lifecycle))]
-        (hook cofx new-route old-route)))))
-
-;; TODO look into defining the flow with data, like
-;; [[:before :route] [:before :params] [:change :route] [:change :params] [:after :params] [:after :route]]
-(defn change-route
-  [cofx]
-  (let [{:keys [scope old-route new-route]}      (::route-change cofx)
-        {:keys [exit before-exit after-exit]}    (:lifecycle old-route)
-        {:keys [param-change before-param-change after-param-change
-                enter before-enter after-enter]} (:lifecycle new-route)]
-    
-    (when (= scope :route)
-      (do-route-lifecycle-hooks cofx (:lifecycle old-route)
-                                [:before-exit :exit :after-exit])
-      (do-route-lifecycle-hooks cofx (:lifecycle new-route)
-                                [:before-enter :enter :after-enter]))
-
-    (do-route-lifecycle-hooks cofx (:lifecycle new-route)
-                              [:before-param-change :param-change :after-param-change]))
-  
-  (rf/dispatch [::queue-nav-loaded]))
-
-(sth/rr rf/reg-fx ::change-route change-route)
-
-(sth/rr rf/reg-event-fx ::queue-nav-loaded
-  [rf/trim-v]
-  (constantly {:dispatch-later [{:ms 0 :dispatch [::nav-loaded]}]}))
 
 (sth/rr rf/reg-event-db ::nav-loaded
   [rf/trim-v]
@@ -214,6 +201,7 @@
 ;; update token
 ;; ------
 
+;; TODO figure out when this is actually used...
 (sth/rr rf/reg-event-fx ::update-token
   [process-route-change]
   (fn [{:keys [db] :as cofx} [_ relative-href op title]]
@@ -256,9 +244,9 @@
 (def default-global-lifecycle
   {:before-exit         nil
    :after-exit          nil
-   :before-enter        #(rf/dispatch [::stnuf/clear :route])
+   :before-enter        (constantly [::stnuf/clear :route])
    :after-enter         nil
-   :before-param-change #(rf/dispatch [::stnuf/clear :params]) 
+   :before-param-change (constantly [::stnuf/clear :params]) 
    :after-param-change  nil})
 
 (defmethod ig/init-key ::global-lifecycle [_ lifecycle]
