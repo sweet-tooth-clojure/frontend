@@ -6,6 +6,7 @@
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as stcf]
             [sweet-tooth.frontend.core.utils :as stcu]
+            [sweet-tooth.frontend.core.compose :as stcc]
             [sweet-tooth.frontend.routes :as stfr]
             [sweet-tooth.frontend.routes.protocol :as strp]
             [sweet-tooth.frontend.paths :as paths]
@@ -45,21 +46,23 @@
   []
   sync-finished)
 
-(defn dispatch-lifecycle
-  [resp stage lifecycle-name fallback-lifecycle-name]
-  (when-let [dispatch-sig (or (get stage lifecycle-name)
-                              (get stage fallback-lifecycle-name))]
-    (rf/dispatch (conj dispatch-sig (with-meta resp {:sweet-tooth true ::resp true})))))
+(defn compose-lifecycle
+  [resp stage lifecycle-name fallback-lifecycle-name fx]
+  (if-let [dispatch-sig (or (get stage lifecycle-name)
+                            (get stage fallback-lifecycle-name))]
+    (conj fx (conj dispatch-sig (with-meta resp {:sweet-tooth true ::resp true})))
+    fx))
 
 (defn sync-response-handler
   "Returns a function to handle sync responses"
   [req]
   (fn [{:keys [type] :as resp}]
-    (rf/dispatch [::sync-finished req resp])
     (let [{:keys [bf on af]} (get req 2)]
-      (dispatch-lifecycle resp bf type :fail)
-      (dispatch-lifecycle resp on type :fail)
-      (dispatch-lifecycle resp af type :fail))))
+      (rf/dispatch [::stcc/compose-dispatch
+                    (->> [[::sync-finished req resp]]
+                         (compose-lifecycle resp bf type :fail)
+                         (compose-lifecycle resp on type :fail)
+                         (compose-lifecycle resp af type :fail))]))))
 
 ;;------
 ;; registrations
