@@ -1,4 +1,6 @@
 (ns sweet-tooth.frontend.js-event-handlers.flow
+  "Treat handler registration as an external service, interact with it
+  via re-frame effects"
   (:require [re-frame.core :as rf]
             [taoensso.timbre :as timbre]
             [sweet-tooth.frontend.handlers :as sth]
