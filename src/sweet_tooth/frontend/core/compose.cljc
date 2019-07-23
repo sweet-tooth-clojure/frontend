@@ -36,7 +36,7 @@
   (cond (= sugar-type :effect)            [conformed]
         (= sugar-type :dispatch)          [{:dispatch-n [conformed]}]
         (= sugar-type :dispatch-later-el) [{:dispatch-later [conformed]}]
-        (= sugar-type :dispatch-sugar)    (mapv sugar-conformance->effectv conformed)))
+        (= sugar-type :dispatch-sugar)    (mapv (comp first sugar-conformance->effectv) conformed)))
 
 (defn effect-sugar->effectv
   [effect-sugar]
