@@ -21,8 +21,10 @@
   [page-count current-page window-size]
   (let [central-range (window page-count current-page window-size)]
     (cond->> central-range
-      (not= (first central-range) 1)         (into [1 nil])
-      (not= (last central-range) page-count) (#(into % [nil page-count])))))
+      (> (first central-range) 2)              (into [nil])
+      (not= (first central-range) 1)           (into [1])
+      (< (last central-range)(dec page-count)) (#(into % [nil]))
+      (not= (last central-range) page-count)   (#(into % [page-count])))))
 
 (defn page-nav
   "A component that displays a link to each page. Current page has the
