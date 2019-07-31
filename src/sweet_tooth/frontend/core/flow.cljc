@@ -39,13 +39,12 @@
   "whereas deep merge will merge new entities with old, this replaces
   old entities with new."
   [db patches]
-  (reduce (fn [db patch]
-            (reduce-kv (fn [db entity-type entities]
-                         (update-in db (paths/full-path :entity entity-type) merge entities))
-                       db
-                       (:entity patch)))
-          db
-          patches))
+  (->> patches
+       (filter #(= :entity (first %)))
+       (map second)
+       (reduce (fn [db patch]
+                 (update-in db (paths/full-path :entity) (partial merge-with merge) patch))
+               db)))
 
 (sth/rr reg-event-db ::replace-entities
   [trim-v]
