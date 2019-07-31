@@ -63,7 +63,9 @@
   {:pre [(vector? db-patches)]}
   (let [updaters (paths/get-path db :system ::update-db)]
     (reduce (fn [db [patch-key patch-val]]
-              ((get updaters patch-key) db patch-val))
+              (if-let [updater (get updaters patch-key)]
+                (updater db patch-val)
+                (throw (ex-info "no updater for patch" {:patch-key patch-key :patch-val patch-val :db-patches db-patches}))))
             db
             db-patches)))
 

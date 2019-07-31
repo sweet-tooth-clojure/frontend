@@ -190,12 +190,10 @@
   []
   (fn [{:keys [db] :as cofx} _]
     (let [current-route (get-in db (paths/full-path :nav :route))]
-      {::route-lifecycle {:db     db
-                          ::route {:scope     :route
-                                   :lifecycle (-> current-route
-                                                  :lifecycle
-                                                  (select-keys [:enter :param-change]))
-                                   :route     current-route}}})))
+      (change-route-fx (assoc cofx ::route-change {:can-change-route? true
+                                                   :scope             :route
+                                                   :new-route         current-route
+                                                   :global-lifecycle  (paths/get-path db :system ::handler :global-lifecycle)})))))
 
 ;; ------
 ;; update token
