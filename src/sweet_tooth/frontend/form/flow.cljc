@@ -237,7 +237,7 @@
 (defn submit-form-fail
   [db [full-form-path form-spec _ {:keys [response-data] :as response}]]
   (timbre/info "form submit fail:" response full-form-path)
-  (-> (assoc-in db (conj full-form-path :errors) (or (:errors response-data) {:cause :unknown}))
+  (-> (assoc-in db (conj full-form-path :errors) (or (get-in response-data [0 1]) {:cause :unknown}))
       (assoc-in (conj full-form-path :state) :sleeping)))
 
 (sth/rr reg-event-db ::submit-form-fail
