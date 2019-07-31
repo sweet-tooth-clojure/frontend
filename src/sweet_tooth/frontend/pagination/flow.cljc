@@ -16,10 +16,9 @@
 ;; TODO namespace the page key
 (defn db-patch-handle-page
   [db db-patch]
-  (if-let [page (:page db-patch)]
-    (-> (update db :page merge page)
-        (assoc-in (paths/full-path :page :state (first (keys (:query page)))) :loaded))
-    db))
+  (-> db
+      (update :page merge db-patch)
+      (assoc-in (paths/full-path :page :state (first (keys (:query db-patch)))) :loaded)))
 
 ;;---------
 ;; Subscriptions

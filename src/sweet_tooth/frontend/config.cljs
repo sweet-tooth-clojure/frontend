@@ -33,5 +33,6 @@
    ::stnf/global-lifecycle stnf/default-global-lifecycle
 
    ;;::stff/config {:data-id :db/id}
-   ::stcf/update-db {(paths/prefix :entity) stcf/db-patch-handle-entity
-                     :page                  stpf/db-patch-handle-page}})
+   ::stcf/update-db {:entity  stcf/db-patch-handle-entity
+                     :page    stpf/db-patch-handle-page
+                     :default merge}})

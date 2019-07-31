@@ -61,16 +61,9 @@
   If no updaters apply, then just merge the patch in."
   [db db-patches]
   {:pre [(vector? db-patches)]}
-  (let [updaters     (paths/get-path db :system ::update-db)
-        updater-keys (keys updaters)
-        updater-fns  (vals updaters)]
-    (reduce (fn [db db-patch]
-              ;; default case is to just merge
-              (if (empty? (select-keys db-patch updater-keys))
-                (merge db db-patch)
-                (reduce (fn [db updater] (updater db db-patch))
-                        db
-                        updater-fns)))
+  (let [updaters (paths/get-path db :system ::update-db)]
+    (reduce (fn [db [patch-key patch-val]]
+              ((get updaters patch-key) db patch-val))
             db
             db-patches)))
 
@@ -82,9 +75,7 @@
 (defn db-patch-handle-entity
   [db db-patch]
   (let [entity-prefix (paths/prefix :entity)]
-    (if-let [entity (get db-patch entity-prefix)]
-      (update db entity-prefix u/deep-merge entity)
-      db)))
+    (update db entity-prefix u/deep-merge db-patch)))
 
 (sth/rr rf/reg-event-db ::toggle
   [trim-v]
