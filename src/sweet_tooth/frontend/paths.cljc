@@ -5,11 +5,12 @@
   (:refer-clojure :exclude [get-in update-in]))
 
 (def config
-  (atom {:form   :form
-         :page   :page
-         :entity :entity
-         :nav    :nav
-         :system :sweet-tooth/system}))
+  (atom {:form    :form
+         :page    :page
+         :entity  :entity
+         :nav     :nav
+         :failure :failure
+         :system  :sweet-tooth/system}))
 
 (def partial-path (comp vec rest))
 

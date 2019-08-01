@@ -10,6 +10,7 @@
             [sweet-tooth.frontend.routes :as stfr]
             [sweet-tooth.frontend.routes.protocol :as strp]
             [sweet-tooth.frontend.paths :as paths]
+            [sweet-tooth.frontend.failure.flow :as stfaf]
             [integrant.core :as ig]
             [medley.core :as medley]
             [clojure.data :as data]
@@ -93,8 +94,8 @@
   [req]
   (update req 2
           default-sync-handlers
-          {:success [::default-sync-response-handler]
-           :fail    [::default-sync-response-handler]}
+          {:success [::default-sync-success-handler]
+           :fail    [::default-sync-fail-handler]}
           [(with-meta req {:sweet-tooth true ::req true})]))
 
 (defn adapt-req
@@ -107,12 +108,23 @@
                              (:query-params opts))]
     [method route-name (assoc opts :path path)]))
 
-(sth/rr rf/reg-event-db ::default-sync-response-handler
+(sth/rr rf/reg-event-db ::default-sync-success-handler
   [rf/trim-v]
   (fn [db [req {:keys [response-data]}]]
     (if (vector? response-data)
       (stcf/update-db db response-data)
-      (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))}))))
+      (do (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))})
+          db))))
+
+(sth/rr rf/reg-event-fx ::default-sync-fail-handler
+  [rf/trim-v]
+  (fn [{:keys [db] :as cofx} [req {:keys [response-data]}]]
+    (let [sync-info {:response-data response-data :req (into [] (take 2 req))}]
+      {:db       (if (vector? response-data)
+                   (stcf/update-db db response-data)
+                   (do (log/warn "Sync response data was not a vector:" sync-info)
+                       db))
+       :dispatch [::stfaf/add-failure [:sync sync-info]]})))
 
 ;;-----------------------
 ;; dispatch sync requests
