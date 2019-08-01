@@ -199,3 +199,11 @@
 (defmethod ig/init-key ::sync
   [_ opts]
   opts)
+
+;;------
+;; db patch exception
+;;------
+(defn db-patch-handle-exception
+  [db ex-data]
+  (js/console.warn "sync exception" ex-data)
+  db)
