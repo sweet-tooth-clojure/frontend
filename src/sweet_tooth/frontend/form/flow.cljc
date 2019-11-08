@@ -168,7 +168,7 @@
   "Returns a request that the sync handler can use
 
   - `success` and `fail` are the handlers for request completion.
-  - `form-spec` is a way to pass on whatevs data to the request 
+  - `form-spec` is a way to pass on whatevs data to the request
     completion handler.
   - the `:sync-opts` key of form spec can customize the sync request"
   [full-form-path data {:keys [sync-opts success fail]
@@ -199,13 +199,13 @@
                                            form-spec)]})))
 
 (defn success-base
-  "Produces a function that can be used for handling form submission success. 
+  "Produces a function that can be used for handling form submission success.
   It handles the common behaviors:
   - updating the form state to :success
   - populating the form's `:response` key with the returned data
   - calls callback specified by `callback` in `form-spec`
   - clears form keys specified by `:clear` in `form-spec`
-  
+
   You customize success-base by providing a `db-update` function which
   will e.g. `merge` or `deep-merge` values from the response.
 
@@ -218,9 +218,14 @@
       (cond-> {:db (let [updated-db (db-update db response-data)]
                      (if (= :all (:clear form-spec))
                        (assoc-in updated-db full-form-path {})
-                       (update-in updated-db full-form-path merge
-                                  {:state :success :response response-data}
-                                  (zipmap (:clear form-spec) (repeat nil)))))}
+                       (-> updated-db
+                           (update-in full-form-path
+                                      merge
+                                      {:state    :success
+                                       :response response-data})
+                           (update-in (conj full-form-path :buffer)
+                                      merge
+                                      (zipmap (:clear form-spec) (repeat nil))))))}
         (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
                                                                 {:ms       v
                                                                  :id       [:expire full-form-path k]

@@ -14,5 +14,5 @@
          metosin/reitit-spec         {:mvn/version "0.3.7"}
          medley                      {:mvn/version "1.0.0"}
          rads/anomalies              {:mvn/version "0.1.13"}}
- 
+
  :aliases {:test {:extra-deps {adzerk/boot-test {:mvn/version "1.1.1"}}}}}
