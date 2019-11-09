@@ -218,14 +218,9 @@
       (cond-> {:db (let [updated-db (db-update db response-data)]
                      (if (= :all (:clear form-spec))
                        (assoc-in updated-db full-form-path {})
-                       (-> updated-db
-                           (update-in full-form-path
-                                      merge
-                                      {:state    :success
-                                       :response response-data})
-                           (update-in (conj full-form-path :buffer)
-                                      merge
-                                      (zipmap (:clear form-spec) (repeat nil))))))}
+                       (update-in updated-db full-form-path merge
+                                  {:state :success :response response-data}
+                                  (zipmap (:clear form-spec) (repeat nil)))))}
         (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
                                                                 {:ms       v
                                                                  :id       [:expire full-form-path k]
