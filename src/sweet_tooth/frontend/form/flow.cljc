@@ -209,7 +209,7 @@
   You customize success-base by providing a `db-update` function which
   will e.g. `merge` or `deep-merge` values from the response.
 
-  TODO investigate useing the `after` interceptor"
+  TODO investigate using the `after` interceptor"
   [db-update]
   (fn [{:keys [db]} [full-form-path form-spec _ resp :as args]]
     (let [{:keys [response-data]} resp]
