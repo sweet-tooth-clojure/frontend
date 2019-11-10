@@ -79,10 +79,11 @@
   syntax. Composes all effects into a single effect using composition
   rules determined by effect key"
   [fx]
-  (->> fx
-       (map effect-sugar->effectv)
-       (reduce into)
-       (reduce merge-fx {})))
+  (let [fx (if (s/valid? ::fx-sugar fx) [fx] fx)]
+    (->> fx
+         (map effect-sugar->effectv)
+         (reduce into)
+         (reduce merge-fx {}))))
 
 (sth/rr rf/reg-event-fx ::compose-dispatch
   [rf/trim-v]
