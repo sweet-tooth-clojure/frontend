@@ -57,13 +57,13 @@
 (defn sync-response-handler
   "Returns a function to handle sync responses"
   [req]
-  (fn [{:keys [type] :as resp}]
+  (fn [{:keys [status] :as resp}]
     (let [{:keys [bf on af]} (get req 2)]
       (rf/dispatch [::stcc/compose-dispatch
                     (->> [[::sync-finished req resp]]
-                         (compose-lifecycle resp bf type :fail)
-                         (compose-lifecycle resp on type :fail)
-                         (compose-lifecycle resp af type :fail))]))))
+                         (compose-lifecycle resp bf status :fail)
+                         (compose-lifecycle resp on status :fail)
+                         (compose-lifecycle resp af status :fail))]))))
 
 ;;------
 ;; registrations

@@ -39,8 +39,8 @@
 
 (defn sync-dispatch-fn
   [{:keys [fail-map]
-    :or {fail-map fails}
-    :as global-opts}]
+    :or   {fail-map fails}
+    :as   global-opts}]
   (fn [req]
     (let [[method res {:keys [uri] :as opts} :as req-sig] (adapt-req req)
           request-method                                  (get request-methods method)]
@@ -64,12 +64,12 @@
            (merge opts)
            (assoc :handler       (fn [resp]
                                    ((stsf/sync-response-handler req)
-                                    {:type          :success
+                                    {:status        :success
                                      :response-data resp})))
            (assoc :error-handler (fn [resp]
                                    ((stsf/sync-response-handler req)
                                     (-> resp
-                                        (assoc :type (get fail-map (:status resp) :fail))
+                                        (assoc :status (get fail-map (:status resp) :fail))
                                         (set/rename-keys {:response :response-data}))))))))))
 
 (defmethod ig/init-key ::sync-dispatch-fn
