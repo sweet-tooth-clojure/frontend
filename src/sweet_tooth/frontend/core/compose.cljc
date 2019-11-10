@@ -3,8 +3,37 @@
   (:require [re-frame.core :as rf]
             [clojure.spec.alpha :as s]
             [sweet-tooth.frontend.handlers :as sth]
-            [sweet-tooth.frontend.specs :as sfs]
             [taoensso.timbre :as log]))
+
+(s/def ::dispatch
+  (s/and vector? #(keyword? (first %))))
+
+(s/def ::dispatch-n
+  (s/coll-of ::dispatch))
+
+(s/def ::ms int?)
+
+(s/def ::dispatch-later-el
+  (s/keys :req-un [::ms ::dispatch]))
+
+(s/def ::dispatch-later
+  (s/coll-of ::dispatch-later-el))
+
+(s/def ::fx
+  (s/keys :opt-un [::dispatch ::dispatch-n ::dispatch-later]))
+
+(s/def ::dispatch-sugar-el
+  (s/or :dispatch ::dispatch
+        :dispatch-later-el ::dispatch-later-el))
+
+(s/def ::dispatch-sugar
+  (s/coll-of ::dispatch-sugar-el))
+
+(s/def ::fx-sugar
+  (s/or :dispatch-later-el ::dispatch-later-el
+        :dispatch ::dispatch
+        :effect ::fx
+        :dispatch-sugar ::dispatch-sugar))
 
 (defmulti merge-key (fn [x k y] k))
 
@@ -13,10 +42,6 @@
   (into (or x []) y))
 
 (defmethod merge-key :dispatch-later
-  [x _ y]
-  (into (or x []) y))
-
-(defmethod merge-key :db-fns
   [x _ y]
   (into (or x []) y))
 
@@ -40,12 +65,13 @@
 
 (defn effect-sugar->effectv
   [effect-sugar]
-  (let [conformance (s/conform ::sfs/fx-sugar effect-sugar)]
+  (let [conformance (s/conform ::fx-sugar effect-sugar)]
     (if (= conformance ::s/invalid)
       (do (log/error "Effect not recognized for composition"
                      ::effect-not-recognized
                      {:effect effect-sugar})
-          (throw (js/Error. "Effect not recognized for composition")))
+          (throw (#?(:clj java.lang.AssertionError.
+                     :cljs js/Error.) "Effect not recognized for composition")))
       (sugar-conformance->effectv conformance))))
 
 (defn compose-fx
