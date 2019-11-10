@@ -164,7 +164,7 @@
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
 (def form-states #{nil :submitting :success :sleeping})
 
-(defn submit-form
+(defn form-sync-opts
   "Returns a request that the sync handler can use
 
   - `success` and `fail` are the handlers for request completion.
@@ -193,10 +193,10 @@
       {:db       (-> db
                      (assoc-in (conj full-form-path :state) :submitting)
                      (assoc-in (conj full-form-path :errors) nil))
-       :dispatch [::stsf/sync (submit-form full-form-path
-                                           (merge (:data form-spec)
-                                                  (get-in db (conj full-form-path :buffer)))
-                                           form-spec)]})))
+       :dispatch [::stsf/sync (form-sync-opts full-form-path
+                                              (merge (:data form-spec)
+                                                     (get-in db (conj full-form-path :buffer)))
+                                              form-spec)]})))
 
 (defn success-base
   "Produces a function that can be used for handling form submission success.
@@ -252,9 +252,9 @@
       {:db (-> db
                (assoc-in (conj item-path :state) :submitting)
                (assoc-in (conj item-path :errors) nil))
-       :dispatch [::stsf/sync (submit-form item-path
-                                           data
-                                           (dissoc item-spec :buffer))]})))
+       :dispatch [::stsf/sync (form-sync-opts item-path
+                                              data
+                                              (dissoc item-spec :buffer))]})))
 
 (sth/rr reg-event-db ::delete-item-success
   [trim-v]
@@ -272,17 +272,17 @@
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-path :form [type :delete (:db/id data)])]
       {:db db
-       :dispatch [::stsf/sync (submit-form full-form-path
-                                           data
-                                           (merge {:success ::delete-item-success}
-                                                  form-spec))]})))
+       :dispatch [::stsf/sync (form-sync-opts full-form-path
+                                              data
+                                              (merge {:success ::delete-item-success}
+                                                     form-spec))]})))
 
 (sth/rr reg-event-fx ::undelete-item
   [trim-v]
   (fn [{:keys [db]} [type data & [form-spec]]]
     (let [full-form-path (p/full-path :form [type :update (:db/id data)])]
       {:db db
-       :dispatch [::stsf/sync (submit-form full-form-path
-                                           data
-                                           (merge {:success ::delete-item-success}
-                                                  form-spec))]})))
+       :dispatch [::stsf/sync (form-sync-opts full-form-path
+                                              data
+                                              (merge {:success ::delete-item-success}
+                                                     form-spec))]})))
