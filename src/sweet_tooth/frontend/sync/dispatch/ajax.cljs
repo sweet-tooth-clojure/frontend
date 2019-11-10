@@ -50,14 +50,14 @@
                       ::no-route-found
                       {:req req})
         (throw (js/Error. "Invalid request: could not find route for request")))
-      
+
       (when-not request-method
         (timbre/error (str "request method did not map to an HTTP request function. valid methods are " (keys request-methods))
                       ::ajax-dispatch-no-request-method
                       {:req    req
                        :method method})
         (throw (js/Error. "Invalid request: no request method found")))
-      
+
       ((get request-methods method)
        uri
        (-> global-opts

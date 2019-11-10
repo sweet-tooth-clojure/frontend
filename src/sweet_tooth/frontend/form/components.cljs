@@ -349,7 +349,7 @@
    :form-errors   (subscribe [::stff/errors partial-form-path])
    :form-buffer   (subscribe [::stff/buffer partial-form-path])
    :form-dirty?   (subscribe [::stff/form-dirty? partial-form-path])
-   
+
    :state-success? (subscribe [::stff/state-success? partial-form-path])
 
    :sync-state    (subscribe [::stff/sync-state partial-form-path])

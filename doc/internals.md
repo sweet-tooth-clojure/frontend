@@ -64,6 +64,14 @@ requests (obviously) need a URI. The request adapter takes the request
 as an argument, and adds a URI to the last element of the request,
 `opts`.
 
+### Handling composition
+
+`req-opts` can include `:bf`, `:on`, and `:af`. The value of each is a
+map of `:success`, `:fail`, and other response types. The value of
+those is a single event description.
+
+Sweet Tooth composes `bf`, `on`, `af`, in that order.
+
 ### TODO
 
 - how to handle offline

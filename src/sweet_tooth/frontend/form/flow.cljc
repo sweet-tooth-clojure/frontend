@@ -170,15 +170,15 @@
   - `success` and `fail` are the handlers for request completion.
   - `form-spec` is a way to pass on whatevs data to the request
     completion handler.
-  - the `:sync-opts` key of form spec can customize the sync request"
-  [full-form-path data {:keys [sync-opts success fail]
+  - the `:sync` key of form spec can customize the sync request"
+  [full-form-path data {:keys [sync success fail]
                         :as   form-spec}]
   (let [[_ endpoint action route-params] full-form-path]
     [action
      (get form-spec :route-name endpoint)
      (-> (merge {:params       data
                  :route-params (or route-params data)}
-                sync-opts)
+                sync)
          (stsf/default-sync-handlers {:success [::submit-form-success]
                                       :fail    [::submit-form-fail]}
                                      [(with-meta full-form-path {:sweet-tooth true ::full-form-path true})
