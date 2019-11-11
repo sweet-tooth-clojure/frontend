@@ -70,5 +70,5 @@
     (let [page-query (merge page-defaults page-params)]
       {:dispatch-n [[::update-db-page-loading page-query]
                     [::stsf/sync [:get endpoint {:query-params page-query
-                                                 :on           {:success (get-in opts [:on :success] [::stsf/update-db])}
+                                                 :on           {:success (get-in opts [:on :success] [::stsf/update-db :$ctx])}
                                                  ::stsf/req-id (:query-id page-query)}]]]})))

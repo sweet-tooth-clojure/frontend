@@ -14,6 +14,7 @@
             [integrant.core :as ig]
             [medley.core :as medley]
             [clojure.data :as data]
+            [clojure.walk :as walk]
             [meta-merge.core :refer [meta-merge]]
             [taoensso.timbre :as log]))
 
@@ -47,23 +48,19 @@
   []
   sync-finished)
 
-(defn compose-lifecycle
-  [resp stage lifecycle-name fallback-lifecycle-name fx]
-  (if-let [dispatch-sig (or (get stage lifecycle-name)
-                            (get stage fallback-lifecycle-name))]
-    (conj fx (conj dispatch-sig (with-meta resp {:sweet-tooth true ::resp true})))
-    fx))
-
 (defn sync-response-handler
   "Returns a function to handle sync responses"
   [req]
   (fn [{:keys [status] :as resp}]
-    (let [{:keys [bf on af]} (get req 2)]
+    (let [{:keys [on]} (get req 2)
+          $ctx         (assoc (get on :$ctx {})
+                              :resp resp
+                              :req  req)
+          composed-fx  (stcc/compose-fx (get on status (get on :fail)))]
       (rf/dispatch [::stcc/compose-dispatch
-                    (->> [[::sync-finished req resp]]
-                         (compose-lifecycle resp bf status :fail)
-                         (compose-lifecycle resp on status :fail)
-                         (compose-lifecycle resp af status :fail))]))))
+                    [[::sync-finished req resp]
+                     (walk/postwalk (fn [x] (if (= x :$ctx) $ctx x))
+                                    composed-fx)]]))))
 
 ;;------
 ;; registrations
@@ -94,16 +91,20 @@
 
 (sth/rr rf/reg-event-db ::default-sync-success
   [rf/trim-v]
-  (fn [db [req {:keys [response-data]}]]
+  (fn [db [{{:keys [response-data]} :resp
+            :keys [req]
+            :as ctx}]]
     (if (vector? response-data)
       (stcf/update-db db response-data)
       (do (log/warn "Sync response data was not a vector:" {:response-data response-data
                                                             :req           (into [] (take 2 req))})
           db))))
 
+;; TODO check that this does what I think
+;; is the second argument here correct?
 (sth/rr rf/reg-event-fx ::default-sync-fail
   [rf/trim-v]
-  (fn [{:keys [db] :as cofx} [req {:keys [response-data]}]]
+  (fn [{:keys [db] :as cofx} [{:keys [req], {:keys [response-data]} :resp}]]
     (let [sync-info {:response-data response-data :req (into [] (take 2 req))}]
       {:db       (if (vector? response-data)
                    (stcf/update-db db response-data)
@@ -114,6 +115,7 @@
 ;;-----------------------
 ;; dispatch sync requests
 ;;-----------------------
+
 (defn default-sync-handlers
   "Updates request opts to include default handlers, plus adds common
   args to all handlers"
@@ -125,11 +127,10 @@
 
 (defn add-default-sync-response-handlers
   [req]
-  (update req 2
-          default-sync-handlers
-          {:success [::default-sync-success]
-           :fail    [::default-sync-fail]}
-          [(with-meta req {:sweet-tooth true ::req true})]))
+  (update-in req [2 :on] meta-merge {:success ^:displace [::default-sync-success :$ctx]
+                                     :fail    ^:displace [::default-sync-fail :$ctx]
+                                     :$ctx    {:req req}}))
+
 
 (defn sync-event-fx
   "In response to a sync event, return an effect map of:
@@ -167,12 +168,12 @@
 ;; Unwraps response-data for update-db
 (sth/rr rf/reg-event-db ::update-db
   [rf/trim-v]
-  (fn [db [_ {:keys [response-data]}]]
+  (fn [db [{{:keys [response-data]} :resp}]]
     (stcf/update-db db response-data)))
 
 (sth/rr rf/reg-event-db ::replace-entities
   [rf/trim-v]
-  (fn [db [_ {:keys [response-data]}]]
+  (fn [db [{{:keys [response-data]} :resp}]]
     (stcf/replace-entities db response-data)))
 
 ;;------

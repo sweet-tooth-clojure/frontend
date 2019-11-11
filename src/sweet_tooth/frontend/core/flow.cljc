@@ -53,7 +53,7 @@
 
 (defn update-db
   "Takes a db and a vector of db-patches, and applies those patches to
-  the db using the udpaters stored in 
+  the db using the udpaters stored in
   [:sweet-tooth/system :sweet-tooth.frontend.core.flow/update-db]
   of the app-db.
 
