@@ -77,6 +77,14 @@
                            (->> (merge handler-defaults handlers)
                                 (medley/map-vals #(into (vec %) common-args)))))))
 
+(defn add-default-sync-response-handlers
+  [req]
+  (update req 2
+          default-sync-handlers
+          {:success [::default-sync-success]
+           :fail    [::default-sync-fail]}
+          [(with-meta req {:sweet-tooth true ::req true})]))
+
 (defn sync-state
   [db req]
   (get-in db [::reqs (req-path req) :state]))
@@ -90,15 +98,8 @@
   (fn [db [_ query]]
     (medley/filter-keys (partial stcu/projection? query) (::reqs db))))
 
-(defn add-default-sync-response-handlers
-  [req]
-  (update req 2
-          default-sync-handlers
-          {:success [::default-sync-success]
-           :fail    [::default-sync-fail]}
-          [(with-meta req {:sweet-tooth true ::req true})]))
-
 (defn adapt-req
+  "Makes sure a path is findable from req and adds it"
   [[method route-name opts :as res] router]
   (when-let [path (strp/path router
                              route-name
