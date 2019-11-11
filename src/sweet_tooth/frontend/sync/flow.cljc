@@ -68,23 +68,6 @@
 ;;------
 ;; registrations
 ;;------
-(defn default-sync-handlers
-  "Updates request opts to include default handlers, plus adds common
-  args to all handlers"
-  [req-opts handler-defaults & [common-args]]
-  (let [req-opts (or req-opts {:on {}})]
-    (update req-opts :on (fn [handlers]
-                           (->> (merge handler-defaults handlers)
-                                (medley/map-vals #(into (vec %) common-args)))))))
-
-(defn add-default-sync-response-handlers
-  [req]
-  (update req 2
-          default-sync-handlers
-          {:success [::default-sync-success]
-           :fail    [::default-sync-fail]}
-          [(with-meta req {:sweet-tooth true ::req true})]))
-
 (defn sync-state
   [db req]
   (get-in db [::reqs (req-path req) :state]))
@@ -114,7 +97,8 @@
   (fn [db [req {:keys [response-data]}]]
     (if (vector? response-data)
       (stcf/update-db db response-data)
-      (do (log/warn "Sync response data was not a vector:" {:response-data response-data :req (into [] (take 2 req))})
+      (do (log/warn "Sync response data was not a vector:" {:response-data response-data
+                                                            :req           (into [] (take 2 req))})
           db))))
 
 (sth/rr rf/reg-event-fx ::default-sync-fail
@@ -130,6 +114,23 @@
 ;;-----------------------
 ;; dispatch sync requests
 ;;-----------------------
+(defn default-sync-handlers
+  "Updates request opts to include default handlers, plus adds common
+  args to all handlers"
+  [req-opts handler-defaults & [common-args]]
+  (let [req-opts (or req-opts {:on {}})]
+    (update req-opts :on (fn [handlers]
+                           (->> (merge handler-defaults handlers)
+                                (medley/map-vals #(into (vec %) common-args)))))))
+
+(defn add-default-sync-response-handlers
+  [req]
+  (update req 2
+          default-sync-handlers
+          {:success [::default-sync-success]
+           :fail    [::default-sync-fail]}
+          [(with-meta req {:sweet-tooth true ::req true})]))
+
 (defn sync-event-fx
   "In response to a sync event, return an effect map of:
   a) updated db to track a sync request
