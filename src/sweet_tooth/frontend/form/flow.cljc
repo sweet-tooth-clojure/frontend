@@ -7,6 +7,7 @@
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.paths :as p]
             [medley.core :as medley]
+            [meta-merge.core :refer [meta-merge]]
             [taoensso.timbre :as timbre]))
 
 ;;------
@@ -179,10 +180,10 @@
      (-> (merge {:params       data
                  :route-params (or route-params data)}
                 sync)
-         (stsf/default-sync-handlers {:success [::submit-form-success]
-                                      :fail    [::submit-form-fail]}
-                                     [(with-meta full-form-path {:sweet-tooth true ::full-form-path true})
-                                      (with-meta form-spec {:sweet-tooth true ::form-spec true})]))]))
+         (update :on meta-merge {:success ^:displace [::submit-form-success]
+                                 :fail    ^:displace [::submit-form-fail]
+                                 :$ctx    {:full-form-path full-form-path
+                                           :form-spec      form-spec}}))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
@@ -198,53 +199,10 @@
                                                      (get-in db (conj full-form-path :buffer)))
                                               form-spec)]})))
 
-(defn success-base
-  "Produces a function that can be used for handling form submission success.
-  It handles the common behaviors:
-  - updating the form state to :success
-  - populating the form's `:response` key with the returned data
-  - calls callback specified by `callback` in `form-spec`
-  - clears form keys specified by `:clear` in `form-spec`
+;;--------------------
+;; submit variations: many items in a list
+;;--------------------
 
-  You customize success-base by providing a `db-update` function which
-  will e.g. `merge` or `deep-merge` values from the response.
-
-  TODO investigate using the `after` interceptor"
-  [db-update]
-  (fn [{:keys [db]} [full-form-path form-spec _ resp :as args]]
-    (let [{:keys [response-data]} resp]
-      (if-let [callback (:callback form-spec)]
-        (callback db args))
-      (cond-> {:db (let [updated-db (db-update db response-data)]
-                     (if (= :all (:clear form-spec))
-                       (assoc-in updated-db full-form-path {})
-                       (update-in updated-db full-form-path merge
-                                  {:state :success :response response-data}
-                                  (zipmap (:clear form-spec) (repeat nil)))))}
-        (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
-                                                                {:ms       v
-                                                                 :id       [:expire full-form-path k]
-                                                                 :dispatch [::c/dissoc-in (conj full-form-path k)]})
-                                                              (:expire form-spec)))))))
-
-(def submit-form-success
-  (success-base c/update-db))
-
-(sth/rr reg-event-fx ::submit-form-success
-  [trim-v]
-  submit-form-success)
-
-(defn submit-form-fail
-  [db [full-form-path form-spec _ {:keys [response-data] :as response}]]
-  (timbre/info "form submit fail:" response full-form-path)
-  (-> (assoc-in db (conj full-form-path :errors) (or (get-in response-data [0 1]) {:cause :unknown}))
-      (assoc-in (conj full-form-path :state) :sleeping)))
-
-(sth/rr reg-event-db ::submit-form-fail
-  [trim-v]
-  submit-form-fail)
-
-;; for cases where you can edit or manipulate many items in a list
 (sth/rr reg-event-fx ::submit-item
   [trim-v]
   (fn [{:keys [db]} [item-path {:keys [data id] :as item-spec}]]
@@ -255,17 +213,6 @@
        :dispatch [::stsf/sync (form-sync-opts item-path
                                               data
                                               (dissoc item-spec :buffer))]})))
-
-(sth/rr reg-event-db ::delete-item-success
-  [trim-v]
-  (fn [db [data full-form-path form-spec]]
-    (let [[_ type _ id] full-form-path]
-      (-> (if (get-in data [:buffer type id])
-            (c/replace-ents db data)
-            (update-in db [:buffer type] dissoc id))
-          ;; TODO why is this called twice?
-          (submit-form-success [data full-form-path form-spec])
-          (submit-form-success [data (assoc full-form-path 2 :update) form-spec])))))
 
 (sth/rr reg-event-fx ::delete-item
   [trim-v]
@@ -286,3 +233,68 @@
                                               data
                                               (merge {:success ::delete-item-success}
                                                      form-spec))]})))
+
+;;--------------------
+;; handle form success/fail
+;;--------------------
+
+(defn success-base
+  "Produces a function that can be used for handling form submission success.
+  It handles the common behaviors:
+  - updating the form state to :success
+  - populating the form's `:response` key with the returned data
+  - calls callback specified by `callback` in `form-spec`
+  - clears form keys specified by `:clear` in `form-spec`
+
+  You customize success-base by providing a `db-update` function which
+  will e.g. `merge` or `deep-merge` values from the response.
+
+  TODO investigate using the `after` interceptor"
+  [db-update]
+  (fn [{:keys [db]} [{:keys [full-form-path form-spec resp]
+                      {:keys [response-data]} :resp
+                      :as args}]]
+    (prn "form spec" form-spec)
+    (if-let [callback (:callback form-spec)]
+      (callback db args))
+    (cond-> {:db (let [updated-db (db-update db response-data)]
+                   (if (= :all (:clear form-spec))
+                     (assoc-in updated-db full-form-path {})
+                     (update-in updated-db full-form-path merge
+                                {:state :success :response response-data}
+                                (zipmap (:clear form-spec) (repeat nil)))))}
+      (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
+                                                              {:ms       v
+                                                               :id       [:expire full-form-path k]
+                                                               :dispatch [::c/dissoc-in (conj full-form-path k)]})
+                                                            (:expire form-spec))))))
+
+(def submit-form-success
+  (success-base c/update-db))
+
+(sth/rr reg-event-fx ::submit-form-success
+  [trim-v]
+  submit-form-success)
+
+(defn submit-form-fail
+  [db [{:keys [full-form-path form-spec resp]
+        {:keys [response-data]} :resp}]]
+  (timbre/info "form submit fail:" resp full-form-path)
+  (-> (assoc-in db (conj full-form-path :errors) (or (get-in response-data [0 1]) {:cause :unknown}))
+      (assoc-in (conj full-form-path :state) :sleeping)))
+
+(sth/rr reg-event-db ::submit-form-fail
+  [trim-v]
+  submit-form-fail)
+
+(sth/rr reg-event-db ::delete-item-success
+  [trim-v]
+  (fn [db {:keys [full-form-path form-spec]
+           {:keys [response-data]} :resp}]
+    (let [[_ type _ id] full-form-path]
+      (-> (if (get-in response-data [:buffer type id])
+            (c/replace-ents db response-data)
+            (update-in db [:buffer type] dissoc id))
+          ;; TODO why is this called twice?
+          (submit-form-success [response-data full-form-path form-spec])
+          (submit-form-success [response-data (assoc full-form-path 2 :update) form-spec])))))

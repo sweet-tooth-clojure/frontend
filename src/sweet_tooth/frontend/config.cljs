@@ -10,16 +10,16 @@
             [sweet-tooth.frontend.nav.flow :as stnf]
             [sweet-tooth.frontend.routes :as stfr]
             [sweet-tooth.frontend.routes.reitit :as strr]
-            
+
             [integrant.core :as ig]))
 
 
 (def default-config
   {::sth/register-handlers {}
-   
+
    ::stsf/sync {:router           (ig/ref ::stfr/sync-router)
                 :sync-dispatch-fn (ig/ref ::stsda/sync-dispatch-fn)}
-   
+
    ::stsda/sync-dispatch-fn {}
 
    ::stnf/handler {:dispatch-route-handler ::stnf/dispatch-route
