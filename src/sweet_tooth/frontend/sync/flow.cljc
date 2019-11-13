@@ -118,9 +118,10 @@
 
 (defn add-default-sync-response-handlers
   [req]
-  (update-in req [2 :on] meta-merge {:success ^:displace [::default-sync-success :$ctx]
-                                     :fail    ^:displace [::default-sync-fail :$ctx]
-                                     :$ctx    {:req req}}))
+  (-> req
+      (update-in [2 :on] (partial merge {:success [::default-sync-success :$ctx]
+                                         :fail    [::default-sync-fail :$ctx]}))
+      (update-in [2 :on] meta-merge {:$ctx {:req req}})))
 
 
 (defn sync-event-fx

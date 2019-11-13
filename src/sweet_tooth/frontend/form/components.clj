@@ -14,7 +14,7 @@
 
 (defmacro with-form
   [partial-form-path & body]
-  
+
   (let [form-path     'form-path
         form-state    'form-state
         form-subs     'form-subs
@@ -22,9 +22,9 @@
         form-errors   'form-errors
         form-buffer   'form-buffer
         form-dirty?   'form-dirty?
-        
+
         state-success? 'state-success?
-        
+
         sync-state    'sync-state
         sync-active?  'sync-active?
         sync-success? 'sync-success?

@@ -180,12 +180,10 @@
      (-> (merge {:params       data
                  :route-params (or route-params data)}
                 sync)
-         (update :on meta-merge {:success ^:displace [::submit-form-success :$ctx]
-                                 :fail    ^:displace [::submit-form-fail :$ctx]
-                                 :$ctx    {:full-form-path full-form-path
-                                           :form-spec      form-spec}})
-         (update-in [:on :success] vary-meta dissoc :displace)
-         (update-in [:on :fail] vary-meta dissoc :displace))]))
+         (update :on (partial merge {:success [::submit-form-success :$ctx]
+                                     :fail    [::submit-form-fail :$ctx]}))
+         (update :on meta-merge {:$ctx {:full-form-path full-form-path
+                                        :form-spec      form-spec}}))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
