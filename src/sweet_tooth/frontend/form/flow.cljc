@@ -180,10 +180,12 @@
      (-> (merge {:params       data
                  :route-params (or route-params data)}
                 sync)
-         (update :on meta-merge {:success ^:displace [::submit-form-success]
-                                 :fail    ^:displace [::submit-form-fail]
+         (update :on meta-merge {:success ^:displace [::submit-form-success :$ctx]
+                                 :fail    ^:displace [::submit-form-fail :$ctx]
                                  :$ctx    {:full-form-path full-form-path
-                                           :form-spec      form-spec}}))]))
+                                           :form-spec      form-spec}})
+         (update-in [:on :success] vary-meta dissoc :displace)
+         (update-in [:on :fail] vary-meta dissoc :displace))]))
 
 ;; update db to indicate form's submitting, clear old errors
 ;; build form request
@@ -254,7 +256,6 @@
   (fn [{:keys [db]} [{:keys [full-form-path form-spec resp]
                       {:keys [response-data]} :resp
                       :as args}]]
-    (prn "form spec" form-spec)
     (if-let [callback (:callback form-spec)]
       (callback db args))
     (cond-> {:db (let [updated-db (db-update db response-data)]

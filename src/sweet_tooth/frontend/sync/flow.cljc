@@ -116,15 +116,6 @@
 ;; dispatch sync requests
 ;;-----------------------
 
-(defn default-sync-handlers
-  "Updates request opts to include default handlers, plus adds common
-  args to all handlers"
-  [req-opts handler-defaults & [common-args]]
-  (let [req-opts (or req-opts {:on {}})]
-    (update req-opts :on (fn [handlers]
-                           (->> (merge handler-defaults handlers)
-                                (medley/map-vals #(into (vec %) common-args)))))))
-
 (defn add-default-sync-response-handlers
   [req]
   (update-in req [2 :on] meta-merge {:success ^:displace [::default-sync-success :$ctx]
