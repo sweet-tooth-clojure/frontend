@@ -28,7 +28,7 @@
                            :interceptors interceptors
                            :handler-fn handler-fn})))
 
-(defn register-handler
+(defn register-handler*
   [registration id-ns interceptors]
   (let [configured-registration (meta-merge registration
                                             {:interceptors (get interceptors id-ns)}
@@ -38,6 +38,9 @@
                                         (empty? (:interceptors configured-registration)) (dissoc :interceptors)))
                                      (filter identity))]
     (apply reg-fn reg-args)))
+
+;; memoize to prevent superfluous re-registrations that create noisy warnings
+(def register-handler (memoize register-handler*))
 
 (defn register-handlers
   [& [interceptors]]
