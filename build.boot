@@ -10,7 +10,7 @@
   '[adzerk.boot-test :as boot-test]
   '[boot-tools-deps.core :refer [deps]])
 
-(def +version+ "0.11.0")
+(def +version+ "0.11.1")
 (bootlaces/bootlaces! +version+)
 
 (task-options!
