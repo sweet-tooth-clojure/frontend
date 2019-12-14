@@ -297,3 +297,22 @@
           ;; TODO why is this called twice?
           (submit-form-success [response-data full-form-path form-spec])
           (submit-form-success [response-data (assoc full-form-path 2 :update) form-spec])))))
+
+;;--------------------
+;; form ui
+;;--------------------
+
+(defn toggle-form
+  [db path data]
+  (update-in db (p/full-path :form path)
+             (fn [form]
+               (let [{:keys [ui-state]} form]
+                 (if ui-state
+                   nil
+                   {:buffer data
+                    :base data
+                    :ui-state true})))))
+
+(rf/reg-event-db ::toggle-form
+  [rf/trim-v]
+  (fn [db [path data]] (toggle-form db path data)))

@@ -7,6 +7,8 @@
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
+            [taoensso.timbre :as log]
+            [medley.core :as medley]
             [sweet-tooth.frontend.nav.accountant :as accountant]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.core.utils :as u]
@@ -29,7 +31,7 @@
 (defn init-handler
   "Configures accountant, window unloading, keeps track of event
   handlers for integrant teardown"
-  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload? global-lifecycle] :as config}]  
+  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload? global-lifecycle] :as config}]
   (let [history      (accountant/new-history)
         nav-handler  (fn [path] (rf/dispatch [dispatch-route-handler path]))
         update-token (fn [relative-href title] (rf/dispatch [::update-token relative-href :set title]))
@@ -87,13 +89,17 @@
 ;; Route change handlers
 ;; ------
 (defn can-change-route?
-  [db scope {:keys [can-exit? can-change-params?]
-             :or   {can-exit?          (constantly true)
-                    can-change-params? (constantly true)}}]
+  [db scope existing-route-lifecycle new-route-lifecycle]
   ;; are we changing the entire route or just the params?
-  (if (= scope :route)
-    (and (can-change-params? db) (can-exit? db))
-    (can-change-params? db)))
+  (let [route-change-checks (-> (merge existing-route-lifecycle new-route-lifecycle)
+                                (select-keys (case scope
+                                               :route  [:can-change-params? :can-exit? :can-enter?]
+                                               :params [:can-change-params?])))
+        check-failures      (medley/filter-vals (fn [lifecycle-fn]
+                                                  (and lifecycle-fn (not (lifecycle-fn db))))
+                                                route-change-checks)]
+    (or (empty? check-failures)
+        (log/debug ::prevented-route-change {:check-failures (set (keys check-failures))}))))
 
 (def process-route-change
   "Intercepor that interprets new route, adding a ::route-change coeffect"
@@ -108,11 +114,11 @@
                    scope            (if (= (:route-name new-route) (:route-name existing-route))
                                       :params
                                       :route)
-                   
+
                    new-route-lifecycle      (:lifecycle new-route)
                    existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
                (assoc-in ctx [:coeffects ::route-change]
-                         {:can-change-route? (can-change-route? db scope existing-route-lifecycle)
+                         {:can-change-route? (can-change-route? db scope existing-route-lifecycle new-route-lifecycle)
                           :scope             scope
                           :old-route         existing-route
                           :new-route         new-route
@@ -137,6 +143,7 @@
          (into fx))))
 
 (defn route-effects
+  "Handles all route lifecycle effects"
   [cofx]
   (let [{:keys [scope old-route new-route]} (::route-change cofx)]
     (cond->> []
@@ -244,7 +251,7 @@
    :after-exit          nil
    :before-enter        (constantly [::stnuf/clear :route])
    :after-enter         nil
-   :before-param-change (constantly [::stnuf/clear :params]) 
+   :before-param-change (constantly [::stnuf/clear :params])
    :after-param-change  nil})
 
 (defmethod ig/init-key ::global-lifecycle [_ lifecycle]
