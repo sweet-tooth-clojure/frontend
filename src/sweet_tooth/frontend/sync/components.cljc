@@ -1,6 +1,5 @@
 (ns sweet-tooth.frontend.sync.components
   (:require [re-frame.core :as rf]
-            [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.nav.flow :as stnf]))
 
 (defn loadable-component

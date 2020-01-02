@@ -13,7 +13,6 @@
             [sweet-tooth.frontend.failure.flow :as stfaf]
             [integrant.core :as ig]
             [medley.core :as medley]
-            [clojure.data :as data]
             [clojure.walk :as walk]
             [meta-merge.core :refer [meta-merge]]
             [taoensso.timbre :as log]))
@@ -23,7 +22,7 @@
 ;;--------------------
 (defn req-path
   "returns a 'normalized' req path for a request"
-  [[method resource opts :as req]]
+  [[method resource opts :as _req]]
   [method resource (or (::req-id opts) (stfr/req-id resource opts))])
 
 (defn track-new-request
@@ -41,7 +40,7 @@
   "Update sync bookkeeping"
   [db [_ req resp]]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state (:type resp)})
+      (assoc-in [::reqs (req-path req)] {:state (:status resp)})
       (update ::active-request-count dec)))
 
 (sth/rr rf/reg-event-db ::sync-finished
