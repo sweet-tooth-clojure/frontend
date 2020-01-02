@@ -1,0 +1,29 @@
+{:linters
+ {:unresolved-symbol
+  {:exclude [(sweet-tooth.frontend.form.components/with-form
+               [form-path
+                form-state
+                form-subs
+                form-ui-state
+                form-errors
+                form-buffer
+                form-dirty?
+
+                state-success?
+
+                sync-state
+                sync-active?
+                sync-success?
+                sync-fail?
+
+                on-submit
+                on-submit-handler
+                input-opts
+                input
+                field
+
+                form-state
+                form-components
+                form
+
+                path])]}}}

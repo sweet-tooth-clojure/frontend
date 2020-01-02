@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.core.flow
-  (:require [re-frame.core  :as rf :refer [reg-fx reg-event-db dispatch trim-v path]]
+  (:require [re-frame.core  :as rf]
             [re-frame.db :as rfdb]
             [re-frame.loggers :as rfl]
             [sweet-tooth.frontend.core.utils :as u]
@@ -8,12 +8,12 @@
             [integrant.core :as ig])
   (:import #?(:cljs [goog.async Debouncer])))
 
-(sth/rr reg-event-db ::assoc-in
-  [trim-v]
+(sth/rr rf/reg-event-db ::assoc-in
+  [rf/trim-v]
   (fn [db [path val]] (assoc-in db path val)))
 
-(sth/rr reg-event-db ::merge
-  [trim-v]
+(sth/rr rf/reg-event-db ::merge
+  [rf/trim-v]
   (fn [db [m & [path]]]
     (if path
       (update-in db path merge m)
@@ -31,8 +31,8 @@
   [db [m]]
   (u/deep-merge db m))
 
-(sth/rr reg-event-db ::deep-merge
-  [trim-v]
+(sth/rr rf/reg-event-db ::deep-merge
+  [rf/trim-v]
   deep-merge)
 
 (defn replace-entities
@@ -46,8 +46,8 @@
                  (update-in db (paths/full-path :entity) (partial merge-with merge) patch))
                db)))
 
-(sth/rr reg-event-db ::replace-entities
-  [trim-v]
+(sth/rr rf/reg-event-db ::replace-entities
+  [rf/trim-v]
   (fn [db [patches]]
     (replace-entities db patches)))
 
@@ -69,7 +69,7 @@
             db-patches)))
 
 (sth/rr rf/reg-event-db ::update-db
-  [trim-v]
+  [rf/trim-v]
   (fn [db [db-patches]]
     (update-db db db-patches)))
 
@@ -79,22 +79,22 @@
     (update db entity-prefix u/deep-merge db-patch)))
 
 (sth/rr rf/reg-event-db ::toggle
-  [trim-v]
+  [rf/trim-v]
   (fn [db [path]] (update-in db path not)))
 
 (sth/rr rf/reg-event-db ::toggle-val
-  [trim-v]
+  [rf/trim-v]
   (fn [db [path val]]
     (update-in db path #(if % nil val))))
 
 ;; Toggles set inclusion/exclusion from set
 (sth/rr rf/reg-event-db ::set-toggle
-  [trim-v]
+  [rf/trim-v]
   (fn [db [path val]]
     (update-in db path u/set-toggle val)))
 
 (sth/rr rf/reg-event-db ::dissoc-in
-  [trim-v]
+  [rf/trim-v]
   (fn [db [path]]
     (u/dissoc-in db path)))
 
@@ -123,7 +123,7 @@
 
 ;; system initialization
 (rf/reg-event-fx ::init-system
-  (fn [db [_ config]]
+  (fn [_ [_ config]]
     {::init-system config}))
 
 (rf/reg-fx ::init-system

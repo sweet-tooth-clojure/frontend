@@ -35,7 +35,7 @@
         :effect ::fx
         :dispatch-sugar ::dispatch-sugar))
 
-(defmulti merge-key (fn [x k y] k))
+(defmulti merge-key (fn [_x k _y] k))
 
 (defmethod merge-key :dispatch-n
   [x _ y]
@@ -87,5 +87,5 @@
 
 (sth/rr rf/reg-event-fx ::compose-dispatch
   [rf/trim-v]
-  (fn [cofx [fx]]
+  (fn [_cofx [fx]]
     (compose-fx fx)))

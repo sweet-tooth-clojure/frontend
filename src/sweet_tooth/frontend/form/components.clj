@@ -36,7 +36,6 @@
         input             'input
         field             'field
 
-        form-state      'form-state
         form-components 'form-components
         form            'form
 

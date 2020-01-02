@@ -79,7 +79,7 @@
 
 (defn adapt-req
   "Makes sure a path is findable from req and adds it"
-  [[method route-name opts :as res] router]
+  [[method route-name opts :as _res] router]
   (when-let [path (strp/path router
                              route-name
                              (or (:route-params opts)
@@ -91,8 +91,7 @@
 (sth/rr rf/reg-event-db ::default-sync-success
   [rf/trim-v]
   (fn [db [{{:keys [response-data]} :resp
-            :keys [req]
-            :as ctx}]]
+            :keys [req]}]]
     (if (vector? response-data)
       (stcf/update-db db response-data)
       (do (log/warn "Sync response data was not a vector:" {:response-data response-data
@@ -103,7 +102,7 @@
 ;; is the second argument here correct?
 (sth/rr rf/reg-event-fx ::default-sync-fail
   [rf/trim-v]
-  (fn [{:keys [db] :as cofx} [{:keys [req], {:keys [response-data]} :resp}]]
+  (fn [{:keys [db] :as _cofx} [{:keys [req], {:keys [response-data]} :resp}]]
     (let [sync-info {:response-data response-data :req (into [] (take 2 req))}]
       {:db       (if (vector? response-data)
                    (stcf/update-db db response-data)
@@ -127,7 +126,7 @@
   "In response to a sync event, return an effect map of:
   a) updated db to track a sync request
   b) ::dispatch-sync effect, to be handled by the ::dispatch-sync effect handler"
-  [{:keys [db] :as cofx} req]
+  [{:keys [db] :as _cofx} req]
   (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
         adapted-req                       (-> req
                                               (add-default-sync-response-handlers)
@@ -180,13 +179,13 @@
 (defn sync-fx
   "Returns an effect handler that dispatches a sync event"
   [[method endpoint & [opts]]]
-  (fn [cofx [call-opts params]]
+  (fn [_cofx [call-opts params]]
     {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]}))
 
 (defn sync-once-fx
   "Returns an effect handler that dispatches a sync event"
   [[method endpoint & [opts]]]
-  (fn [cofx [call-opts params]]
+  (fn [_cofx [call-opts params]]
     {:dispatch [::sync-once [method endpoint (build-opts opts call-opts params)]]}))
 
 ;; TODO possibly add some timeout effect here to clean up sync

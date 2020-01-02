@@ -30,22 +30,19 @@
   "A component that displays a link to each page. Current page has the
   `active` class"
   [pager-id & [window-size]]
-  (let [pager (subscribe [::stpf/pager pager-id])
-        route (subscribe [::stnf/route])]
-    (fn [pager-id]
-      (let [{:keys [query page-count]}                              @pager
-            {:keys [path-params query-params route-name] :as route} @route
-            current-page                                            (:page query)
-            page-nums                                               (if (and window-size (< window-size page-count))
-                                                                      (page-subset page-count current-page window-size)
-                                                                      (range 1 (inc page-count)))]
-        
-        (->> page-nums
-             (map (fn [page]
-                    (if page
-                      [:a.page-num
-                       {:href  (stfr/path route-name path-params (assoc query-params :page page))
-                        :class (if (= (:page query) page) "active")}
-                       page]
-                      [:span.page-space [:i.fal.fa-ellipsis-h]])))
-             (into [:div.pager]))))))
+  (let [{:keys [query page-count]}                    @(subscribe [::stpf/pager pager-id])
+        {:keys [path-params query-params route-name]} @(subscribe [::stnf/route])
+        current-page                                  (:page query)
+        page-nums                                     (if (and window-size (< window-size page-count))
+                                                        (page-subset page-count current-page window-size)
+                                                        (range 1 (inc page-count)))]
+
+    (->> page-nums
+         (map (fn [page]
+                (if page
+                  [:a.page-num
+                   {:href  (stfr/path route-name path-params (assoc query-params :page page))
+                    :class (when (= (:page query) page) "active")}
+                   page]
+                  [:span.page-space [:i.fal.fa-ellipsis-h]])))
+         (into [:div.pager]))))

@@ -1,10 +1,8 @@
 (ns sweet-tooth.frontend.nav.flow
   "Adapted from Accountant, https://github.com/venantius/accountant
   Accountant is licensed under the EPL v1.0."
-  (:require [clojure.string :as str]
-            [goog.events :as events]
+  (:require [goog.events :as events]
             [goog.events.EventType]
-            [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
             [integrant.core :as ig]
             [taoensso.timbre :as log]
@@ -17,10 +15,7 @@
             [sweet-tooth.frontend.nav.ui.flow :as stnuf]
             [sweet-tooth.frontend.nav.utils :as stnu]
             [sweet-tooth.frontend.sync.flow :as stsf]
-            [sweet-tooth.frontend.routes.protocol :as strp])
-  (:import goog.history.Event
-           goog.history.Html5History
-           goog.Uri))
+            [sweet-tooth.frontend.routes.protocol :as strp]))
 
 (defn- handle-unloading
   []
@@ -31,7 +26,7 @@
 (defn init-handler
   "Configures accountant, window unloading, keeps track of event
   handlers for integrant teardown"
-  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload? global-lifecycle] :as config}]
+  [{:keys [router dispatch-route-handler reload-same-path? check-can-unload? global-lifecycle] :as _config}]
   (let [history      (accountant/new-history)
         nav-handler  (fn [path] (rf/dispatch [dispatch-route-handler path]))
         update-token (fn [relative-href title] (rf/dispatch [::update-token relative-href :set title]))

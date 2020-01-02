@@ -1,9 +1,7 @@
 (ns sweet-tooth.frontend.sync.dispatch.ajax
-  (:require [re-frame.core :as rf]
-            [taoensso.timbre :as timbre]
+  (:require [taoensso.timbre :as timbre]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.sync.flow :as stsf]
-            [sweet-tooth.frontend.routes.protocol :as strp]
             [integrant.core :as ig]
             [clojure.set :as set]
             [cognitect.anomalies :as anom]))
@@ -42,7 +40,7 @@
     :or   {fail-map fails}
     :as   global-opts}]
   (fn [req]
-    (let [[method res {:keys [uri] :as opts} :as req-sig] (adapt-req req)
+    (let [[method _res {:keys [uri] :as opts} :as req-sig] (adapt-req req)
           request-method                                  (get request-methods method)]
 
       (when-not req-sig

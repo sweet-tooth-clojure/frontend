@@ -1,13 +1,10 @@
 (ns sweet-tooth.frontend.form.components
   (:require [re-frame.core :refer [dispatch-sync dispatch subscribe]]
-            [reagent.core :refer [atom] :as r]
             [clojure.string :as str]
             [cljs-time.format :as tf]
             [cljs-time.core :as ct]
-            [sweet-tooth.frontend.paths :as p]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.sync.flow :as stsf])
+            [sweet-tooth.frontend.form.flow :as stff])
   (:require-macros [sweet-tooth.frontend.form.components]))
 
 (defn progress-indicator
@@ -175,7 +172,7 @@
 
 ;; date handling
 (defn unparse [fmt x]
-  (if x (tf/unparse fmt (js/goog.date.DateTime. x))))
+  (when x (tf/unparse fmt (js/goog.date.DateTime. x))))
 
 (def date-fmt (:date tf/formatters))
 
@@ -257,8 +254,7 @@
     after-errors]])
 
 (defn checkbox-field
-  [{:keys [data form-id tip required label no-label
-           attr-path attr-errors]
+  [{:keys [tip required label no-label attr-path attr-errors]
     :as opts}]
   [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors "error"))}
    [:div

@@ -51,7 +51,7 @@
                      (:params opts)
                      opts)]
       (select-keys params (:required (rc/match-by-name router name)))))
-  
+
   (strp/route
     [this path]
     (if-let [{:keys [data query-params] :as m} (reif/match-by-path router path)]
@@ -59,7 +59,7 @@
           (merge (dissoc m :data))
           (set/rename-keys {:name       :route-name
                             :parameters :params})
-          (update :params (fn [{:keys [path query] :as params}]
+          (update :params (fn [{:keys [path query] :as _params}]
                             (merge path query query-params))))
       (when on-no-route
         (on-no-route path)

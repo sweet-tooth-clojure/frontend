@@ -1,8 +1,7 @@
 (ns sweet-tooth.frontend.filter.flow
-  (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe]]
+  (:require [re-frame.core :as rf]
             [clojure.string :as str]
-            [sweet-tooth.frontend.form.flow :as stff]
-            [taoensso.timbre :as timbre]))
+            [sweet-tooth.frontend.form.flow :as stff]))
 
 ;; TODO: min-length opt
 (defn filter-query
@@ -64,7 +63,7 @@
 
 (defn reg-filtered-sub
   [sub-name source-sub filter-form-path filter-fns]
-  (reg-sub sub-name
+  (rf/reg-sub sub-name
     :<- [source-sub]
     :<- [::stff/buffer filter-form-path]
     (fn [[unfiltered form-data] _]

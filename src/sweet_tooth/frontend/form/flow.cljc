@@ -1,12 +1,10 @@
 (ns sweet-tooth.frontend.form.flow
   (:require [re-frame.core :refer [reg-event-db reg-event-fx trim-v reg-sub subscribe] :as rf]
-            [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.paths :as p]
-            [medley.core :as medley]
             [meta-merge.core :refer [meta-merge]]
             [taoensso.timbre :as timbre]))
 
@@ -172,7 +170,7 @@
   - `form-spec` is a way to pass on whatevs data to the request
     completion handler.
   - the `:sync` key of form spec can customize the sync request"
-  [full-form-path data {:keys [sync success fail]
+  [full-form-path data {:keys [sync]
                         :as   form-spec}]
   (let [[_ endpoint action route-params] full-form-path]
     [action
@@ -251,7 +249,7 @@
 
   TODO investigate using the `after` interceptor"
   [db-update]
-  (fn [{:keys [db]} [{:keys [full-form-path form-spec resp]
+  (fn [{:keys [db]} [{:keys [full-form-path form-spec]
                       {:keys [response-data]} :resp
                       :as args}]]
     (if-let [callback (:callback form-spec)]
@@ -276,7 +274,7 @@
   submit-form-success)
 
 (defn submit-form-fail
-  [db [{:keys [full-form-path form-spec resp]
+  [db [{:keys [full-form-path resp]
         {:keys [response-data]} :resp}]]
   (timbre/info "form submit fail:" resp full-form-path)
   (-> (assoc-in db (conj full-form-path :errors) (or (get-in response-data [0 1]) {:cause :unknown}))

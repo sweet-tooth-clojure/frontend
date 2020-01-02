@@ -1,19 +1,9 @@
 (ns sweet-tooth.frontend.nav.accountant
   "Adapted from Accountant, https://github.com/venantius/accountant
   Accountant is licensed under the EPL v1.0."
-  (:require [clojure.string :as str]
-            [goog.events :as events]
+  (:require [goog.events :as events]
             [goog.events.EventType]
-            [goog.history.EventType :as EventType]
-            [re-frame.core :as rf]
-            [integrant.core :as ig]
-            [sweet-tooth.frontend.paths :as paths]
-            [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.handlers :as sth]
-            [sweet-tooth.frontend.nav.ui.flow :as stnuf]
-            [sweet-tooth.frontend.nav.utils :as stnu]
-            [sweet-tooth.frontend.sync.flow :as stsf]
-            [sweet-tooth.frontend.routes.protocol :as strp])
+            [goog.history.EventType :as EventType])
   (:import goog.history.Event
            goog.history.Html5History
            goog.Uri))
@@ -22,11 +12,11 @@
 (def app-updated-token? (atom false))
 
 (defn- transformer-create-url
-  [token path-prefix location]
+  [token path-prefix _location]
   (str path-prefix token))
 
 (defn- transformer-retrieve-token
-  [path-prefix location]
+  [_path-prefix location]
   (str (.-pathname location) (.-search location) (.-hash location)))
 
 (defn new-history

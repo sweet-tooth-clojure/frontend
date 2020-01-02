@@ -2,8 +2,8 @@
   (:require [clojure.string :as str]
             [clojure.set :as set]
             [clojure.walk :as walk]
-            [ajax.url :as url]
-            [medley.core :as medley]))
+            [clojure.data :as data]
+            [ajax.url :as url]))
 
 ;;*** DOM utils TODO move to ui.cljs
 #?(:cljs (defn prevent-default
@@ -23,10 +23,10 @@
   [e]
   (aget e "target" "value"))
 
-(defn capitalize-words 
+(defn capitalize-words
   "Capitalize every word in a string"
   [s]
-  (->> (str/split (str s) #"\b") 
+  (->> (str/split (str s) #"\b")
        (map str/capitalize)
        (str/join)))
 
@@ -133,7 +133,7 @@
   "Is every value in x present in y?"
   [x y]
   {:pre [(and (seqable? x) (seqable? y))]}
-  (let [diff (second (clojure.data/diff y x))]
+  (let [diff (second (data/diff y x))]
     (->> (walk/postwalk (fn [x]
                           (when-not (and (map? x)
                                          (nil? (first (vals x))))

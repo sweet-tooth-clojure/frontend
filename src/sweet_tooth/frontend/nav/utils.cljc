@@ -1,16 +1,17 @@
 (ns sweet-tooth.frontend.nav.utils
   (:require [sweet-tooth.frontend.core.utils :as u]
+            [sweet-tooth.frontend.paths :as paths]
             [cemerick.url :as url]
             [clojure.string :as str]
-            [sweet-tooth.frontend.paths :as paths]))
+            [clojur.walk :as walk]))
 
 (defn query-params
   "Turn query string params into map with keyword keys"
   [path]
-  (if (re-find #"\?" path)
+  (when (re-find #"\?" path)
     (-> (str/replace path #".*?\?" "")
         url/query->map
-        clojure.walk/keywordize-keys)))
+        walk/keywordize-keys)))
 
 ;; Does this belong in a pagination namespace?
 (def page-param-keys
