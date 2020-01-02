@@ -3,7 +3,7 @@
             [sweet-tooth.frontend.paths :as paths]
             [cemerick.url :as url]
             [clojure.string :as str]
-            [clojur.walk :as walk]))
+            [clojure.walk :as walk]))
 
 (defn query-params
   "Turn query string params into map with keyword keys"
