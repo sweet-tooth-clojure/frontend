@@ -240,7 +240,7 @@
            tip required label no-label
            before-input after-input after-errors]
     :as opts}]
-  [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors "error"))}
+  [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors " error"))}
    (when-not no-label
      [:label {:for (label-for form-id attr-path) :class "label"}
       (or label (label-text attr-path))
@@ -256,7 +256,7 @@
 (defn checkbox-field
   [{:keys [tip required label no-label attr-path attr-errors]
     :as opts}]
-  [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors "error"))}
+  [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors " error"))}
    [:div
     (if no-label
       [:span [input (apply dissoc opts field-opts)] [:i]]
