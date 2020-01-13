@@ -20,23 +20,13 @@
             [:i {:class "fa fa-check-circle"}]
             " success"])]))
 
-(defn dispatch-change
-  [partial-form-path attr-path val]
-  (dispatch-sync [::stff/update-attr-buffer partial-form-path attr-path val]))
-
-(defn dispatch-touch
-  [partial-form-path attr-path]
-  (dispatch-sync [::stff/touch-attr partial-form-path attr-path val]))
-
-(defn dispatch-validation
-  [partial-form-path attr-path validation-fn]
-  (dispatch-sync [::stff/update-attr-errors partial-form-path attr-path validation-fn]))
-
-(defn handle-change
-  "Meant for input fields where your keystrokes should update the
-  field. Gets new value from event."
-  [event partial-form-path attr-path]
-  (dispatch-change partial-form-path attr-path (u/tv event)))
+(defn dispatch-input-event
+  [event {:keys [format-write] :as input-opts} & [update-val?]]
+  (dispatch-sync [::stff/input-event (cond-> (select-keys input-opts [:partial-form-path
+                                                                      :attr-path
+                                                                      :validate])
+                                       true        (merge {:event-type (u/go-get event ["type"])})
+                                       update-val? (merge {:val (format-write (u/tv event))}))]))
 
 (defn attr-path-str
   [attr-path]
@@ -52,6 +42,7 @@
   [{:keys [form-id partial-form-path attr-path]} & suffix]
   (str form-id partial-form-path attr-path (str/join "" suffix)))
 
+;; composition helpers
 (defn pre-wrap
   [f1 f2]
   (fn [& args]
@@ -69,14 +60,14 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 ;; used in the field component below
-(def field-opts #{:tip :before-input :after-input :after-errors :label :no-label})
+(def field-opts #{:tip :before-input :after-input :after-errors :label :no-label :show-errors-on})
 
 ;; react doesn't recognize these and hates them
-(def input-opts #{:attr-buffer :attr-path :attr-errors :attr-touched?
+(def input-opts #{:attr-buffer :attr-path :attr-errors :attr-visible-errors :attr-input-events
                   :label :no-label :options
                   :partial-form-path :input-type
                   :format-read :format-write
-                  :validate-with})
+                  :validate})
 
 (defn dissoc-input-opts
   [x]
@@ -88,33 +79,18 @@
 
 
 (defn framework-input-opts
-  [{:keys [partial-form-path attr-path] :as opts}]
-  (merge {:attr-buffer   (subscribe [::stff/attr-buffer partial-form-path attr-path])
-          :attr-errors   (subscribe [::stff/attr-errors partial-form-path attr-path])
-          :attr-touched? (subscribe [::stff/attr-touched? partial-form-path attr-path])
-          :format-read   identity
-          :format-write  identity}
+  [{:keys [partial-form-path attr-path show-errors-on] :as opts
+    :or   {show-errors-on #{"blur" "submit" "show-errors"}}}]
+  (merge {:attr-buffer         (subscribe [::stff/attr-buffer partial-form-path attr-path])
+          :attr-errors         (subscribe [::stff/attr-errors partial-form-path attr-path])
+          :attr-visible-errors (subscribe [::stff/attr-visible-errors
+                                           partial-form-path
+                                           attr-path
+                                           show-errors-on])
+          :attr-input-events   (subscribe [::stff/attr-input-events partial-form-path attr-path])
+          :format-read         identity
+          :format-write        identity}
          opts))
-
-(defn on-change-fn
-  [{:keys [attr-path partial-form-path format-write validate-with attr-touched?]
-    :or   {format-write identity}}]
-  (letfn [(dc [e] (dispatch-change partial-form-path attr-path (format-write (u/tv e))))]
-    (if validate-with
-      (fn [e]
-        (dc e)
-        (when @attr-touched?
-          (dispatch-validation partial-form-path attr-path validate-with)))
-      dc)))
-
-(defn on-blur-fn
-  [{:keys [attr-path partial-form-path validate-with]}]
-  (letfn [(dt [& _] (dispatch-touch partial-form-path attr-path))]
-    (if validate-with
-      (fn []
-        (dt)
-        (dispatch-validation partial-form-path attr-path validate-with))
-      dt)))
 
 (defn input-type-opts-default
   [{:keys [form-id attr-path attr-buffer format-read input-type]
@@ -122,8 +98,9 @@
   (merge {:type      (name (or input-type :text))
           :value     (format-read @attr-buffer)
           :id        (label-for form-id attr-path)
-          :on-change (on-change-fn opts)
-          :on-blur   (on-blur-fn opts)
+          :on-change #(dispatch-input-event % opts true)
+          :on-blur   #(dispatch-input-event % opts false)
+          :on-focus  #(dispatch-input-event % opts false)
           :class     (str "input " (attr-path-str attr-path))}
          opts))
 
@@ -144,17 +121,17 @@
       (dissoc :type)))
 
 (defmethod input-type-opts :radio
-  [{:keys [format-read attr-buffer partial-form-path attr-path value] :as opts}]
-  (assoc (input-type-opts-default opts)
-         :checked (= value (format-read @attr-buffer))
-         :on-change #(dispatch-change partial-form-path attr-path value)))
+  [{:keys [format-read attr-buffer value] :as opts}]
+  (assoc (input-type-opts-default (merge {:format-write (constantly value)}
+                                         opts))
+         :checked (= value (format-read @attr-buffer))))
 
 (defmethod input-type-opts :checkbox
-  [{:keys [attr-buffer partial-form-path attr-path format-read] :as opts}]
+  [{:keys [attr-buffer format-read] :as opts}]
   (let [value (format-read @attr-buffer)]
     (-> (input-type-opts-default opts)
-        (assoc :default-checked (boolean value)
-               :on-change #(dispatch-change partial-form-path attr-path (not value)))
+        (merge {:default-checked (boolean value)
+                :on-change       #(dispatch-input-event % (merge {:format-write (constantly (not value))} opts) true)})
         (dissoc :value))))
 
 (defn toggle-set-membership
@@ -163,12 +140,12 @@
     (if (empty? new-s) #{} new-s)))
 
 (defmethod input-type-opts :checkbox-set
-  [{:keys [attr-buffer partial-form-path attr-path value format-read] :as opts}]
+  [{:keys [attr-buffer value format-read] :as opts}]
   (let [checkbox-set (or (format-read @attr-buffer) #{})]
-    (assoc (input-type-opts-default opts)
-           :type      "checkbox"
-           :checked   (boolean (checkbox-set value))
-           :on-change #(dispatch-change partial-form-path attr-path (toggle-set-membership checkbox-set value)))))
+    (merge (input-type-opts-default opts)
+           {:type      "checkbox"
+            :checked   (boolean (checkbox-set value))
+            :on-change #(dispatch-input-event % (merge {:format-write (constantly (toggle-set-membership checkbox-set value))} opts) true)})))
 
 ;; date handling
 (defn unparse [fmt x]
@@ -176,26 +153,28 @@
 
 (def date-fmt (:date tf/formatters))
 
-(defn handle-date-change [e partial-form-path attr-path]
-  (let [v (u/tv e)]
-    (if (empty? v)
-      (dispatch-change partial-form-path attr-path nil)
-      (let [date (tf/parse date-fmt v)
-            date (js/Date. (ct/year date) (dec (ct/month date)) (ct/day date))]
-        (dispatch-change partial-form-path attr-path date)))))
+(defn format-write-date
+  [v]
+  (if (empty? v)
+    nil
+    (let [parsed (tf/parse date-fmt v)]
+      (js/Date. (ct/year parsed) (dec (ct/month parsed)) (ct/day parsed)))))
 
 (defmethod input-type-opts :date
-  [{:keys [attr-buffer partial-form-path attr-path] :as opts}]
+  [{:keys [attr-buffer] :as opts}]
   (assoc (input-type-opts-default opts)
          :value (unparse date-fmt @attr-buffer)
-         :on-change #(handle-date-change % partial-form-path attr-path)))
+         :on-change #(dispatch-input-event % (merge {:format-write format-write-date} opts) true)))
+
+(defn format-write-number
+  [v]
+  (let [parsed (js/parseInt v)]
+    (if (js/isNaN parsed) nil parsed)))
 
 (defmethod input-type-opts :number
-  [{:keys [partial-form-path attr-path] :as opts}]
+  [opts]
   (assoc (input-type-opts-default opts)
-         :on-change #(let [v (js/parseInt (u/tv %))
-                           v (if (js/isNaN v) nil v)]
-                       (dispatch-change partial-form-path attr-path v))))
+         :on-change #(dispatch-input-event % (merge {:format-write format-write-number} opts) true)))
 
 ;;~~~~~~~~~~~~~~~~~~
 ;; input components
@@ -226,21 +205,27 @@
 ;; 'field' interface, wraps inputs with error messagse and labels
 ;;~~~~~~~~~~~~~~~~~~
 
+(defn error-class
+  [error-sub]
+  (when (seq @error-sub) " error"))
+
 (defn error-messages
   "A list of error messages"
-  [errors]
-  (when (seq errors)
-    [:ul {:class "error-messages"}
-     (map (fn [x] ^{:key (str "error-" x)} [:li x]) errors)]))
+  [error-sub]
+  (let [errors @error-sub]
+    (when (seq errors)
+      [:ul {:class "error-messages"}
+       (map (fn [x] ^{:key (str "error-" x)} [:li x]) errors)])))
 
 (defmulti field :input-type)
 
 (defmethod field :default
-  [{:keys [form-id attr-path attr-errors
+  [{:keys [form-id attr-path attr-visible-errors
            tip required label no-label
            before-input after-input after-errors]
     :as opts}]
-  [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors " error"))}
+  [:div.field {:class (str (u/kebab (attr-path-str attr-path))
+                           (error-class attr-visible-errors))}
    (when-not no-label
      [:label {:for (label-for form-id attr-path) :class "label"}
       (or label (label-text attr-path))
@@ -250,13 +235,14 @@
     before-input
     [input (dissoc-field-opts opts)]
     after-input
-    (error-messages @attr-errors)
+    (error-messages attr-visible-errors)
     after-errors]])
 
 (defn checkbox-field
-  [{:keys [tip required label no-label attr-path attr-errors]
+  [{:keys [tip required label no-label attr-path attr-visible-errors]
     :as opts}]
-  [:div.field {:class (str (u/kebab (attr-path-str attr-path)) (when @attr-errors " error"))}
+  [:div.field {:class (str (u/kebab (attr-path-str attr-path))
+                           (error-class attr-visible-errors))}
    [:div
     (if no-label
       [:span [input (apply dissoc opts field-opts)] [:i]]
@@ -266,7 +252,7 @@
        (or label (label-text attr-path))
        (when required [:span {:class "required"} "*"])])
     (when tip [:div.tip tip])
-    (error-messages @attr-errors)]])
+    (error-messages @attr-visible-errors)]])
 
 (defmethod field :checkbox
   [opts]

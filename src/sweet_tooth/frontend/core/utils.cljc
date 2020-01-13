@@ -3,7 +3,8 @@
             [clojure.set :as set]
             [clojure.walk :as walk]
             [clojure.data :as data]
-            [ajax.url :as url]))
+            [ajax.url :as url]
+            #?(:cljs [goog.object :as go])))
 
 ;;*** DOM utils TODO move to ui.cljs
 #?(:cljs (defn prevent-default
@@ -18,6 +19,22 @@
 #?(:cljs (defn scroll-top
            []
            (aset (js/document.querySelector "body") "scrollTop" 0)))
+
+#?(:cljs (do (defn go-get
+               "Google Object Get - Navigates into a javascript object and gets a nested value"
+               [obj ks]
+               (let [ks (if (string? ks) [ks] ks)]
+                 (reduce go/get obj ks)))
+             (defn go-set
+               "Google Object Set - Navigates into a javascript object and sets a nested value"
+               [obj ks v]
+               (let [ks (if (string? ks) [ks] ks)
+                     target (reduce (fn [acc k]
+                                      (go/get acc k))
+                                    obj
+                                    (butlast ks))]
+                 (go/set target (last ks) v))
+               obj)))
 
 (defn tv
   [e]

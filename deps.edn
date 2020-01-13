@@ -4,7 +4,7 @@
          re-frame                    {:mvn/version "0.10.6"}
          cljs-ajax                   {:mvn/version "0.8.0"}
          meta-merge                  {:mvn/version "1.0.0"}
-         com.andrewmcveigh/cljs-time {:mvn/version "0.4.0"}
+         com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}
          com.taoensso/timbre         {:mvn/version "4.10.0"}
          com.cemerick/url            {:mvn/version "0.1.1"}
          venantius/accountant        {:mvn/version "0.2.4"}
