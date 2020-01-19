@@ -270,22 +270,20 @@
 
   TODO investigate using the `after` interceptor"
   [db-update]
-  (fn [{:keys [db]} [{:keys [full-form-path form-spec]
-                      {:keys [response-data]} :resp
-                      :as args}]]
-    (if-let [callback (:callback form-spec)]
-      (callback db args))
-    (cond-> {:db (let [updated-db (db-update db response-data)]
-                   (if (= :all (:clear form-spec))
-                     (assoc-in updated-db full-form-path {})
-                     (update-in updated-db full-form-path merge
-                                {:state :success :response response-data}
-                                (zipmap (:clear form-spec) (repeat nil)))))}
-      (:expire form-spec) (assoc ::c/debounce-dispatch (map (fn [[k v]]
-                                                              {:ms       v
-                                                               :id       [:expire full-form-path k]
-                                                               :dispatch [::c/dissoc-in (conj full-form-path k)]})
-                                                            (:expire form-spec))))))
+  (fn [{:keys [db]} [{:keys [full-form-path], {:keys [response-data]} :resp, :as args}
+                     {:keys [callback clear expire]}]]
+    (when callback (callback db args))
+    (cond-> {:db (db-update db response-data)}
+      (= :all clear)    (assoc-in (into [:db] full-form-path) {})
+      (not= :all clear) (update-in (into [:db] full-form-path)
+                                   merge
+                                   {:state :success :response response-data}
+                                   (zipmap clear (repeat nil)))
+      expire            (assoc ::c/debounce-dispatch (map (fn [[k v]]
+                                                            {:ms       v
+                                                             :id       [:expire full-form-path k]
+                                                             :dispatch [::c/dissoc-in (conj full-form-path k)]})
+                                                          expire)))))
 
 (def submit-form-success
   (success-base c/update-db))
