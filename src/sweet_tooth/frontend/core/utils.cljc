@@ -3,7 +3,7 @@
             [clojure.set :as set]
             [clojure.walk :as walk]
             [clojure.data :as data]
-            [ajax.url :as url]
+            #?(:cljs [ajax.url :as url])
             #?(:cljs [goog.object :as go])))
 
 ;;*** DOM utils TODO move to ui.cljs
@@ -158,11 +158,12 @@
                         diff)
          (every? nil?))))>
 
-(defn params-to-str
-  [m]
-  (->> m
-       (map (fn [[k v]]
-              [(if (keyword? k) (subs (str k) 1) k)
-               (if (keyword? v) (subs (str v) 1) v)]))
-       (into {})
-       (url/params-to-str :java)))
+#?(:cljs
+   (defn params-to-str
+     [m]
+     (->> m
+          (map (fn [[k v]]
+                 [(if (keyword? k) (subs (str k) 1) k)
+                  (if (keyword? v) (subs (str v) 1) v)]))
+          (into {})
+          (url/params-to-str :java))))

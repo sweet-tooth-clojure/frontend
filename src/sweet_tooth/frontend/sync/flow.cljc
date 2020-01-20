@@ -198,5 +198,5 @@
 ;;------
 (defn db-patch-handle-exception
   [db ex-data]
-  (js/console.warn "sync exception" ex-data)
+  #?(:cljs (js/console.warn "sync exception" ex-data))
   db)

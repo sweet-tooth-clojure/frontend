@@ -1,7 +1,6 @@
 (ns sweet-tooth.frontend.routes
   (:require [integrant.core :as ig]
             [sweet-tooth.frontend.routes.protocol :as strp]
-            [sweet-tooth.frontend.routes.reitit]
             [clojure.spec.alpha :as s]))
 
 (s/def ::route-name keyword?)
