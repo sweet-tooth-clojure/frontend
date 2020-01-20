@@ -115,17 +115,20 @@
     validate (assoc :errors (validate (:buffer form)))))
 
 ;; Meant to handle all input events: focus, blur, change, etc
+(defn input-event
+  [db [{:keys [partial-form-path attr-path validate val event-type] :as opts}]]
+  (let [form-path     (partial p/full-path :form partial-form-path)
+        validation-fn (or validate (get-in db (form-path :validate)))]
+    (update-in db (p/full-path :form partial-form-path)
+               (fn [form]
+                 (cond-> form
+                   true                  (update-in (u/flatv :input-events attr-path) (fnil conj #{}) event-type)
+                   (contains? opts :val) (assoc-in (u/flatv :buffer attr-path) val)
+                   validation-fn         (validate-form validation-fn))))))
+
 (sth/rr rf/reg-event-db ::input-event
   [rf/trim-v]
-  (fn [db [{:keys [partial-form-path attr-path validate val event-type] :as opts}]]
-    (let [form-path     (partial p/full-path :form partial-form-path)
-          validation-fn (or validate (get-in db (form-path :validate)))]
-      (update-in db (p/full-path :form partial-form-path)
-                 (fn [form]
-                   (cond-> form
-                     true                  (update-in (u/flatv :input-events attr-path) (fnil conj #{}) event-type)
-                     (contains? opts :val) (assoc-in (u/flatv :buffer attr-path) val)
-                     validation-fn         (validate-form validation-fn)))))))
+  input-event)
 
 ;;------
 ;; Building and submitting forms

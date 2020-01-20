@@ -9,3 +9,4 @@ tmp
 public
 .cpcache
 .clj-kondo/.cache
+out

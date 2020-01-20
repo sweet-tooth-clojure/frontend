@@ -1,14 +1,14 @@
 (set-env!
-  :source-paths   #{"src"}
-  :target-path    "target/build"
-  :dependencies   '[[adzerk/bootlaces "0.1.13" :scope "test"]
-                    [adzerk/boot-test "1.1.1"  :scope "test"]
-                    [seancorfield/boot-tools-deps "0.4.7" :scope "test"]])
+ :source-paths #{"src"}
+ :target-path  "target/build"
+ :dependencies '[[adzerk/bootlaces "0.1.13" :scope "test"]
+                 [seancorfield/boot-tools-deps "0.4.7" :scope "test"]
+                 [crisptrutski/boot-cljs-test "0.3.5-SNAPSHOT"]])
 
 (require
-  '[adzerk.bootlaces :as bootlaces]
-  '[adzerk.boot-test :as boot-test]
-  '[boot-tools-deps.core :refer [deps]])
+ '[adzerk.bootlaces :as bootlaces]
+ '[boot-tools-deps.core :refer [deps]]
+ '[crisptrutski.boot-cljs-test :refer [test-cljs]])
 
 (def +version+ "0.12.0")
 (bootlaces/bootlaces! +version+)
@@ -34,4 +34,13 @@
 (deftask build-jar
   ""
   []
-  (comp (deps :overwrite-boot-deps true) (bootlaces/build-jar)))
+  (comp (deps :overwrite-boot-deps true :aliases [:cljs])
+        (bootlaces/build-jar)))
+
+
+(deftask test
+  "runs tests"
+  []
+  (comp (deps :aliases [:cljs])
+        (merge-env! :source-paths #{"test"})
+        (test-cljs)))
