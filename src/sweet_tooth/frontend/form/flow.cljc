@@ -134,13 +134,15 @@
 ;; Building and submitting forms
 ;;------
 
-;; Reset buffer to value when form was initialized
+(defn reset-form-buffer
+  "Reset buffer to value when form was initialized. Typically paired with a 'reset' button"
+  [db [partial-form-path]]
+  (update-in db (p/full-path :form partial-form-path) (fn [{:keys [base] :as form}]
+                                                        (assoc form :buffer base))))
+
 (sth/rr rf/reg-event-db ::reset-form-buffer
   [rf/trim-v]
-  (fn [db [partial-form-path]]
-    (let [path (p/full-path :form partial-form-path)]
-      (update-in db path (fn [{:keys [base] :as form}]
-                           (assoc form :buffer base))))))
+  reset-form-buffer)
 
 (defn initialize-form
   [db [partial-form-path {:keys [buffer validate] :as form}]]
@@ -159,8 +161,8 @@
 (sth/rr rf/reg-event-db ::initialize-form-from-path
   [rf/trim-v]
   (fn [db [partial-form-path {:keys [data-path data-fn]
-                              :or {data-fn identity}
-                              :as form}]]
+                              :or   {data-fn identity}
+                              :as   form}]]
     (initialize-form db [partial-form-path (-> form
                                                (assoc :buffer (data-fn (get-in db (u/path data-path))))
                                                (dissoc :data-path :data-fn))])))
