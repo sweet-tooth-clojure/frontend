@@ -157,26 +157,28 @@
   [rf/trim-v]
   initialize-form)
 
+(defn initialize-form-from-path
+  [db [partial-form-path {:keys [data-path data-fn]
+                          :or   {data-fn identity}
+                          :as   form}]]
+  (initialize-form db [partial-form-path (-> form
+                                             (assoc :buffer (data-fn (get-in db (u/path data-path))))
+                                             (dissoc :data-path :data-fn))]))
+
 ;; Populate form initial state
 (sth/rr rf/reg-event-db ::initialize-form-from-path
   [rf/trim-v]
-  (fn [db [partial-form-path {:keys [data-path data-fn]
-                              :or   {data-fn identity}
-                              :as   form}]]
-    (initialize-form db [partial-form-path (-> form
-                                               (assoc :buffer (data-fn (get-in db (u/path data-path))))
-                                               (dissoc :data-path :data-fn))])))
+  initialize-form-from-path)
 
 ;; nils out form
 (defn clear-form
-  [db partial-form-path]
+  [db [partial-form-path]]
   (let [path (p/full-path :form partial-form-path)]
     (assoc-in db path nil)))
 
 (sth/rr rf/reg-event-db ::clear-form
   [rf/trim-v]
-  (fn [db [partial-form-path]]
-    (clear-form db partial-form-path)))
+  clear-form)
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
