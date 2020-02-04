@@ -1,5 +1,6 @@
 (ns sweet-tooth.frontend.form.flow-test
   (:require [sweet-tooth.frontend.form.flow :as sut]
+            [sweet-tooth.frontend.test-config :as test-config]
             #?(:clj [clojure.test :refer [is deftest testing]]
                :cljs [cljs.test :refer [is deftest testing] :include-macros true])))
 
@@ -101,4 +102,54 @@
                                     :form-spec      {}}}}]
          (sut/form-sync-opts [:form :todos :create]
                              {:todo/title "boop"}
-                             {}))))
+                             {})))
+
+  (is (= [:create
+          :todos
+          {:params       {:todo/title "boop"}
+           :route-params {:todo/title "boop"}
+           :on           {:success [[:sweet-tooth.frontend.form.flow/submit-frm-success :$ctx]
+                                    [:do-a-thing :$ctx]]
+                          :fail    [:sweet-tooth.frontend.form.flow/submit-form-fail :$ctx],
+                          :$ctx    {:full-form-path [:form :todos :create]
+                                    :form-spec      {:sync {:on {:success [[::sut/submit-frm-success :$ctx]
+                                                                           [:do-a-thing :$ctx]]}}}}}}]
+         (sut/form-sync-opts [:form :todos :create]
+                             {:todo/title "boop"}
+                             {:sync {:on {:success [[::sut/submit-frm-success :$ctx]
+                                                    [:do-a-thing :$ctx]]}}}))))
+
+(deftest test-submit-form
+  (testing "sets form state to submitting, clears errors, returns sync dispatch event"
+    (is (= {:db       {:form {:create {:todos {:state        :submitting
+                                               :errors       nil
+                                               :input-events #:sweet-tooth.frontend.form.flow{:form #{"submit"}}}}}},
+            :dispatch [:sweet-tooth.frontend.sync.flow/sync
+                       [:todos :create {:params       nil
+                                        :route-params nil
+                                        :on           {:success [:sweet-tooth.frontend.form.flow/submit-form-success :$ctx]
+                                                       :fail    [:sweet-tooth.frontend.form.flow/submit-form-fail :$ctx]
+                                                       :$ctx    {:full-form-path [:form :create :todos]
+                                                                 :form-spec      nil}}}]]}
+           (sut/submit-form {:db {:form {:create {:todos {:state  nil
+                                                          :errors {}}}}}}
+                            [[:create :todos]])))))
+
+(deftest test-delete-entity-optimistic-fn
+  (testing "dissocs from :entity and returns delete dispatch"
+    (let [handler (sut/delete-entity-optimistic-fn :todo :db/id)]
+      (is (= {:dispatch [:sweet-tooth.frontend.sync.flow/sync [:delete :todo {:db/id        1
+                                                                              :params       nil
+                                                                              :route-params nil}]]
+              :db       {:entity {:todo {}}}}
+             (handler {:db {:entity {:todo {1 {:db/id 1}}}}}
+                      [{:db/id 1}]))))))
+
+(deftest test-submit-form-success
+  (testing ""
+    (is (= {:db (merge test-config/base-system
+                       {:entity {:todo {1 {:db/id 1}}}
+                        :form   {:create {:todos {}}}})}
+           (sut/submit-form-success {:db test-config/base-system}
+                                    [{:full-form-path [:form :create :todos]
+                                      :resp           {:response-data [[:entity {:todo {1 {:db/id 1}}}]]}}])))))

@@ -55,14 +55,12 @@
   "Takes a db and a vector of db-patches, and applies those patches to
   the db using the udpaters stored in
   [:sweet-tooth/system :sweet-tooth.frontend.core.flow/update-db]
-  of the app-db.
-
-  If no updaters apply, then just merge the patch in."
+  of the app-db."
   [db db-patches]
   {:pre [(vector? db-patches)]}
   (let [updaters (paths/get-path db :system ::update-db)]
     (reduce (fn [db [patch-key patch-val]]
-              (if-let [updater (get updaters patch-key)]
+              (if-let [updater (get updaters patch-key (get updaters :default))]
                 (updater db patch-val)
                 (throw (ex-info "no updater for patch" {:patch-key patch-key :patch-val patch-val :db-patches db-patches}))))
             db

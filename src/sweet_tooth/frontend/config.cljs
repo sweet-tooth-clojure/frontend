@@ -11,7 +11,6 @@
 
             [integrant.core :as ig]))
 
-
 (def default-config
   {::sth/register-handlers {}
 

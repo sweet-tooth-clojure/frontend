@@ -21,13 +21,17 @@
   [[_ partial-form-path]]
   (rf/subscribe [::form partial-form-path]))
 
-(doseq [[sub-name attr] {::state        :state
-                         ::ui-state     :ui-state
-                         ::errors       :errors
-                         ::buffer       :buffer
-                         ::base         :base
-                         ::touched      :touched
-                         ::input-events :input-events}]
+(def sub-name->form-key
+  {::state        :state
+   ::ui-state     :ui-state
+   ::errors       :errors
+   ::buffer       :buffer
+   ::base         :base
+   ::input-events :input-events})
+
+(def form-keys (set (vals sub-name->form-key)))
+
+(doseq [[sub-name attr] sub-name->form-key]
   (rf/reg-sub sub-name
     form-signal
     (fn [form _]
@@ -61,11 +65,6 @@
 
 ;; Has the user interacted with the input that corresponds to this
 ;; attr?
-(rf/reg-sub ::attr-touched?
-  (attr-facet-sub ::touched)
-  (fn [touched [_ _partial-form-path attr-path]]
-    (contains? touched (u/path attr-path))))
-
 (rf/reg-sub ::form-dirty?
   (fn [[_ partial-form-path]]
     [(rf/subscribe [::base partial-form-path])
@@ -204,20 +203,22 @@
          (update :on meta-merge {:$ctx {:full-form-path full-form-path
                                         :form-spec      form-spec}}))]))
 
-;; update db to indicate form's submitting, clear old errors
-;; build form request
+(defn submit-form
+  "build form request. update db to indicate form's submitting, clear
+  old errors"
+  [{:keys [db]} [partial-form-path & [form-spec]]]
+  (let [full-form-path (p/full-path :form partial-form-path)]
+    {:db       (-> db
+                   (update-in full-form-path {:state :submitting, :errors nil})
+                   (update-in (into full-form-path [:input-events ::form]) (fnil conj #{}) "submit"))
+     :dispatch [::stsf/sync (form-sync-opts full-form-path
+                                            (merge (:data form-spec)
+                                                   (get-in db (conj full-form-path :buffer)))
+                                            form-spec)]}))
+
 (sth/rr rf/reg-event-fx ::submit-form
   [rf/trim-v]
-  (fn [{:keys [db]} [partial-form-path & [form-spec]]]
-    (let [full-form-path (p/full-path :form partial-form-path)]
-      {:db       (-> db
-                     (assoc-in (conj full-form-path :state) :submitting)
-                     (assoc-in (conj full-form-path :errors) nil)
-                     (update-in (conj full-form-path :input-events ::form) (fnil conj #{}) "submit"))
-       :dispatch [::stsf/sync (form-sync-opts full-form-path
-                                              (merge (:data form-spec)
-                                                     (get-in db (conj full-form-path :buffer)))
-                                              form-spec)]})))
+  submit-form)
 
 ;; when user clicks submit on form that has errors
 (sth/rr rf/reg-event-db ::register-form-submit
@@ -226,39 +227,18 @@
     (update-in db (p/full-path :form partial-form-path :input-events ::form) (fnil conj #{}) "submit")))
 
 ;;--------------------
-;; submit variations: many items in a list
+;; deleting
 ;;--------------------
 
-(sth/rr rf/reg-event-fx ::submit-item
-  [rf/trim-v]
-  (fn [{:keys [db]} [item-path {:keys [data id] :as item-spec}]]
-    (let [item-path (u/flatv :item-submissions item-path (get data id))]
-      {:db (-> db
-               (assoc-in (conj item-path :state) :submitting)
-               (assoc-in (conj item-path :errors) nil))
-       :dispatch [::stsf/sync (form-sync-opts item-path
-                                              data
-                                              (dissoc item-spec :buffer))]})))
-
-(sth/rr rf/reg-event-fx ::delete-item
-  [rf/trim-v]
-  (fn [{:keys [db]} [type data & [form-spec]]]
-    (let [full-form-path (p/full-path :form [type :delete (:db/id data)])]
-      {:db db
-       :dispatch [::stsf/sync (form-sync-opts full-form-path
-                                              data
-                                              (merge {:success ::delete-item-success}
-                                                     form-spec))]})))
-
-(sth/rr rf/reg-event-fx ::undelete-item
-  [rf/trim-v]
-  (fn [{:keys [db]} [type data & [form-spec]]]
-    (let [full-form-path (p/full-path :form [type :update (:db/id data)])]
-      {:db db
-       :dispatch [::stsf/sync (form-sync-opts full-form-path
-                                              data
-                                              (merge {:success ::delete-item-success}
-                                                     form-spec))]})))
+;; TODO handle id-key in a universal manner
+(defn delete-entity-optimistic-fn
+  "Returns a handler that can be used to both send a delete sync and
+  remove the entity from the ent db"
+  [ent-type & [id-key]]
+  (let [id-key (or id-key :id)]
+    (fn [{:keys [db] :as cofx} [entity :as args]]
+      (merge ((stsf/sync-fx [:delete ent-type]) cofx args)
+             {:db (update-in db [:entity ent-type] dissoc (id-key entity))}))))
 
 ;;--------------------
 ;; handle form success/fail
@@ -267,7 +247,7 @@
 (defn success-base
   "Produces a function that can be used for handling form submission success.
   It handles the common behaviors:
-  - updating the form state to :success
+  - updating the form state to `:success`
   - populating the form's `:response` key with the returned data
   - calls callback specified by `callback` in `form-spec`
   - clears form keys specified by `:clear` in `form-spec`
@@ -278,19 +258,20 @@
   TODO investigate using the `after` interceptor"
   [db-update]
   (fn [{:keys [db]} [{:keys [full-form-path], {:keys [response-data]} :resp, :as args}
-                     {:keys [callback clear expire]}]]
+                     {:keys [callback clear keep expire]}]]
     (when callback (callback db args))
-    (cond-> {:db (db-update db response-data)}
-      (= :all clear)    (assoc-in (into [:db] full-form-path) {})
-      (not= :all clear) (update-in (into [:db] full-form-path)
-                                   merge
-                                   {:state :success :response response-data}
-                                   (zipmap clear (repeat nil)))
-      expire            (assoc ::c/debounce-dispatch (map (fn [[k v]]
-                                                            {:ms       v
-                                                             :id       [:expire full-form-path k]
-                                                             :dispatch [::c/dissoc-in (conj full-form-path k)]})
-                                                          expire)))))
+    (let [db-form-path full-form-path
+          keep-keys    (cond keep           keep
+                             (= :all clear) #{}
+                             clear          (set/difference form-keys (set clear))
+                             :else          form-keys)]
+      (cond-> {:db (-> (db-update db response-data)
+                       (update-in db-form-path select-keys keep-keys))}
+        expire (assoc ::c/debounce-dispatch (map (fn [[k v]]
+                                                   {:ms       v
+                                                    :id       [:expire full-form-path k]
+                                                    :dispatch [::c/dissoc-in (conj full-form-path k)]})
+                                                 expire))))))
 
 (def submit-form-success
   (success-base c/update-db))
