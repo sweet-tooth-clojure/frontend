@@ -260,18 +260,16 @@
   (fn [{:keys [db]} [{:keys [full-form-path], {:keys [response-data]} :resp, :as args}
                      {:keys [callback clear keep expire]}]]
     (when callback (callback db args))
-    (let [db-form-path full-form-path
-          keep-keys    (cond keep           keep
-                             (= :all clear) #{}
-                             clear          (set/difference form-keys (set clear))
-                             :else          form-keys)]
-      (cond-> {:db (-> (db-update db response-data)
-                       (update-in db-form-path select-keys keep-keys))}
-        expire (assoc ::c/debounce-dispatch (map (fn [[k v]]
-                                                   {:ms       v
-                                                    :id       [:expire full-form-path k]
-                                                    :dispatch [::c/dissoc-in (conj full-form-path k)]})
-                                                 expire))))))
+    (cond-> {:db (-> (db-update db response-data)
+                     (update-in full-form-path select-keys (cond keep           keep
+                                                                 (= :all clear) #{}
+                                                                 clear          (set/difference form-keys (set clear))
+                                                                 :else          form-keys)))}
+      expire (assoc ::c/debounce-dispatch (map (fn [[k v]]
+                                                 {:ms       v
+                                                  :id       [:expire full-form-path k]
+                                                  :dispatch [::c/dissoc-in (conj full-form-path k)]})
+                                               expire)))))
 
 (def submit-form-success
   (success-base c/update-db))
