@@ -158,7 +158,8 @@
                                        :resp           {:response-data [[:entity {:todo {1 {:db/id 1}}}]]}}
                                       options]))]
     (testing "basic form submission"
-      (is (= (expected {:buffer {:todo/title "hi"}})
+      (is (= (expected {:buffer {:todo/title "hi"}
+                        :state  :success})
              (submit-form-success nil))))
 
     (testing "clear all keys"
@@ -166,11 +167,12 @@
              (submit-form-success {:clear :all}))))
 
     (testing "clear specified keys"
-      (is (= (expected {})
+      (is (= (expected {:state :success})
              (submit-form-success {:clear [:buffer]}))))
 
-    (testing "keep key not specified for clearing"
-      (is (= (expected {:buffer {:todo/title "hi"}})
+    (testing "keep keys not specified for clearing"
+      (is (= (expected {:buffer {:todo/title "hi"}
+                        :state  :success})
              (submit-form-success {:clear [:base]}))))
 
     (testing "keep specified keys"

@@ -262,6 +262,7 @@
                      {:keys [callback clear keep expire]}]]
     (when callback (callback db args))
     (cond-> {:db (-> (db-update db response-data)
+                     (assoc-in (conj full-form-path :state) :success)
                      (update-in full-form-path select-keys (cond keep           keep
                                                                  (= :all clear) #{}
                                                                  clear          (set/difference form-keys (set clear))
