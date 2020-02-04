@@ -145,11 +145,38 @@
              (handler {:db {:entity {:todo {1 {:db/id 1}}}}}
                       [{:db/id 1}]))))))
 
+;; tests how the form gets updated
 (deftest test-submit-form-success
-  (testing ""
-    (is (= {:db (merge test-config/base-system
-                       {:entity {:todo {1 {:db/id 1}}}
-                        :form   {:create {:todos {}}}})}
-           (sut/submit-form-success {:db test-config/base-system}
-                                    [{:full-form-path [:form :create :todos]
-                                      :resp           {:response-data [[:entity {:todo {1 {:db/id 1}}}]]}}])))))
+  (letfn [(expected [form-map]
+            {:db (merge test-config/base-system
+                        {:entity {:todo {1 {:db/id 1}}}
+                         :form   {:create {:todos form-map}}})})
+          (submit-form-success [options]
+            (sut/submit-form-success {:db (merge test-config/base-system
+                                                 {:form {:create {:todos {:buffer {:todo/title "hi"}}}}})}
+                                     [{:full-form-path [:form :create :todos]
+                                       :resp           {:response-data [[:entity {:todo {1 {:db/id 1}}}]]}}
+                                      options]))]
+    (testing "basic form submission"
+      (is (= (expected {:buffer {:todo/title "hi"}})
+             (submit-form-success nil))))
+
+    (testing "clear all keys"
+      (is (= (expected {})
+             (submit-form-success {:clear :all}))))
+
+    (testing "clear specified keys"
+      (is (= (expected {})
+             (submit-form-success {:clear [:buffer]}))))
+
+    (testing "keep key not specified for clearing"
+      (is (= (expected {:buffer {:todo/title "hi"}})
+             (submit-form-success {:clear [:base]}))))
+
+    (testing "keep specified keys"
+      (is (= (expected {:buffer {:todo/title "hi"}})
+             (submit-form-success {:keep [:buffer]}))))
+
+    (testing "clear keys not specified for keeping"
+      (is (= (expected {})
+             (submit-form-success {:keep [:base]}))))))

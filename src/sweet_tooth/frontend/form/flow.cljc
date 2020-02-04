@@ -249,8 +249,9 @@
   It handles the common behaviors:
   - updating the form state to `:success`
   - populating the form's `:response` key with the returned data
-  - calls callback specified by `callback` in `form-spec`
-  - clears form keys specified by `:clear` in `form-spec`
+  - calls callback specified by `:callback`
+  - clears form keys specified by `:clear`
+  - `:expire` maps form keys to number of milliseconds to wait before clearing
 
   You customize success-base by providing a `db-update` function which
   will e.g. `merge` or `deep-merge` values from the response.
