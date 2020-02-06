@@ -209,7 +209,7 @@
   [{:keys [db]} [partial-form-path & [form-spec]]]
   (let [full-form-path (p/full-path :form partial-form-path)]
     {:db       (-> db
-                   (update-in full-form-path {:state :submitting, :errors nil})
+                   (update-in full-form-path merge {:state :submitting, :errors nil})
                    (update-in (into full-form-path [:input-events ::form]) (fnil conj #{}) "submit"))
      :dispatch [::stsf/sync (form-sync-opts full-form-path
                                             (merge (:data form-spec)

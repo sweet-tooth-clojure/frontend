@@ -89,7 +89,7 @@
   (is (= {:form {:todos {:create nil}}}
          (sut/clear-form {:form {:todos {:create {:base   {:todo/title "boop"}
                                                   :buffer {:todo/title "boop"}}}}}
-                         [:todos :create]))))
+                         [[:todos :create]]))))
 
 (deftest test-form-sync-opts
   (is (= [:create
@@ -123,7 +123,7 @@
   (testing "sets form state to submitting, clears errors, returns sync dispatch event"
     (is (= {:db       {:form {:create {:todos {:state        :submitting
                                                :errors       nil
-                                               :input-events #:sweet-tooth.frontend.form.flow{:form #{"submit"}}}}}},
+                                               :input-events #:sweet-tooth.frontend.form.flow{:form #{"submit"}}}}}}
             :dispatch [:sweet-tooth.frontend.sync.flow/sync
                        [:todos :create {:params       nil
                                         :route-params nil
