@@ -104,20 +104,33 @@
                              {:todo/title "boop"}
                              {})))
 
+  ;; specify on-success
   (is (= [:create
           :todos
           {:params       {:todo/title "boop"}
            :route-params {:todo/title "boop"}
-           :on           {:success [[:sweet-tooth.frontend.form.flow/submit-frm-success :$ctx]
+           :on           {:success [[::sut/submit-form-success :$ctx]
                                     [:do-a-thing :$ctx]]
-                          :fail    [:sweet-tooth.frontend.form.flow/submit-form-fail :$ctx],
+                          :fail    [::sut/submit-form-fail :$ctx],
                           :$ctx    {:full-form-path [:form :todos :create]
-                                    :form-spec      {:sync {:on {:success [[::sut/submit-frm-success :$ctx]
+                                    :form-spec      {:sync {:on {:success [[::sut/submit-form-success :$ctx]
                                                                            [:do-a-thing :$ctx]]}}}}}}]
          (sut/form-sync-opts [:form :todos :create]
                              {:todo/title "boop"}
-                             {:sync {:on {:success [[::sut/submit-frm-success :$ctx]
-                                                    [:do-a-thing :$ctx]]}}}))))
+                             {:sync {:on {:success [[::sut/submit-form-success :$ctx]
+                                                    [:do-a-thing :$ctx]]}}})))
+
+  (is (= [:create
+          :todos
+          {:params       {:todo/title "boop"}
+           :route-params {:todo/title "boop"}
+           :on           {:success [:do-a-thing :$ctx]
+                          :fail    [::sut/submit-form-fail :$ctx]
+                          :$ctx    {:full-form-path [:form :todos :create]
+                                    :form-spec      {:sync {:on {:success [:do-a-thing :$ctx]}}}}}}]
+         (sut/form-sync-opts [:form :todos :create]
+                             {:todo/title "boop"}
+                             {:sync {:on {:success [:do-a-thing :$ctx]}}}))))
 
 (deftest test-submit-form
   (testing "sets form state to submitting, clears errors, returns sync dispatch event"
