@@ -195,3 +195,14 @@
     (testing "clear keys not specified for keeping"
       (is (= (expected {})
              (submit-form-success {:keep [:base]}))))))
+
+(deftest test-submit-form-fail
+  (is (= {:form {:create {:todos {:errors {:cause :unknown}
+                                  :state  :sleeping}}}}
+         (sut/submit-form-fail {} [{:full-form-path [:form :create :todos]}]))))
+
+(deftest test-toggle-form
+  (is (= {:form {:create {:todos {:buffer   {:todo/title "hi"}
+                                  :base     {:todo/title "hi"}
+                                  :ui-state true}}}}
+         (sut/toggle-form {} [:create :todos] {:todo/title "hi"}))))

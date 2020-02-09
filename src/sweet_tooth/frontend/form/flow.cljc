@@ -95,12 +95,14 @@
 ;; Errors
 ;;------
 
+;; returns attr errors only when the form or given input has received
+;; one of the input events in `show-errors-on`
 (rf/reg-sub ::attr-visible-errors
   (fn [[_ & args]]
     [(rf/subscribe (into [::attr-input-events] args))
      (rf/subscribe (into [::input-events] args))
      (rf/subscribe (into [::attr-errors] args))])
-  (fn [[attr-input-events input-events attr-errors] [_ _ _ show-errors-on ]]
+  (fn [[attr-input-events input-events attr-errors] [_ _ _ show-errors-on]]
     (when (not-empty (set/intersection show-errors-on (set (into attr-input-events (::form input-events)))))
       attr-errors)))
 
@@ -251,7 +253,6 @@
   - populating the form's `:response` key with the returned data
   - calls callback specified by `:callback`
   - clears form keys specified by `:clear`
-  - `:expire` maps form keys to number of milliseconds to wait before clearing
 
   You customize success-base by providing a `db-update` function which
   will e.g. `merge` or `deep-merge` values from the response.
@@ -259,19 +260,14 @@
   TODO investigate using the `after` interceptor"
   [db-update]
   (fn [{:keys [db]} [{:keys [full-form-path], {:keys [response-data]} :resp, :as args}
-                     {:keys [callback clear keep expire]}]]
+                     {:keys [callback clear keep]}]]
     (when callback (callback db args))
-    (cond-> {:db (-> (db-update db response-data)
-                     (assoc-in (conj full-form-path :state) :success)
-                     (update-in full-form-path select-keys (cond keep           keep
-                                                                 (= :all clear) #{}
-                                                                 clear          (set/difference form-keys (set clear))
-                                                                 :else          form-keys)))}
-      expire (assoc ::c/debounce-dispatch (map (fn [[k v]]
-                                                 {:ms       v
-                                                  :id       [:expire full-form-path k]
-                                                  :dispatch [::c/dissoc-in (conj full-form-path k)]})
-                                               expire)))))
+    {:db (-> (db-update db response-data)
+             (assoc-in (conj full-form-path :state) :success)
+             (update-in full-form-path select-keys (cond keep           keep
+                                                         (= :all clear) #{}
+                                                         clear          (set/difference form-keys (set clear))
+                                                         :else          form-keys)))}))
 
 (def submit-form-success
   (success-base c/update-db))
@@ -290,18 +286,6 @@
 (sth/rr rf/reg-event-db ::submit-form-fail
   [rf/trim-v]
   submit-form-fail)
-
-(sth/rr rf/reg-event-db ::delete-item-success
-  [rf/trim-v]
-  (fn [db {:keys [full-form-path form-spec]
-           {:keys [response-data]} :resp}]
-    (let [[_ type _ id] full-form-path]
-      (-> (if (get-in response-data [:buffer type id])
-            (c/replace-ents db response-data)
-            (update-in db [:buffer type] dissoc id))
-          ;; TODO why is this called twice?
-          (submit-form-success [response-data full-form-path form-spec])
-          (submit-form-success [response-data (assoc full-form-path 2 :update) form-spec])))))
 
 ;;--------------------
 ;; form ui
