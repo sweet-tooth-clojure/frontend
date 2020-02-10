@@ -23,10 +23,10 @@
   ([reg-fn id handler-fn]
    (rr reg-fn id [] handler-fn))
   ([reg-fn id interceptors handler-fn]
-   (register-registration {:reg-fn reg-fn
-                           :id id
+   (register-registration {:reg-fn       reg-fn
+                           :id           id
                            :interceptors interceptors
-                           :handler-fn handler-fn})))
+                           :handler-fn   handler-fn})))
 
 (defn register-handler*
   [registration id-ns interceptors]
@@ -37,12 +37,19 @@
                                       (cond-> configured-registration
                                         (empty? (:interceptors configured-registration)) (dissoc :interceptors)))
                                      (filter identity))]
-    (apply reg-fn reg-args)))
+    (apply reg-fn reg-args)
+    (into [reg-fn] reg-args)))
 
 ;; memoize to prevent superfluous re-registrations that create noisy warnings
 (def register-handler (memoize register-handler*))
 
 (defn register-handlers
+  "`interceptors` is a map where the key is either a handler id or a
+  namespace symbol, and the value is a vector of interceptors to add
+  `into` the handlers' interceptors.
+
+  When an `interceptors` key is a symbol, then those interceptors will
+  be added to all the handlers in that ns."
   [& [interceptors]]
   (doseq [[id-ns registrations] @handlers]
     (doseq [registration registrations]
