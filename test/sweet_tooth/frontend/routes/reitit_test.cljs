@@ -6,20 +6,24 @@
 (deftest routing
   (let [router (strp/router (merge sut/config-defaults
                                    {:routes [["/"
-                                              {:name     :home
-                                               :required [:xyz]}]]}))]
-    (is (= {:template     "/"
-            :result       nil
-            :path-params  {}
-            :path         "/"
-            :query-params {}
-            :route-name   :home
-            :params       {}
-            :required     [:xyz]}
-           (strp/route router "/")))
+                                              {:name :home}]
 
-    (is (= {:xyz 1}
-           (strp/req-id router :home {:params {:xyz 1}})))
+                                             ["/todo-list/:id"
+                                              {:name :todo-list}]]}))]
+    (testing "returns route from path"
+      (is (= {:template     "/"
+              :result       nil
+              :path-params  {}
+              :path         "/"
+              :query-params {}
+              :route-name   :home
+              :params       {}}
+             (strp/route router "/"))))
 
-    (is (= "/"
-           (strp/path router :home)))))
+    (testing "returns a req-id"
+      (is (= {:id 1}
+             (strp/req-id router :todo-list {:route-params {:id 1}}))))
+
+    (testing "returns path for route name"
+      (is (= "/"
+             (strp/path router :home))))))

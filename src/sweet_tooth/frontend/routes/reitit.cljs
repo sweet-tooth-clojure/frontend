@@ -50,7 +50,7 @@
     (let [params (or (:route-params opts)
                      (:params opts)
                      opts)]
-      (select-keys params (get-in (rc/match-by-name router name) [:data :required]))))
+      (select-keys params (:required (rc/match-by-name router name)))))
 
   (strp/route
     [this path]
