@@ -1,4 +1,5 @@
 (ns sweet-tooth.frontend.sync.dispatch.ajax
+  "Takes sync request and dispatch AJAX requests"
   (:require [taoensso.timbre :as timbre]
             [ajax.core :refer [GET PUT POST DELETE]]
             [sweet-tooth.frontend.sync.flow :as stsf]
@@ -41,7 +42,7 @@
     :as   global-opts}]
   (fn [req]
     (let [[method _res {:keys [uri] :as opts} :as req-sig] (adapt-req req)
-          request-method                                  (get request-methods method)]
+          request-method                                   (get request-methods method)]
 
       (when-not req-sig
         (timbre/error "could not find route for request"

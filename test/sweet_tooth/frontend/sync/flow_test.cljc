@@ -2,8 +2,8 @@
   (:require [sweet-tooth.frontend.sync.flow :as sut]
             [sweet-tooth.frontend.routes.protocol :as strp]
             #?(:cljs [sweet-tooth.frontend.routes.reitit :as strr])
-            #?(:clj [clojure.test :refer [is deftest testing]]
-               :cljs [cljs.test :refer [is deftest testing] :include-macros true])))
+            #?(:clj [clojure.test :refer [is deftest]]
+               :cljs [cljs.test :refer [is deftest] :include-macros true])))
 
 (deftest test-track-new-request
   (is (= #:sweet-tooth.frontend.sync.flow{:reqs                 {[:get :home {}] {:state :active}}
@@ -34,3 +34,8 @@
      (is (= [:get :todo-list {:route-params {:id 1}
                               :path         "/todo-list/1"}]
             (sut/adapt-req [:get :todo-list {:route-params {:id 1}}] router)))))
+
+(deftest test-sync-fx
+  (is (= {:dispatch [::sut/sync [:get :todo-lists {:params       {:x :y}
+                                                   :route-params {:x :y}}]]}
+         ((sut/sync-fx [:get :todo-lists]) {} [{} {:x :y}]))))

@@ -1,25 +1,34 @@
 (ns sweet-tooth.frontend.filter.flow
+  "Easy-ish tools for creating subscriptions that filter other
+  subscriptions, typically used with form inputs"
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
             [sweet-tooth.frontend.form.flow :as stff]))
 
 ;; TODO: min-length opt
 (defn filter-query
-  [_ query x-keys xs]
-  (if (empty? query)
-    xs
-    (let [query (str/lower-case query)]
-      (filter (fn [x]
-                (not= -1
-                      (.indexOf (->> (if (seq x-keys)
-                                       (select-keys x x-keys)
-                                       x)
-                                     vals
-                                     (filter string?)
-                                     (str/join " ")
-                                     (str/lower-case))
-                                query)))
-              xs))))
+  "Filters `xs` returning those where any val (or vals corresponding to
+  `x-keys`) contain `query`
+
+  `val-transform` is applied to each val, defaulting to `str`. It can
+  sometimes be useful, for example, to filter numbers as text rather
+  than numbers."
+  [_ query [x-keys val-transform] xs]
+  (let [val-transform (or val-transform str)]
+    (if (empty? query)
+      xs
+      (let [query (str/lower-case query)]
+        (filter (fn [x]
+                  (not= -1
+                        (.indexOf (->> (if (seq x-keys)
+                                         (select-keys x x-keys)
+                                         x)
+                                       vals
+                                       (map val-transform)
+                                       (str/join " ")
+                                       (str/lower-case))
+                                  query)))
+                xs)))))
 
 (defn filter-toggle
   "Restrict xs to vals whose `form-attr` is truthy, if `toggle?` is true"
@@ -61,14 +70,26 @@
   [form-attr attr-val [key-fn] xs]
   (filter-attr-compare form-attr attr-val [#(contains? %2 %1) key-fn] xs))
 
+(defn apply-filter-fns
+  [unfiltered form-data filter-fns]
+  (reduce (fn [unfiltered [form-attr filter-fn & filter-args]]
+            (filter-fn form-attr (form-attr form-data) filter-args unfiltered))
+          unfiltered
+          filter-fns))
+
 (defn reg-filtered-sub
+  "Usage:
+  (reg-filtered-sub
+    :sub-name
+    :source-sub-name
+    [:form-name :method]
+    [[:attr-1 filter-fn]
+     [:attr-2 filter-fn]])
+
+  `filter-fns` is a vector where each element is a vector"
   [sub-name source-sub filter-form-path filter-fns]
   (rf/reg-sub sub-name
     :<- [source-sub]
     :<- [::stff/buffer filter-form-path]
     (fn [[unfiltered form-data] _]
-      ;; TODO some intelligence about unfiltered?
-      (reduce (fn [filtered [form-attr filter-fn & filter-args]]
-                (filter-fn form-attr (form-attr form-data) filter-args filtered))
-              unfiltered
-              filter-fns))))
+      (apply-filter-fns unfiltered form-data filter-fns))))
