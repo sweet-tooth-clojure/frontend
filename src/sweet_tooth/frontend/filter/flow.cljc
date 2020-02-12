@@ -6,29 +6,34 @@
             [sweet-tooth.frontend.form.flow :as stff]))
 
 ;; TODO: min-length opt
-(defn filter-query
+(defn filter-contains-text
   "Filters `xs` returning those where any val (or vals corresponding to
-  `x-keys`) contain `query`
+  `x-keys`) contain `query`, case-insensitive.
 
   `val-transform` is applied to each val, defaulting to `str`. It can
   sometimes be useful, for example, to filter numbers as text rather
-  than numbers."
-  [_ query [x-keys val-transform] xs]
-  (let [val-transform (or val-transform str)]
-    (if (empty? query)
-      xs
-      (let [query (str/lower-case query)]
-        (filter (fn [x]
-                  (not= -1
-                        (.indexOf (->> (if (seq x-keys)
-                                         (select-keys x x-keys)
-                                         x)
-                                       vals
-                                       (map val-transform)
-                                       (str/join " ")
-                                       (str/lower-case))
-                                  query)))
-                xs)))))
+  than numbers. It can also be used to 'filter' vals by returning
+  `nil`"
+  [_
+   query
+   [{:keys [queried-keys mapping min-length]
+     :or   {mapping    str
+            min-length 0}}]
+   xs]
+  (if (<= (count query) min-length)
+    xs
+    (let [query (str/lower-case query)]
+      (filter (fn [x]
+                (not= -1
+                      (.indexOf (->> (if (seq queried-keys)
+                                       (select-keys x queried-keys)
+                                       x)
+                                     vals
+                                     (map mapping)
+                                     (str/join " ")
+                                     (str/lower-case))
+                                query)))
+              xs))))
 
 (defn filter-toggle
   "Restrict xs to vals whose `form-attr` is truthy, if `toggle?` is true"

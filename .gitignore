@@ -10,3 +10,4 @@ public
 .cpcache
 .clj-kondo/.cache
 out
+.cljs_node_repl
