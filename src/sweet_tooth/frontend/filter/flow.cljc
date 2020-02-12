@@ -43,7 +43,7 @@
     xs))
 
 (defn filter-attr-compare
-  "Compares x val to form val"
+  "Compares x val to `attr-val` when `attr-val` is not `nil`"
   [form-attr attr-val [comp-fn key-fn] xs]
   (if (some? attr-val)
     (let [key-fn (or key-fn form-attr)]
@@ -91,7 +91,35 @@
     [[:attr-1 filter-fn]
      [:attr-2 filter-fn]])
 
-  `filter-fns` is a vector where each element is a vector"
+  For example:
+
+  (reg-filtered-sub
+    :filtered-todo-lists
+    :all-todos
+    [:todo-filter-form]
+    [[:name filter-attr=]])
+
+  creates a subscription named `:filtered-todo-lists`. It has an input
+  subscription named `:all-todos`. `:all-todos` is filtered using the
+  `:buffer` value of a form at `:todo-filter-form`.
+
+  The value of the `:name` attribute of `:todo-filter-form` is used to
+  filter todos in `:all-todos` such that the result contains todos
+  that have a `:name` that's equal to the value in `:todo-filter-form`.
+
+  Another example:
+
+  (reg-filtered-sub
+    :filtered-todo-lists
+    :all-todos
+    [:todo-filter-form]
+    [[:query filter-attr=]])
+
+  This is similar to the previous example. The difference is that
+  you're checking whether `:query` text is found anywhere in a todo.
+  `:all-todos` is filtered such that a todo is returned if any of its
+  `vals` contains the text in the `:query` attribute of
+  `:todo-filter-form`."
   [sub-name source-sub filter-form-path filter-fns]
   (rf/reg-sub sub-name
     :<- [source-sub]
