@@ -9,7 +9,7 @@
             #?(:cljs [reagent.ratom :as ratom]))
   #?(:cljs (:import [goog.async Debouncer])))
 
-;;*** DOM utils TODO move to ui.cljs
+;;*** DOM utils
 #?(:cljs
    (do (defn prevent-default
          [f]
