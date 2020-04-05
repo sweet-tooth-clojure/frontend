@@ -5,6 +5,7 @@
             [sweet-tooth.frontend.routes :as stfr]))
 
 (defn window
+  "The central set of pages to include with links"
   [page-count current-page window-size]
   (let [n      (Math/floor (/ (dec window-size) 2))
         l      (- current-page n)
@@ -18,6 +19,7 @@
     (vec (range l (inc r)))))
 
 (defn page-subset
+  "Which pages, out of all, to include in in page-nav"
   [page-count current-page window-size]
   (let [central-range (window page-count current-page window-size)]
     (cond->> central-range
@@ -28,8 +30,8 @@
 
 (defn page-nav
   "A component that displays a link to each page. Current page has the
-  `active` class"
-  [pager-id & [window-size]]
+  `active-class` class (`active` by default)"
+  [pager-id & [window-size active-class]]
   (let [{:keys [query page-count]}                    @(subscribe [::stpf/pager pager-id])
         {:keys [path-params query-params route-name]} @(subscribe [::stnf/route])
         current-page                                  (:page query)
@@ -42,7 +44,7 @@
                 (if page
                   [:a.page-num
                    {:href  (stfr/path route-name path-params (assoc query-params :page page))
-                    :class (when (= (:page query) page) "active")}
+                    :class (when (= (:page query) page) (or active-class "active"))}
                    page]
                   [:span.page-space [:i.fal.fa-ellipsis-h]])))
          (into [:div.pager]))))

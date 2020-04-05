@@ -1,5 +1,5 @@
 (ns sweet-tooth.frontend.nav.ui.flow
-  "Add ui-controlling state should be cleared on navigation changes"
+  "Add ui-controlling state that will be cleared on navigation changes"
   (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.paths :as paths]))
@@ -18,6 +18,6 @@
     (assoc-in-ui db path val)))
 
 (sth/rr rf/reg-event-db ::clear
-  []
-  (fn [db [_ route-or-params]]
+  [rf/trim-v]
+  (fn [db [route-or-params]]
     (assoc-in-ui db route-or-params nil)))

@@ -7,19 +7,6 @@
             [sweet-tooth.frontend.form.flow :as stff])
   (:require-macros [sweet-tooth.frontend.form.components]))
 
-(defn progress-indicator
-  "Show a progress indicator when a form is submitted"
-  [state]
-  (let [state @state]
-    [:span
-     (cond (= state :submitting)
-           [:span.submission-progress "submitting..."]
-
-           (= state :success)
-           [:span.submission-progress
-            [:i {:class "fa fa-check-circle"}]
-            " success"])]))
-
 (defn dispatch-input-event
   [event {:keys [format-write] :as input-opts} & [update-val?]]
   (dispatch-sync [::stff/input-event (cond-> (select-keys input-opts [:partial-form-path

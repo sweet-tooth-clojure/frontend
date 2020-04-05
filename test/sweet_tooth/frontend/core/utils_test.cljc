@@ -22,7 +22,7 @@
 (deftest toggle
   (is (= (u/toggle :foo :foo :bar)
          :bar))
-  
+
   (is (= (u/toggle :foo :bar :foo)
          :bar)))
 

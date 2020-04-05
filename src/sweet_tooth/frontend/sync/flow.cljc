@@ -22,11 +22,11 @@
 ;;--------------------
 (defn req-path
   "returns a 'normalized' req path for a request"
-  [[method resource opts :as _req]]
+  [[method resource opts]]
   [method resource (or (::req-id opts) (stfr/req-id resource opts))])
 
 (defn track-new-request
-  "Adds a request's state te the app-db and increments the activ request
+  "Adds a request's state te the app-db and increments the active request
   count"
   [db req]
   (-> db
@@ -198,5 +198,5 @@
 ;;------
 (defn db-patch-handle-exception
   [db ex-data]
-  (js/console.warn "sync exception" ex-data)
+  #?(:cljs (js/console.warn "sync exception" ex-data))
   db)
