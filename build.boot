@@ -10,7 +10,7 @@
  '[boot-tools-deps.core :refer [deps]]
  '[crisptrutski.boot-cljs-test :refer [test-cljs]])
 
-(def +version+ "0.12.0")
+(def +version+ "0.12.1")
 (bootlaces/bootlaces! +version+)
 
 (task-options!
