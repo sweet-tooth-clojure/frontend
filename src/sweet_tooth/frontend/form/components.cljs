@@ -15,6 +15,15 @@
                                        true        (merge {:event-type (u/go-get event ["type"])})
                                        update-val? (merge {:val (format-write (u/tv event))}))]))
 
+(defn dispatch-new-val
+  "Helper when you want non-input elemnts to update a val"
+  [form-path attr-path val & [opts]]
+  (dispatch-sync [::stff/input-event (merge {:partial-form-path form-path
+                                             :attr-path         attr-path
+                                             :event-type        nil
+                                             :val               val}
+                                            opts)]))
+
 (defn attr-path-str
   [attr-path]
   (name (if (vector? attr-path) (last attr-path) attr-path)))

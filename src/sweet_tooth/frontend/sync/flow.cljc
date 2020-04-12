@@ -200,3 +200,27 @@
   [db ex-data]
   #?(:cljs (js/console.warn "sync exception" ex-data))
   db)
+
+;;---------------
+;; common sync
+;;---------------
+(defn- method-sync-fx
+  [method]
+  (fn [cofx req]
+    (sync-event-fx cofx (into [method] req))))
+
+(sth/rr rf/reg-event-fx ::get
+  [rf/trim-v]
+  (method-sync-fx :get))
+
+(sth/rr rf/reg-event-fx ::put
+  [rf/trim-v]
+  (method-sync-fx :put))
+
+(sth/rr rf/reg-event-fx ::post
+  [rf/trim-v]
+  (method-sync-fx :post))
+
+(sth/rr rf/reg-event-fx ::delete
+  [rf/trim-v]
+  (method-sync-fx :delete))

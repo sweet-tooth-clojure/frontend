@@ -65,11 +65,11 @@
                                      (reset! sub-tracker sub-val)
                                      (reset! state sub-val)
                                      (.fire debouncer))
-                                   @state))))))
+                                   @state))))
 
-(defn tv
-  [e]
-  (aget e "target" "value"))
+       (defn tv
+         [e]
+         (go-get e ["target" "value"]))))
 
 (defn capitalize-words
   "Capitalize every word in a string"

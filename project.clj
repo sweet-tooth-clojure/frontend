@@ -1,4 +1,4 @@
-(defproject sweet-tooth/sweet-tooth-frontend "0.12.1"
+(defproject sweet-tooth/sweet-tooth-frontend "0.12.2"
   :description "Some opinions on top of re-frame"
   :url         "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"
   :license     {:name "MIT"
@@ -11,8 +11,7 @@
 
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
 
-  :lein-tools-deps/config {:config-files [:install :user :project]
-                           :aliases      [:cljs]}
+  :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :cljsbuild {:builds [{:id           "test"
                         :source-paths ["src" "test"]

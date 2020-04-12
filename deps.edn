@@ -1,17 +1,16 @@
 {:paths ["src"]
- :deps  {org.clojure/clojure       {:mvn/version "1.10.0"}
-         org.clojure/clojurescript {:mvn/version "1.10.439"}
-         re-frame                  {:mvn/version "0.10.6"}
-         meta-merge                {:mvn/version "1.0.0"}
-         com.taoensso/timbre       {:mvn/version "4.10.0"}
-         com.cemerick/url          {:mvn/version "0.1.1"}
-         venantius/accountant      {:mvn/version "0.2.4"}
-         integrant                 {:mvn/version "0.8.0-alpha2"}
-         metosin/reitit-core       {:mvn/version "0.3.7"}
-         metosin/reitit-frontend   {:mvn/version "0.3.7"}
-         metosin/reitit-spec       {:mvn/version "0.3.7"}
-         medley                    {:mvn/version "1.0.0"}
-         rads/anomalies            {:mvn/version "0.1.13"}}
-
- :aliases {:cljs {:extra-deps {cljs-ajax                   {:mvn/version "0.8.0"}
-                               com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}}}}}
+ :deps  {org.clojure/clojure         {:mvn/version "1.10.0"}
+         org.clojure/clojurescript   {:mvn/version "1.10.439"}
+         re-frame                    {:mvn/version "0.10.6"}
+         meta-merge                  {:mvn/version "1.0.0"}
+         com.taoensso/timbre         {:mvn/version "4.10.0"}
+         com.cemerick/url            {:mvn/version "0.1.1"}
+         venantius/accountant        {:mvn/version "0.2.4"}
+         integrant                   {:mvn/version "0.8.0-alpha2"}
+         metosin/reitit-core         {:mvn/version "0.3.7"}
+         metosin/reitit-frontend     {:mvn/version "0.3.7"}
+         metosin/reitit-spec         {:mvn/version "0.3.7"}
+         medley                      {:mvn/version "1.0.0"}
+         rads/anomalies              {:mvn/version "0.1.13"}
+         cljs-ajax                   {:mvn/version "0.8.0"}
+         com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}}}
