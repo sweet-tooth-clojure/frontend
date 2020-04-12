@@ -293,3 +293,29 @@
 (rf/reg-sub ::route-sync-state
   (fn [db [_ path-prefix]]
     (stsf/sync-state db (conj path-prefix (-> db nav :route :params)))))
+
+;; ------
+;; sync dispatching with routes
+;; ------
+
+(defn- method-sync-fx
+  [method]
+  (fn [{:keys [db] :as cofx} [route-name opts]]
+    (stsf/sync-event-fx cofx (into [method route-name (merge {:route-params (get-in (nav db) [:route :params])}
+                                                             opts)]))))
+
+(sth/rr rf/reg-event-fx ::get
+  [rf/trim-v]
+  (method-sync-fx :get))
+
+(sth/rr rf/reg-event-fx ::put
+  [rf/trim-v]
+  (method-sync-fx :put))
+
+(sth/rr rf/reg-event-fx ::post
+  [rf/trim-v]
+  (method-sync-fx :post))
+
+(sth/rr rf/reg-event-fx ::delete
+  [rf/trim-v]
+  (method-sync-fx :delete))
