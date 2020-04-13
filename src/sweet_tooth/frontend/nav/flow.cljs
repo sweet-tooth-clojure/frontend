@@ -304,18 +304,18 @@
     (stsf/sync-event-fx cofx (into [method route-name (merge {:route-params (get-in (nav db) [:route :params])}
                                                              opts)]))))
 
-(sth/rr rf/reg-event-fx ::get
+(sth/rr rf/reg-event-fx ::get-with-route-params
   [rf/trim-v]
   (method-sync-fx :get))
 
-(sth/rr rf/reg-event-fx ::put
+(sth/rr rf/reg-event-fx ::put-with-route-params
   [rf/trim-v]
   (method-sync-fx :put))
 
-(sth/rr rf/reg-event-fx ::post
+(sth/rr rf/reg-event-fx ::post-with-route-params
   [rf/trim-v]
   (method-sync-fx :post))
 
-(sth/rr rf/reg-event-fx ::delete
+(sth/rr rf/reg-event-fx ::deletee-with-route-params
   [rf/trim-v]
   (method-sync-fx :delete))
