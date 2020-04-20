@@ -171,15 +171,21 @@
   [rf/trim-v]
   initialize-form-from-path)
 
-;; nils out form
+(defn set-form
+  [db [partial-form-path form]]
+  (assoc-in db (p/full-path :form partial-form-path) form))
+
 (defn clear-form
-  [db [partial-form-path]]
-  (let [path (p/full-path :form partial-form-path)]
-    (assoc-in db path nil)))
+  [db args]
+  (set-form db (take 1 args)))
 
 (sth/rr rf/reg-event-db ::clear-form
   [rf/trim-v]
   clear-form)
+
+(sth/rr rf/reg-event-db ::set-form
+  [rf/trim-v]
+  set-form)
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
