@@ -11,4 +11,4 @@ public
 .clj-kondo/.cache
 out
 .cljs_node_repl
-pom.xml
+pom.xml*
