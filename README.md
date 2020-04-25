@@ -26,6 +26,10 @@ sane, extensible starting point to deal with:
 
 Sweet Tooth eliminates much of the boilerplate for creating forms.
 
+- structure
+- concepts
+- 
+
 ### with-form
 
 - the form "name"
@@ -46,11 +50,14 @@ Sweet Tooth eliminates much of the boilerplate for creating forms.
 
 ## Sync
 
+- building handlers
+- calling directly
+
 ## Structuring Data
 
-## Pagination
+## Navigation and Routing
 
-## URLs and routing
+## Pagination
 
 ## Flows (organization)
 
