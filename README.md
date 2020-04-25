@@ -10,17 +10,48 @@ The library is a layer on top of
 subscriptions, components, utilities and conventions to give you a
 sane, extensible starting point to deal with:
 
+* API calls
+  * performing calls
+  * sharing routes between frontend and backend
+  * keeping track of active calls (e.g. to show activity indicators)
+  * call lifecycle
 * Forms
   * storing their data in the app db
   * validation
   * the submission lifecycle
   * components that "wirte things up" so you don't have to.
-* API calls
-  * sharing routes between frontend and backend
-  * keeping track of active calls (e.g. to show activity indicators)
-  * call lifecycle
 * URL-based navigation with HTML history
 * Pagination
+
+## API calls with sync
+
+* helpers
+
+Transform various calls into a dispatch on `::sync` or
+`::sync-once`. Those dispatches take a `req`.
+
+* sync signature
+
+* sync-fx handler signature
+
+```clojure
+(defn sync-fx
+  "Returns an effect handler that dispatches a sync event"
+  [[method endpoint opts]]
+  (fn [_cofx [call-opts params]]
+    {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]}))
+```
+
+```clojure
+(fn [_cofx [call-opts params]]
+    {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]})
+```
+
+* calling directly
+* building handlers
+* default callbacks
+* :$ctx
+* subscriptions
 
 ## Forms
 
@@ -47,11 +78,6 @@ Sweet Tooth eliminates much of the boilerplate for creating forms.
 ### success
 
 ### fail
-
-## Sync
-
-- building handlers
-- calling directly
 
 ## Structuring Data
 

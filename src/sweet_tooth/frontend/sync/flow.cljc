@@ -11,17 +11,53 @@
             [sweet-tooth.frontend.routes.protocol :as strp]
             [sweet-tooth.frontend.paths :as paths]
             [sweet-tooth.frontend.failure.flow :as stfaf]
+            [sweet-tooth.frontend.specs :as ss]
             [integrant.core :as ig]
             [medley.core :as medley]
             [clojure.walk :as walk]
             [meta-merge.core :refer [meta-merge]]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.spec.alpha :as s]))
+
+
+;;--------------------
+;; specs
+;;--------------------
+
+;; `req` specs
+;; The `::sync` and `::sync-once` handlers expect a `req` as their argument
+(s/def ::req-method keyword?)
+(s/def ::route-name keyword?)
+
+(s/def ::params map?)
+(s/def ::route-params ::params)
+(s/def ::query-params ::params)
+
+(s/def ::req-opts (s/keys :opt-un [::route-params ::query-parms ::params]))
+
+(s/def ::req (s/cat :req-method ::req-method
+                    :route-name ::route-name
+                    :req-opts   (s/? ::req-opts)))
+
+;; `::dispatch-sync` specs
+(s/def ::dispatch-fn fn?)
+(s/def ::dispatch-sync (s/keys :req-un [::req ::dispatch-fn]))
 
 ;;--------------------
 ;; request tracking
 ;;--------------------
 (defn req-path
-  "returns a 'normalized' req path for a request"
+  "returns a 'normalized' req path for a request.
+
+  normalized in the sense that when it comes to distinguishing requess
+  in order to track them, some of the variations between requests are
+  significant, and some aren't.
+
+  The first two elements of the request, `method` and `resource`, are
+  always significant. Where things get tricky is with `opts`. We don't
+  want to use `opts` itself because the variation would lead to
+  \"identical\" requests being treated as separate, so we use
+  `stfr/req-id` to select a subset of opts to distinguish reqs"
   [[method resource opts]]
   [method resource (or (::req-id opts) (stfr/req-id resource opts))])
 
@@ -73,6 +109,7 @@
     (let [state (sync-state db req)]
       (if comparison (= state comparison) state))))
 
+;; Used to find, e.g. all requests like [:get :topic] or [:post :host]
 (rf/reg-sub ::sync-state-q
   (fn [db [_ query]]
     (medley/filter-keys (partial stcu/projection? query) (::reqs db))))
@@ -114,18 +151,27 @@
 ;; dispatch sync requests
 ;;-----------------------
 
+;;---
+;; helpers
 (defn add-default-sync-response-handlers
   [req]
   (-> req
+      ;; the third element is for options
       (update-in [2 :on] (partial merge {:success [::default-sync-success :$ctx]
                                          :fail    [::default-sync-fail :$ctx]}))
+      ;; use meta-merge to ensure the inner map is added onto
+      ;; whatever's already there
       (update-in [2 :on] meta-merge {:$ctx {:req req}})))
 
 
 (defn sync-event-fx
-  "In response to a sync event, return an effect map of:
+  "Transforms sync events adding defaults and other options needed for
+  the `::dispatch-sync` effect handler to perform a sync.
+
+  returns an effect map of:
   a) updated db to track a sync request
-  b) ::dispatch-sync effect, to be handled by the ::dispatch-sync effect handler"
+  b) ::dispatch-sync effect, to be handled by the ::dispatch-sync
+  effect handler"
   [{:keys [db] :as _cofx} req]
   (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
         adapted-req                       (-> req
@@ -135,19 +181,32 @@
       {:db             (track-new-request db adapted-req)
        ::dispatch-sync {:dispatch-fn sync-dispatch-fn
                         :req         adapted-req}}
-      (log/warn "sync router could not match req" {:req req}))))
+      (do (log/warn "sync router could not match req" {:req req})
+          {:db db}))))
 
+(s/fdef sync-event-fx
+  :args (s/cat :cofx ::ss/cofx :req ::req)
+  :ret  (s/keys :req-un [::ss/db]
+                :req    [::dispatch-sync]))
+
+;;---
+;; handlers
+
+;; The core event handler for syncing
 (sth/rr rf/reg-event-fx ::sync
-  []
-  (fn [cofx [_ req]]
+  [rf/trim-v]
+  (fn [cofx [req]]
     (sync-event-fx cofx req)))
 
+;; Like `::sync`, but only fires if there hasn't previously been a
+;; successful request with the same signature
 (sth/rr rf/reg-event-fx ::sync-once
-  []
-  (fn [cofx [_ req]]
+  [rf/trim-v]
+  (fn [cofx [req]]
     (when-not (= :success (sync-state (:db cofx) req))
       (sync-event-fx cofx req))))
 
+;; The effect handlers that actually performs a sync
 (sth/rr rf/reg-fx ::dispatch-sync
   (fn [{:keys [dispatch-fn req]}]
     (dispatch-fn req)))
@@ -178,17 +237,16 @@
 
 (defn sync-fx
   "Returns an effect handler that dispatches a sync event"
-  [[method endpoint & [opts]]]
+  [[method endpoint opts]]
   (fn [_cofx [call-opts params]]
     {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]}))
 
 (defn sync-once-fx
   "Returns an effect handler that dispatches a sync event"
-  [[method endpoint & [opts]]]
+  [[method endpoint opts]]
   (fn [_cofx [call-opts params]]
     {:dispatch [::sync-once [method endpoint (build-opts opts call-opts params)]]}))
 
-;; TODO possibly add some timeout effect here to clean up sync
 (defmethod ig/init-key ::sync
   [_ opts]
   opts)
