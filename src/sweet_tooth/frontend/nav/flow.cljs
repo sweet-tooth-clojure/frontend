@@ -316,6 +316,6 @@
   [rf/trim-v]
   (method-sync-fx :post))
 
-(sth/rr rf/reg-event-fx ::deletee-with-route-params
+(sth/rr rf/reg-event-fx ::delete-with-route-params
   [rf/trim-v]
   (method-sync-fx :delete))
