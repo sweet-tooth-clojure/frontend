@@ -1,5 +1,6 @@
 (ns sweet-tooth.frontend.nav.utils
   (:require [sweet-tooth.frontend.core.utils :as u]
+            [sweet-tooth.frontend.form.flow :as stff]
             [sweet-tooth.frontend.paths :as paths]
             [cemerick.url :as url]
             [clojure.string :as str]
@@ -26,5 +27,10 @@
 
 (defn routed-entity
   "Returns an entity by looking up its entity-key in nav params"
-  [db entity-key param]
-  (paths/get-path db :entity entity-key (paths/get-path db :nav :route :params param)))
+  [db entity-key param-key]
+  (paths/get-path db :entity entity-key (paths/get-path db :nav :route :params param-key)))
+
+(defn initialize-form-with-routed-entity
+  [db form-path entity-key param-key & [form-opts]]
+  (let [ent (routed-entity db entity-key param-key)]
+    (stff/initialize-form db [(conj form-path (select-keys ent [param-key])) (merge {:buffer ent} form-opts)])))

@@ -319,3 +319,12 @@
 (sth/rr rf/reg-event-fx ::delete-with-route-params
   [rf/trim-v]
   (method-sync-fx :delete))
+
+;; ------
+;; form initialization?
+;; ------
+
+(sth/rr rf/reg-event-db ::initialize-form-with-routed-entity
+  [rf/trim-v]
+  (fn [db [form-path entity-key param-key form-opts]]
+    (stnu/initialize-form-with-routed-entity db form-path entity-key param-key form-opts)))
