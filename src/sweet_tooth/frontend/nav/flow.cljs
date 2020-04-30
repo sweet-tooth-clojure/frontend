@@ -15,6 +15,7 @@
             [sweet-tooth.frontend.nav.ui.flow :as stnuf]
             [sweet-tooth.frontend.nav.utils :as stnu]
             [sweet-tooth.frontend.sync.flow :as stsf]
+            [sweet-tooth.frontend.routes :as stfr]
             [sweet-tooth.frontend.routes.protocol :as strp]))
 
 (defn- handle-unloading
@@ -286,7 +287,7 @@
   (fn [route _] (:route-name route)))
 
 (rf/reg-sub ::routed-entity
-  (fn [db [entity-key param]]
+  (fn [db [_ entity-key param]]
     (stnu/routed-entity db entity-key param)))
 
 ;; uses routed path params to get sync state
@@ -321,10 +322,15 @@
   (method-sync-fx :delete))
 
 ;; ------
-;; form initialization?
+;; form interactions
 ;; ------
 
 (sth/rr rf/reg-event-db ::initialize-form-with-routed-entity
   [rf/trim-v]
   (fn [db [form-path entity-key param-key form-opts]]
     (stnu/initialize-form-with-routed-entity db form-path entity-key param-key form-opts)))
+
+(rf/reg-event-fx ::navigate-to-synced-entity
+  [rf/trim-v]
+  (fn [_ [route-name ctx]]
+    {:dispatch [::navigate (stfr/path route-name (stsf/single-entity ctx))]}))

@@ -282,3 +282,18 @@
 (sth/rr rf/reg-event-fx ::delete
   [rf/trim-v]
   (method-sync-fx :delete))
+
+;;---------------
+;; response helpers
+;;---------------
+
+(defn single-entity
+  [ctx]
+  (->> (get-in ctx [:resp :response-data])
+       (filter #(= :entity (first %)))
+       (first)
+       (second)
+       (vals)
+       (first)
+       (vals)
+       (first)))

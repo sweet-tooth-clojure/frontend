@@ -7,9 +7,9 @@
          com.cemerick/url            {:mvn/version "0.1.1"}
          venantius/accountant        {:mvn/version "0.2.4"}
          integrant                   {:mvn/version "0.8.0-alpha2"}
-         metosin/reitit-core         {:mvn/version "0.3.7"}
-         metosin/reitit-frontend     {:mvn/version "0.3.7"}
-         metosin/reitit-spec         {:mvn/version "0.3.7"}
+         metosin/reitit-core         {:mvn/version "0.4.2"}
+         metosin/reitit-frontend     {:mvn/version "0.4.2"}
+         metosin/reitit-spec         {:mvn/version "0.4.2"}
          medley                      {:mvn/version "1.0.0"}
          rads/anomalies              {:mvn/version "0.1.13"}
          cljs-ajax                   {:mvn/version "0.8.0"}
