@@ -53,13 +53,14 @@
   in order to track them, some of the variations between requests are
   significant, and some aren't.
 
-  The first two elements of the request, `method` and `resource`, are
+  The first two elements of the request, `method` and `route`, are
   always significant. Where things get tricky is with `opts`. We don't
   want to use `opts` itself because the variation would lead to
   \"identical\" requests being treated as separate, so we use
   `stfr/req-id` to select a subset of opts to distinguish reqs"
-  [[method resource opts]]
-  [method resource (or (::req-id opts) (stfr/req-id resource opts))])
+  [[method route opts]]
+  (or (::req-path opts)
+      [method route (or (::req-id opts) (stfr/req-id route opts))]))
 
 (defn track-new-request
   "Adds a request's state te the app-db and increments the active request

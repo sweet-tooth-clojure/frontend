@@ -10,6 +10,14 @@
             [clojure.set :as set]))
 
 ;;------
+;; sync
+;;------
+
+(defn req-path
+  [[route-name method entity :as req]]
+  [method route-name {:route-params entity}])
+
+;;------
 ;; Form subs
 ;;------
 
@@ -74,8 +82,8 @@
 
 ;; sync states
 (defn sync-state
-  [db [_ [endpoint action entity]]]
-  (stsf/sync-state db [action endpoint {:route-params entity}]))
+  [db [_ [route-name method entity]]]
+  (stsf/sync-state db [method route-name {:route-params entity}]))
 
 (rf/reg-sub ::sync-state sync-state)
 
@@ -194,22 +202,33 @@
 (defn form-sync-opts
   "Returns a request that the sync handler can use
 
+  `form-handle`, the first element in a partial form path, is usually
+  the route name. however, say you want to display two
+  `[:todos :create]` forms. You don't want them to store their form
+  data in the same place, so for one you use the partial form path
+  `[:todos-a :create]` and for the other you use `[:todos-b :create]`.
+
+  You would then need to include `:route-name` in the `sync` opts.
+
   - `success` and `fail` are the handlers for request completion.
   - `form-spec` is a way to pass on whatevs data to the request
     completion handler.
   - the `:sync` key of form spec can customize the sync request"
-  [full-form-path data {:keys [sync]
-                        :as   form-spec}]
-  (let [[_ endpoint action route-params] full-form-path]
-    [action
-     (get form-spec :route-name endpoint)
-     (-> (merge {:params       data
-                 :route-params (or route-params data)}
-                sync)
-         (update :on (partial merge {:success [::submit-form-success :$ctx]
-                                     :fail    [::submit-form-fail :$ctx]}))
-         (update :on meta-merge {:$ctx {:full-form-path full-form-path
-                                        :form-spec      form-spec}}))]))
+  [partial-form-path data {:keys [sync]
+                           :as   form-spec}]
+  (let [[form-handle method route-params] partial-form-path
+        route-name (get sync :route-name form-handle)
+        sync-opts  (-> (merge {:params       data
+                               :route-params (or route-params data)}
+                              sync)
+                       (update :on (partial merge {:success [::submit-form-success :$ctx]
+                                                   :fail    [::submit-form-fail :$ctx]}))
+                       (update :on meta-merge {:$ctx {:full-form-path (p/full-path :form partial-form-path)
+                                                      :form-spec      form-spec}}))
+        ;; custom req-path to handle the fact that form-handle can be
+        ;; different from the route name
+        sync-opts  (update sync-opts ::stsf/req-path #(or % (stsf/req-path [method form-handle sync-opts])))]
+    [method route-name sync-opts]))
 
 (defn submit-form
   "build form request. update db to indicate form's submitting, clear
@@ -219,7 +238,7 @@
     {:db       (-> db
                    (update-in full-form-path merge {:state :submitting, :errors nil})
                    (update-in (into full-form-path [:input-events ::form]) (fnil conj #{}) "submit"))
-     :dispatch [::stsf/sync (form-sync-opts full-form-path
+     :dispatch [::stsf/sync (form-sync-opts partial-form-path
                                             (merge (:data form-spec)
                                                    (get-in db (conj full-form-path :buffer)))
                                             form-spec)]}))
