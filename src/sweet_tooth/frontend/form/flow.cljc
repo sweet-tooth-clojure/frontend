@@ -10,14 +10,6 @@
             [clojure.set :as set]))
 
 ;;------
-;; sync
-;;------
-
-(defn req-path
-  [[route-name method entity :as req]]
-  [method route-name {:route-params entity}])
-
-;;------
 ;; Form subs
 ;;------
 
@@ -82,8 +74,8 @@
 
 ;; sync states
 (defn sync-state
-  [db [_ [route-name method entity]]]
-  (stsf/sync-state db [method route-name {:route-params entity}]))
+  [db [_ [form-handle method entity]]]
+  (stsf/sync-state db [method form-handle {:route-params entity}]))
 
 (rf/reg-sub ::sync-state sync-state)
 
