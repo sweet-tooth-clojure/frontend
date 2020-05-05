@@ -25,14 +25,6 @@
   ([db ent-type id-key m]
    (update-in db (paths/full-path :entity ent-type (id-key m)) merge m)))
 
-(defn replace-ents
-  [db m]
-  (update db (paths/prefix :entity)
-          (fn [data]
-            (reduce-kv (fn [data ent-type ents] (update data ent-type merge ents))
-                       data
-                       ((paths/prefix :entity) m)))))
-
 (defn deep-merge
   [db [m]]
   (u/deep-merge db m))
