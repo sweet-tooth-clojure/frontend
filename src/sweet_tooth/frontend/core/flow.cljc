@@ -19,6 +19,12 @@
       (update-in db path merge m)
       (merge db m))))
 
+(defn merge-entity
+  ([db ent-type m]
+   (merge-entity db ent-type :id m))
+  ([db ent-type id-key m]
+   (update-in db (paths/full-path :entity ent-type (id-key m)) merge m)))
+
 (defn replace-ents
   [db m]
   (update db (paths/prefix :entity)
