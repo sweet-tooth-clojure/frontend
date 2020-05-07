@@ -1,6 +1,5 @@
 (ns sweet-tooth.frontend.form.components
-  (:require [reagent.core :as r]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [clojure.string :as str]
             [cljs-time.format :as tf]
             [cljs-time.core :as ct]
@@ -84,22 +83,23 @@
                                               partial-form-path
                                               attr-path
                                               show-errors-on])
-          :attr-input-events   (rf/subscribe [::stff/attr-input-events partial-form-path attr-path])
-          :format-read         identity
-          :format-write        identity}
+          :attr-input-events   (rf/subscribe [::stff/attr-input-events partial-form-path attr-path])}
          opts))
 
 (defn input-type-opts-default
-  [{:keys [form-id attr-path attr-buffer format-read input-type]
+  [{:keys [form-id attr-path attr-buffer input-type]
     :as   opts}]
-  (merge {:type      (name (or input-type :text))
-          :value     (format-read @attr-buffer)
-          :id        (label-for form-id attr-path)
-          :on-change #(dispatch-input-event % opts true)
-          :on-blur   #(dispatch-input-event % opts false)
-          :on-focus  #(dispatch-input-event % opts false)
-          :class     (str "input " (attr-path-str attr-path))}
-         opts))
+  (let [{:keys [format-read] :as opts} (merge {:format-read identity
+                                               :format-write identity}
+                                              opts)]
+    (merge {:type         (name (or input-type :text))
+            :value        (format-read @attr-buffer)
+            :id           (label-for form-id attr-path)
+            :on-change    #(dispatch-input-event % opts true)
+            :on-blur      #(dispatch-input-event % opts false)
+            :on-focus     #(dispatch-input-event % opts false)
+            :class        (str "input " (attr-path-str attr-path))}
+           opts)))
 
 (defmulti input-type-opts :input-type)
 
@@ -118,17 +118,20 @@
       (dissoc :type)))
 
 (defmethod input-type-opts :radio
-  [{:keys [format-read attr-buffer value] :as opts}]
-  (assoc (input-type-opts-default (merge {:format-write (constantly value)}
-                                         opts))
-         :checked (= value (format-read @attr-buffer))))
+  [{:keys [format-read format-write attr-buffer value] :as opts}]
+  (let [format-read  (or format-read identity)
+        format-write (or format-write (constantly value))]
+    (assoc (input-type-opts-default (merge opts {:format-write format-write}))
+           :checked (= value (format-read @attr-buffer)))))
 
 (defmethod input-type-opts :checkbox
-  [{:keys [attr-buffer format-read] :as opts}]
-  (let [value (format-read @attr-buffer)]
+  [{:keys [attr-buffer format-read format-write] :as opts}]
+  (let [format-read  (or format-read identity)
+        value        (format-read @attr-buffer)
+        format-write (or format-write (constantly (not value)))]
     (-> (input-type-opts-default opts)
         (merge {:default-checked (boolean value)
-                :on-change       #(dispatch-input-event % (merge {:format-write (constantly (not value))} opts) true)})
+                :on-change       #(dispatch-input-event % (merge opts {:format-write format-write}) true)})
         (dissoc :value))))
 
 (defn toggle-set-membership
@@ -137,12 +140,14 @@
     (if (empty? new-s) #{} new-s)))
 
 (defmethod input-type-opts :checkbox-set
-  [{:keys [attr-buffer value format-read] :as opts}]
-  (let [checkbox-set (or (format-read @attr-buffer) #{})]
+  [{:keys [attr-buffer value format-read format-write] :as opts}]
+  (let [format-read  (or format-read identity)
+        checkbox-set (or (format-read @attr-buffer) #{})
+        format-write (or format-write (constantly (toggle-set-membership checkbox-set value)))]
     (merge (input-type-opts-default opts)
            {:type      "checkbox"
             :checked   (boolean (checkbox-set value))
-            :on-change #(dispatch-input-event % (merge {:format-write (constantly (toggle-set-membership checkbox-set value))} opts) true)})))
+            :on-change #(dispatch-input-event % (merge opts {:format-write format-write}) true)})))
 
 ;; date handling
 (defn unparse [fmt x]
@@ -249,7 +254,7 @@
        (or label (label-text attr-path))
        (when required [:span {:class "required"} "*"])])
     (when tip [:div.tip tip])
-    (error-messages @attr-visible-errors)]])
+    (error-messages attr-visible-errors)]])
 
 (defmethod field :checkbox
   [opts]
