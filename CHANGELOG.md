@@ -1,6 +1,6 @@
 # Changelog
 
-# [0.12.7 Unreleased]
+# [0.12.7] 2020-05-10
 
 ### Added
 
