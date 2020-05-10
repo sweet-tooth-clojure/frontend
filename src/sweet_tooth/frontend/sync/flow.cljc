@@ -190,6 +190,13 @@
   :ret  (s/keys :req-un [::ss/db]
                 :req    [::dispatch-sync]))
 
+(defn sync-entity-req
+  "To be used when dispatching a sync event for an entity:
+  (sync-entity-req :put :comment {:id 1 :content \"comment\"})"
+  [[method route ent & [opts]]]
+  [method route (-> opts
+                    (update :params #(or % ent))
+                    (update :route-params #(or % ent)))])
 ;;---
 ;; handlers
 
@@ -199,6 +206,12 @@
   (fn [cofx [req]]
     (sync-event-fx cofx req)))
 
+;; makes it a little easier to sync a single entity
+(sth/rr rf/reg-event-fx ::sync-entity
+  [rf/trim-v]
+  (fn [cofx [req]]
+    (sync-event-fx cofx (sync-entity-req req))))
+
 ;; Like `::sync`, but only fires if there hasn't previously been a
 ;; successful request with the same signature
 (sth/rr rf/reg-event-fx ::sync-once
@@ -206,6 +219,13 @@
   (fn [cofx [req]]
     (when-not (= :success (sync-state (:db cofx) req))
       (sync-event-fx cofx req))))
+
+;; makes it a little easier to sync a single entity once
+(sth/rr rf/reg-event-fx ::sync-once
+  [rf/trim-v]
+  (fn [cofx [req]]
+    (when-not (= :success (sync-state (:db cofx) req))
+      (sync-event-fx cofx (sync-entity-req req)))))
 
 ;; The effect handlers that actually performs a sync
 (sth/rr rf/reg-fx ::dispatch-sync
@@ -229,6 +249,7 @@
 ;;------
 ;; event helpers
 ;;------
+
 (defn build-opts
   [opts call-opts params]
   (let [{:keys [route-params params] :as new-opts} (-> (meta-merge opts call-opts)

@@ -1,4 +1,4 @@
-(defproject sweet-tooth/sweet-tooth-frontend "0.12.6"
+(defproject sweet-tooth/sweet-tooth-frontend "0.12.7-SNAPSHOT"
   :description "Some opinions on top of re-frame"
   :url         "https://github.com/sweet-tooth-clojure/sweet-tooth-frontend"
   :license     {:name "MIT"

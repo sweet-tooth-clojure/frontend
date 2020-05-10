@@ -62,24 +62,33 @@
   [_ handler]
   (halt-handler! handler))
 
+(defn- navigate-handler
+  [{:keys [db] :as cofx} [path query]]
+  (let [{:keys [history]} (paths/get-path db :system ::handler)
+        token             (.getToken history)
+        query-string      (u/params-to-str (reduce-kv (fn [valid k v]
+                                                        (if v
+                                                          (assoc valid k v)
+                                                          valid))
+                                                      {}
+                                                      query))
+        with-params       (if (empty? query-string)
+                            path
+                            (str path "?" query-string))]
+    (if (= token with-params)
+      {:dispatch [::update-token with-params :replace]}
+      {:dispatch [::update-token with-params :set]})))
+
 ;; Used for synthetic navigation events
 (sth/rr rf/reg-event-fx ::navigate
   [rf/trim-v]
-  (fn [{:keys [db] :as cofx} [route query]]
-    (let [{:keys [history]} (paths/get-path db :system ::handler)
-          token             (.getToken history)
-          query-string      (u/params-to-str (reduce-kv (fn [valid k v]
-                                                          (if v
-                                                            (assoc valid k v)
-                                                            valid))
-                                                        {}
-                                                        query))
-          with-params       (if (empty? query-string)
-                              route
-                              (str route "?" query-string))]
-      (if (= token with-params)
-        {:dispatch [::update-token with-params :replace]}
-        {:dispatch [::update-token with-params :set]}))))
+  navigate-handler)
+
+(sth/rr rf/reg-event-fx ::navigate-route
+  [rf/trim-v]
+  (fn [{:keys [db] :as cofx} [route route-params query-params]]
+    (let [router (paths/get-path db :system ::handler :router)]
+      (navigate-handler cofx [(strp/path router route route-params query-params)]))))
 
 ;; ------
 ;; Route change handlers
