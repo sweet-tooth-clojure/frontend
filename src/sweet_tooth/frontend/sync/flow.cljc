@@ -221,13 +221,27 @@
       (sync-event-fx cofx req))))
 
 ;; makes it a little easier to sync a single entity once
-(sth/rr rf/reg-event-fx ::sync-once
+(sth/rr rf/reg-event-fx ::sync-entity-once
   [rf/trim-v]
   (fn [cofx [req]]
     (when-not (= :success (sync-state (:db cofx) req))
       (sync-event-fx cofx (sync-entity-req req)))))
 
-;; The effect handlers that actually performs a sync
+;; only sync if there's no active sync
+(sth/rr rf/reg-event-fx ::sync-unless-active
+  [rf/trim-v]
+  (fn [cofx [req]]
+    (when-not (= :active (sync-state (:db cofx) req))
+      (sync-event-fx cofx req))))
+
+;; only sync entity if there's no active sync
+(sth/rr rf/reg-event-fx ::sync-entity-unless-active
+  [rf/trim-v]
+  (fn [cofx [req]]
+    (when-not (= :active (sync-state (:db cofx) req))
+      (sync-event-fx cofx (sync-entity-req req)))))
+
+;; The effect handler that actually performs a sync
 (sth/rr rf/reg-fx ::dispatch-sync
   (fn [{:keys [dispatch-fn req]}]
     (dispatch-fn req)))

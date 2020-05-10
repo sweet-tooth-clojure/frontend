@@ -1,6 +1,6 @@
 # Changelog
 
-# [Unreleased]
+# [0.12.7 Unreleased]
 
 ### Added
 
@@ -11,5 +11,12 @@
   `:params` sync options. 
 - `:sweet-tooth.frontend.sync.flow/sync-entity` handler
 - `:sweet-tooth.frontend.sync.flow/sync-entity-once` handler
+- `:sweet-tooth.frontend.sync.flow/sync-unless-active` handler, now
+  used by `sweet-tooth.frontend.form.flow/submit-form` to prevent
+  double form submission
 - `:sweet-tooth.frontend.nav.flow/navigate-route` handler, allows you
   to navigate using route data instead of a path string
+
+### Fixed
+
+- Input component options weren't getting applied correctly

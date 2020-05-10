@@ -230,10 +230,10 @@
     {:db       (-> db
                    (update-in full-form-path merge {:state :submitting, :errors nil})
                    (update-in (into full-form-path [:input-events ::form]) (fnil conj #{}) "submit"))
-     :dispatch [::stsf/sync (form-sync-opts partial-form-path
-                                            (merge (:data form-spec)
-                                                   (get-in db (conj full-form-path :buffer)))
-                                            form-spec)]}))
+     :dispatch [::stsf/sync-unless-active (form-sync-opts partial-form-path
+                                                          (merge (:data form-spec)
+                                                                 (get-in db (conj full-form-path :buffer)))
+                                                          form-spec)]}))
 
 (sth/rr rf/reg-event-fx ::submit-form
   [rf/trim-v]
