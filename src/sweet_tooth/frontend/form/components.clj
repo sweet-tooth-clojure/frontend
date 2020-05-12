@@ -14,54 +14,29 @@
 
 (defmacro with-form
   [partial-form-path & body]
-
-  (let [form-path     'form-path
-        form-state    'form-state
-        form-subs     'form-subs
-        form-ui-state 'form-ui-state
-        form-errors   'form-errors
-        form-buffer   'form-buffer
-        form-dirty?   'form-dirty?
-
-        state-success? 'state-success?
-
-        sync-state    'sync-state
-        sync-active?  'sync-active?
-        sync-success? 'sync-success?
-        sync-fail?    'sync-fail?
-
-        on-submit         'on-submit
-        on-submit-handler 'on-submit-handler
-        input-opts        'input-opts
-        input             'input
-        field             'field
-
-        form-components 'form-components
-        form            'form
-
-        path (gensym)]
+  (let [path (gensym)]
     `(let [~path ~partial-form-path
-           {:keys [~form-path
-                   ~form-state
-                   ~form-ui-state
-                   ~form-errors
-                   ~form-buffer
-                   ~form-dirty?
+           {:keys [~'form-path
+                   ~'form-state
+                   ~'form-ui-state
+                   ~'form-errors
+                   ~'form-buffer
+                   ~'form-dirty?
 
-                   ~state-success?
+                   ~'state-success?
 
-                   ~sync-state
-                   ~sync-active?
-                   ~sync-success?
-                   ~sync-fail?]
-            :as ~form-subs}
+                   ~'sync-state
+                   ~'sync-active?
+                   ~'sync-success?
+                   ~'sync-fail?]
+            :as ~'form-subs}
            (form-subs ~path)]
-       (let [{:keys [~on-submit
-                     ~on-submit-handler
-                     ~input-opts
-                     ~input
-                     ~field]
-              :as   ~form-components}
+       (let [{:keys [~'on-submit
+                     ~'on-submit-handler
+                     ~'input-opts
+                     ~'input
+                     ~'field]
+              :as   ~'form-components}
              ~(form-components-form path body)
-             ~form (merge ~form-subs ~form-components)]
+             ~'form (merge ~'form-subs ~'form-components)]
          ~@(form-body body)))))
