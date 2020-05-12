@@ -305,12 +305,15 @@
 
   In the case of b, `input-opts` consists only of the opts specific to
   this input (it doesn't include framework opts). Those opts are
-  passed to the `input-opts` function.
+  passed to the `all-input-opts-fn` function.
 
-  This allows the user to call [input :text :user/username {:x :y}]
+  This allows the developer to write something like
+
+  `[input :text :user/username {:x :y}]`
+
   rather than something like
 
-  [input (all-input-opts :partial-form-path :text :user/username {:x :y})]"
+  `[input (all-input-opts :partial-form-path :text :user/username {:x :y})]`"
   [all-input-opts-fn]
   (fn [input-type & [attr-path input-opts]]
     [input (if (map? input-type)

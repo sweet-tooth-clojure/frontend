@@ -1,12 +1,16 @@
 (ns sweet-tooth.frontend.form.components)
 
-(defn form-components-form
+(defn- form-components-form
+  "If the first element in the body is a map, that means it's form
+  options we want to apply to every input"
   [path body]
   (if (map? (first body))
     `(form-components ~path ~(first body))
     `(form-components ~path)))
 
-(defn form-body
+(defn- form-body
+  "If the first element in the body is a map, that means it's form
+  options we want to apply to every input"
   [body]
   (if (map? (first body))
     (rest body)
