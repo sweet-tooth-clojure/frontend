@@ -101,7 +101,10 @@
             :class        (str "input " (attr-path-str attr-path))}
            opts)))
 
-(defmulti input-type-opts :input-type)
+(defmulti input-type-opts
+  "Different input types expect different options. For example, a radio
+  button has a `:checked` attribute."
+  :input-type)
 
 (defmethod input-type-opts :default
   [opts]
