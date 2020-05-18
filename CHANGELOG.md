@@ -1,5 +1,13 @@
 # Changelog
 
+# [0.12.8] WIP
+
+### Changed
+
+- Can now specify `:method` as a sync opt, further allowing the
+  request signature (name) to diverge from the sync calls
+- Cleaned up form macro, getting rid of unnecessary duplication
+
 # [0.12.7] 2020-05-10
 
 ### Added
