@@ -210,6 +210,7 @@
                            :as   form-spec}]
   (let [[form-handle method route-params] partial-form-path
         route-name (get sync :route-name form-handle)
+        method     (get sync :method method)
         sync-opts  (-> (merge {:params       data
                                :route-params (or route-params data)}
                               sync)
