@@ -152,17 +152,28 @@
 ;; dispatch sync requests
 ;;-----------------------
 
+(def default-handlers
+  {:default-on {:success [[::default-sync-success :$ctx]]
+                :fail    [[::default-sync-fail :$ctx]]}})
+
 ;;---
 ;; helpers
+
 (defn add-default-sync-response-handlers
   [req]
-  (-> req
-      ;; the third element is for options
-      (update-in [2 :on] (partial merge {:success [::default-sync-success :$ctx]
-                                         :fail    [::default-sync-fail :$ctx]}))
-      ;; use meta-merge to ensure the inner map is added onto
-      ;; whatever's already there
-      (update-in [2 :on] meta-merge {:$ctx {:req req}})))
+  (update req 2 #(meta-merge default-handlers {:$ctx {:req req}} %)))
+
+(defn reconcile-default-handlers
+  "Adds default handlers"
+  [req]
+  (let [{:keys [default-on on] :as opts} (get req 2)]
+    (assoc req 2 (reduce-kv (fn [opts handler-name default-handler-events]
+                              (assoc-in opts [:on handler-name] (let [on-events (handler-name on)]
+                                                                  (if (vector? default-handler-events)
+                                                                    (stcc/compose-events default-handler-events on-events)
+                                                                    on-events))))
+                            opts
+                            default-on))))
 
 
 (defn sync-event-fx
@@ -177,6 +188,7 @@
   (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
         adapted-req                       (-> req
                                               (add-default-sync-response-handlers)
+                                              (reconcile-default-handlers)
                                               (adapt-req router))]
     (if adapted-req
       {:db             (track-new-request db adapted-req)

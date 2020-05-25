@@ -89,3 +89,10 @@
   [rf/trim-v]
   (fn [_cofx [fx]]
     (compose-fx fx)))
+
+(defn compose-events
+  [xs ys]
+  {:pre [(vector? xs) (or (empty? ys) (vector? ys))]}
+  (if (keyword? (first ys))
+    (conj xs ys)
+    (into xs ys)))

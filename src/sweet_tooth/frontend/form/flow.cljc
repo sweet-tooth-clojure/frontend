@@ -1,7 +1,6 @@
 (ns sweet-tooth.frontend.form.flow
   (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
-            [sweet-tooth.frontend.core.flow :as c]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.paths :as p]
@@ -175,6 +174,10 @@
   [db [partial-form-path form]]
   (assoc-in db (p/full-path :form partial-form-path) form))
 
+(sth/rr rf/reg-event-db ::set-form
+  [rf/trim-v]
+  set-form)
+
 (defn clear-form
   [db args]
   (set-form db (take 1 args)))
@@ -183,9 +186,21 @@
   [rf/trim-v]
   clear-form)
 
-(sth/rr rf/reg-event-db ::set-form
+(defn clear-selected-keys
+  [db partial-form-path clear]
+  (update-in db (p/full-path :form partial-form-path) select-keys (if (= :all clear)
+                                                                    #{}
+                                                                    (set/difference form-keys (set clear)))))
+
+(sth/rr rf/reg-event-db ::clear
   [rf/trim-v]
-  set-form)
+  (fn [db [partial-form-path clear]]
+    (clear-selected-keys db partial-form-path clear)))
+
+(sth/rr rf/reg-event-db ::keep
+  [rf/trim-v]
+  (fn [db [partial-form-path keep-keys]]
+    (update-in db (p/full-path :form partial-form-path) select-keys keep-keys)))
 
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
@@ -206,21 +221,21 @@
   - `form-spec` is a way to pass on whatevs data to the request
     completion handler.
   - the `:sync` key of form spec can customize the sync request"
-  [partial-form-path data {:keys [sync]
-                           :as   form-spec}]
-  (let [[form-handle method route-params] partial-form-path
-        route-name (get sync :route-name form-handle)
+  [[form-handle method route-params :as partial-form-path], data, {:keys [sync] :as form-spec}]
+  (let [route-name (get sync :route-name form-handle)
         method     (get sync :method method)
-        sync-opts  (-> (merge {:params       data
+
+        sync-opts (meta-merge {:default-on   {:success [[::submit-form-success :$ctx]]
+                                              :fail    [[::submit-form-fail :$ctx]]}
+                               :$ctx         {:full-form-path    (p/full-path :form partial-form-path)
+                                              :partial-form-path partial-form-path
+                                              :form-spec         form-spec}
+                               :params       data
                                :route-params (or route-params data)}
                               sync)
-                       (update :on (partial merge {:success [::submit-form-success :$ctx]
-                                                   :fail    [::submit-form-fail :$ctx]}))
-                       (update :on meta-merge {:$ctx {:full-form-path (p/full-path :form partial-form-path)
-                                                      :form-spec      form-spec}}))
         ;; custom req-path to handle the fact that form-handle can be
         ;; different from the route name
-        sync-opts  (update sync-opts ::stsf/req-path #(or % (stsf/req-path [method form-handle sync-opts])))]
+        sync-opts (update sync-opts ::stsf/req-path #(or % (stsf/req-path [method form-handle sync-opts])))]
     [method route-name sync-opts]))
 
 (defn submit-form
@@ -264,35 +279,10 @@
 ;; handle form success/fail
 ;;--------------------
 
-(defn success-base
-  "Produces a function that can be used for handling form submission success.
-  It handles the common behaviors:
-  - updating the form state to `:success`
-  - populating the form's `:response` key with the returned data
-  - calls callback specified by `:callback`
-  - clears form keys specified by `:clear`
-
-  You customize success-base by providing a `db-update` function which
-  will e.g. `merge` or `deep-merge` values from the response.
-
-  TODO investigate using the `after` interceptor"
-  [db-update]
-  (fn [{:keys [db]} [{:keys [full-form-path], {:keys [response-data]} :resp, :as args}
-                     {:keys [callback clear keep]}]]
-    (when callback (callback db args))
-    {:db (-> (db-update db response-data)
-             (assoc-in (conj full-form-path :state) :success)
-             (update-in full-form-path select-keys (cond keep           keep
-                                                         (= :all clear) #{}
-                                                         clear          (set/difference form-keys (set clear))
-                                                         :else          form-keys)))}))
-
-(def submit-form-success
-  (success-base c/update-db))
-
-(sth/rr rf/reg-event-fx ::submit-form-success
+(sth/rr rf/reg-event-db ::submit-form-success
   [rf/trim-v]
-  submit-form-success)
+  (fn [db [{:keys [full-form-path]}]]
+    (assoc-in db (conj full-form-path :state) :success)))
 
 (defn submit-form-fail
   [db [{:keys [full-form-path resp]

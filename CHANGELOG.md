@@ -1,12 +1,25 @@
 # Changelog
 
-# [0.12.8] WIP
+# [0.13.0] WIP
 
 ### Changed
 
 - Can now specify `:method` as a sync opt, further allowing the
   request signature (name) to diverge from the sync calls
 - Cleaned up form macro, getting rid of unnecessary duplication
+- added `:default-on` to sync opts to eliminate the need to always
+  have to specify the default handlers whenever you want to have
+  custom sync handlers. If you need to treat default handlers in some
+  custom way you can do something like:
+
+  ```clojure
+  {:default-on {:success :skip}
+   :on         {:success [[:first :event]
+                          [::stsf/default-sync-success :$ctx]
+                          [:next :event]]}
+  ```
+  
+  But you're probably better off just writing a named handler.
 
 # [0.12.7] 2020-05-10
 
