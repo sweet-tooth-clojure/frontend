@@ -1,5 +1,18 @@
 # Changelog
 
+# [0.13.1] 2020-05-30
+
+### Added
+
+- `sweet-tooth.frontend.routes/route`: get a route from the frontend
+  router
+
+### Changed
+
+- When nav flow doesn't find a path's route, it attempts to use a
+  `::stnf/not-found` route
+- sweet-tooth.frontend.routes.protocol/route can now take a route name
+
 # [0.13.0] 2020-05-24
 
 ### Changed

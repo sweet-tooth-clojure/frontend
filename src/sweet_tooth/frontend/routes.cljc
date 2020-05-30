@@ -20,6 +20,10 @@
   [name & [route-params query-params]]
   (strp/path @frontend-router name route-params query-params))
 
+(defn route
+  [path-or-name & [route-params query-params]]
+  (strp/route @frontend-router path-or-name route-params query-params))
+
 (defn api-path
   [name & [route-params query-params]]
   (strp/path @sync-router name route-params query-params))

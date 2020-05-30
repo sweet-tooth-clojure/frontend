@@ -114,7 +114,8 @@
              (let [global-lifecycle (paths/get-path db :system ::handler :global-lifecycle)
                    router           (paths/get-path db :system ::handler :router)
                    path             (get event 1)
-                   new-route        (strp/route router path)
+                   new-route        (or (strp/route router path)
+                                        (strp/route router ::not-found))
                    existing-route   (paths/get-path db :nav :route)
                    scope            (if (= (:route-name new-route) (:route-name existing-route))
                                       :params

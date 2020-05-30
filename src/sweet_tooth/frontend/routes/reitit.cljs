@@ -12,8 +12,8 @@
   (log/warn "reitit could not generate path" name match route-params))
 
 (defn on-no-route-default
-  [path]
-  (log/warn "reitit could not match route" path))
+  [path-or-name route-params query-params]
+  (log/warn "reitit could not match route" {:route-args [path-or-name route-params query-params]}))
 
 (def config-defaults
   {:use         :reitit
@@ -29,7 +29,7 @@
     [this name route-params]
     (strp/path this name route-params {}))
   (strp/path
-    [{:keys [router]} name route-params query-params]
+    [this name route-params query-params]
     (let [{{:keys [prefix]} :data :as match} (rc/match-by-name router name route-params)]
       (if-not (:required match)
         (cond-> match
@@ -53,8 +53,16 @@
       (select-keys params (:required (rc/match-by-name router name)))))
 
   (strp/route
-    [this path]
-    (if-let [{:keys [data query-params] :as m} (reif/match-by-path router path)]
+    [this path-or-name]
+    (strp/route this path-or-name {} {}))
+  (strp/route
+    [this path-or-name route-params]
+    (strp/route this path-or-name route-params {}))
+  (strp/route
+    [this path-or-name route-params query-params]
+    (if-let [{:keys [data query-params] :as m} (if (keyword? path-or-name)
+                                                 (rc/match-by-name router path-or-name route-params)
+                                                 (reif/match-by-path router path-or-name))]
       (-> data
           (merge (dissoc m :data))
           (set/rename-keys {:name       :route-name
@@ -62,7 +70,7 @@
           (update :params (fn [{:keys [path query] :as _params}]
                             (merge path query query-params))))
       (when on-no-route
-        (on-no-route path)
+        (on-no-route path-or-name route-params query-params)
         nil))))
 
 (defmethod strp/router :reitit
