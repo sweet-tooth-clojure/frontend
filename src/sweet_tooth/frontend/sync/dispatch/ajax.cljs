@@ -1,20 +1,24 @@
 (ns sweet-tooth.frontend.sync.dispatch.ajax
   "Takes sync request and dispatch AJAX requests"
   (:require [taoensso.timbre :as timbre]
-            [ajax.core :refer [GET PUT POST DELETE]]
+            [ajax.core :refer [GET HEAD POST PUT DELETE OPTIONS TRACE PATCH PURGE]]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [integrant.core :as ig]
             [clojure.set :as set]
             [cognitect.anomalies :as anom]))
 
 (def request-methods
-  {:query  GET
-   :get    GET
-   :put    PUT
-   :update PUT
-   :post   POST
-   :create POST
-   :delete DELETE})
+  {:query   GET
+   :get     GET
+   :put     PUT
+   :update  PUT
+   :post    POST
+   :create  POST
+   :delete  DELETE
+   :options OPTIONS
+   :trace   TRACE
+   :patch   PATCH
+   :purce   PURGE})
 
 (def fails
   {400 ::anom/incorrect

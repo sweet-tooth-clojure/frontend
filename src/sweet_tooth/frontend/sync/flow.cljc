@@ -17,7 +17,8 @@
             [clojure.walk :as walk]
             [meta-merge.core :refer [meta-merge]]
             [taoensso.timbre :as log]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [cognitect.anomalies :as anom]))
 
 
 ;;--------------------
@@ -115,17 +116,6 @@
   (fn [db [_ query]]
     (medley/filter-keys (partial stcu/projection? query) (::reqs db))))
 
-(defn adapt-req
-  "Makes sure a path is findable from req and adds it"
-  [[method route-name opts :as _res] router]
-  (when-let [path (strp/path router
-                             route-name
-                             (or (:route-params opts)
-                                 (:params opts)
-                                 opts)
-                             (:query-params opts))]
-    [method route-name (assoc opts :path path)]))
-
 (sth/rr rf/reg-event-db ::default-sync-success
   [rf/trim-v]
   (fn [db [{{:keys [response-data]} :resp
@@ -136,25 +126,30 @@
                                                             :req           (into [] (take 2 req))})
           db))))
 
-;; TODO check that this does what I think
-;; is the second argument here correct?
 (sth/rr rf/reg-event-fx ::default-sync-fail
   [rf/trim-v]
   (fn [{:keys [db] :as _cofx} [{:keys [req], {:keys [response-data]} :resp}]]
     (let [sync-info {:response-data response-data :req (into [] (take 2 req))}]
-      {:db       (if (vector? response-data)
-                   (stcf/update-db db response-data)
-                   (do (log/warn "Sync response data was not a vector:" sync-info)
-                       db))
-       :dispatch [::stfaf/add-failure [:sync sync-info]]})))
+      (when-not (vector? response-data)
+        (log/warn "Sync response data was not a vector:" sync-info))
+      (cond-> {:dispatch [::stfaf/add-failure [:sync sync-info]]}
+        (vector? response-data) (assoc :db (stcf/update-db db response-data))))))
+
+(sth/rr rf/reg-event-fx ::default-sync-unavailable
+  [rf/trim-v]
+  (fn [{:keys [db] :as _cofx} [{:keys [req]}]]
+    (let [sync-info {:req (into [] (take 2 req))}]
+      (log/warn "Service unavailable. Try `(dev) (go)` in your REPL." sync-info)
+      {:dispatch [::stfaf/add-failure [:sync sync-info]]})))
 
 ;;-----------------------
 ;; dispatch sync requests
 ;;-----------------------
 
 (def default-handlers
-  {:default-on {:success [[::default-sync-success :$ctx]]
-                :fail    [[::default-sync-fail :$ctx]]}})
+  {:default-on {:success           [[::default-sync-success :$ctx]]
+                :fail              [[::default-sync-fail :$ctx]]
+                ::anom/unavailable [[::default-sync-unavailable :$ctx]]}})
 
 ;;---
 ;; helpers
@@ -175,6 +170,17 @@
                             opts
                             default-on))))
 
+
+(defn adapt-req
+  "Makes sure a path is findable from req and adds it"
+  [[method route-name opts :as _res] router]
+  (when-let [path (strp/path router
+                             route-name
+                             (or (:route-params opts)
+                                 (:params opts)
+                                 opts)
+                             (:query-params opts))]
+    [method route-name (assoc opts :path path)]))
 
 (defn sync-event-fx
   "Transforms sync events adding defaults and other options needed for

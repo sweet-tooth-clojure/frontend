@@ -11,7 +11,10 @@
 
 - When nav flow doesn't find a path's route, it attempts to use a
   `::stnf/not-found` route
-- sweet-tooth.frontend.routes.protocol/route can now take a route name
+- `sweet-tooth.frontend.routes.protocol/route` can now take a route name
+- `sweet-tooth.frontend.sync.dispatch.ajax/request-methods` now
+  includes all supported request methods
+- sync requests now have a default 503 handler specifically
 
 # [0.13.0] 2020-05-24
 
