@@ -59,7 +59,6 @@ Sweet Tooth eliminates much of the boilerplate for creating forms.
 
 - structure
 - concepts
-- 
 
 ### with-form
 
@@ -78,6 +77,10 @@ Sweet Tooth eliminates much of the boilerplate for creating forms.
 ### success
 
 ### fail
+
+### form states
+
+### input states
 
 ## Structuring Data
 

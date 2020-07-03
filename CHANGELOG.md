@@ -1,6 +1,6 @@
 # Changelog
 
-# [0.13.1] 2020-05-30
+# [0.13.1] 2020-07-03
 
 ### Added
 
@@ -15,6 +15,7 @@
 - `sweet-tooth.frontend.sync.dispatch.ajax/request-methods` now
   includes all supported request methods
 - sync requests now have a default 503 handler specifically
+- project name from `sweet-tooth/sweet-tooth-frontend` to `sweet-tooth/frontend`
 
 # [0.13.0] 2020-05-24
 
