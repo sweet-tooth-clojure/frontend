@@ -89,11 +89,11 @@
   "Returns a function to handle sync responses"
   [req]
   (fn [{:keys [status] :as resp}]
-    (let [{:keys [on]} (get req 2)
-          $ctx         (assoc (get on :$ctx {})
-                              :resp resp
-                              :req  req)
-          composed-fx  (stcc/compose-fx (get on status (get on :fail)))]
+    (let [{:keys [on] :as rdata} (get req 2)
+          $ctx                   (assoc (get rdata :$ctx {})
+                                        :resp resp
+                                        :req  req)
+          composed-fx            (stcc/compose-fx (get on status (get on :fail)))]
       (rf/dispatch [::stcc/compose-dispatch
                     [[::sync-finished req resp]
                      (walk/postwalk (fn [x] (if (= x :$ctx) $ctx x))

@@ -1,6 +1,13 @@
 # Changelog
 
-# [0.13.1] 2020-07-03
+## [0.13.2] 2020-09-06
+
+### Fixed
+
+- Fixed `:$ctx` reference in sync flow success
+
+
+## [0.13.1] 2020-07-03
 
 ### Added
 
@@ -17,7 +24,7 @@
 - sync requests now have a default 503 handler specifically
 - project name from `sweet-tooth/sweet-tooth-frontend` to `sweet-tooth/frontend`
 
-# [0.13.0] 2020-05-24
+## [0.13.0] 2020-05-24
 
 ### Changed
 
@@ -38,7 +45,7 @@
   
   But you're probably better off just writing a named handler.
 
-# [0.12.7] 2020-05-10
+## [0.12.7] 2020-05-10
 
 ### Added
 
