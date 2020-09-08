@@ -309,11 +309,12 @@
 ;; sync dispatching with routes
 ;; ------
 
+;; TODO remove these
 (defn- method-sync-fx
   [method]
   (fn [{:keys [db] :as cofx} [route-name opts]]
-    (stsf/sync-event-fx cofx (into [method route-name (merge {:route-params (get-in (nav db) [:route :params])}
-                                                             opts)]))))
+    (stsf/sync-event-fx cofx [method route-name (merge {:route-params (get-in (nav db) [:route :params])}
+                                                       opts)])))
 
 (sth/rr rf/reg-event-fx ::get-with-route-params
   [rf/trim-v]

@@ -182,6 +182,92 @@
                              (:query-params opts))]
     [method route-name (assoc opts :path path)]))
 
+(defn ctx-db
+  "db coeffect in interceptor"
+  [ctx]
+  (get-in ctx [:coeffects :db]))
+
+(defn ctx-req
+  "Retrieve request within interceptor"
+  [ctx]
+  (get-in ctx [:coeffects :event 1]))
+
+(defn sync-rule?
+  [ctx rule]
+  (contains? (get-in (ctx-req ctx) [2 :rules]) rule))
+
+(defn ctx-sync-state
+  [ctx]
+  (sync-state (ctx-db ctx) (ctx-req ctx)))
+
+;;---
+;; sync interceptors
+;;---
+(defn sync-entity-req
+  "To be used when dispatching a sync event for an entity:
+  (sync-entity-req :put :comment {:id 1 :content \"comment\"})"
+  [[method route ent & [opts]]]
+  [method route (-> opts
+                    (update :params #(or % ent))
+                    (update :route-params #(or % ent)))])
+
+(def sync-once
+  {:id     ::sync-once
+   :before (fn [ctx]
+             (if (and (sync-rule? ctx :once)
+                      (= :success (ctx-sync-state ctx)))
+               {:queue []}
+               ctx))
+   :after  identity})
+
+(def sync-when-not-active
+  {:id     ::sync-when-not-active
+   :before (fn [ctx]
+             (if (and (sync-rule? ctx :when-not-active)
+                      (= :active (ctx-sync-state ctx)))
+               {:queue []}
+               ctx))
+   :after  identity})
+
+(def sync-route-params
+  {:id     ::sync-route-params
+   :before (fn [ctx]
+             (if (sync-rule? ctx :merge-route-params)
+               (update-in ctx
+                          [:coeffects :event 1 2]
+                          (fn [opts]
+                            (merge {:route-params (paths/get-path (ctx-db ctx) :nav [:route :params])}
+                                   opts)))
+               ctx))
+   :after  identity})
+
+(def sync-methods
+  {"get"    :get
+   "put"    :put
+   "delete" :delete
+   "post"   :post
+   "patch"  :patch})
+
+(def sync-method
+  {:id     ::sync-method
+   :before (fn [ctx]
+             (if-let [method (get sync-methods (name (get-in ctx [:coeffects :event 0])))]
+               (update-in ctx [:coeffects :event] (fn [[event-name & args]]
+                                                    (conj [event-name] (into [method] args))))
+               ctx))
+   :after  identity})
+
+(def sync-interceptors
+  [sync-method
+   sync-route-params
+   sync-once
+   sync-when-not-active
+   rf/trim-v])
+
+;;---
+;; sync
+;;---
+
 (defn sync-event-fx
   "Transforms sync events adding defaults and other options needed for
   the `::dispatch-sync` effect handler to perform a sync.
@@ -208,25 +294,18 @@
   :ret  (s/keys :req-un [::ss/db]
                 :req    [::dispatch-sync]))
 
-(defn sync-entity-req
-  "To be used when dispatching a sync event for an entity:
-  (sync-entity-req :put :comment {:id 1 :content \"comment\"})"
-  [[method route ent & [opts]]]
-  [method route (-> opts
-                    (update :params #(or % ent))
-                    (update :route-params #(or % ent)))])
 ;;---
 ;; handlers
 
 ;; The core event handler for syncing
 (sth/rr rf/reg-event-fx ::sync
-  [rf/trim-v]
+  sync-interceptors
   (fn [cofx [req]]
     (sync-event-fx cofx req)))
 
 ;; makes it a little easier to sync a single entity
 (sth/rr rf/reg-event-fx ::sync-entity
-  [rf/trim-v]
+  sync-interceptors
   (fn [cofx [req]]
     (sync-event-fx cofx (sync-entity-req req))))
 
@@ -318,26 +397,11 @@
 ;;---------------
 ;; common sync
 ;;---------------
-(defn- method-sync-fx
-  [method]
-  (fn [cofx req]
-    (sync-event-fx cofx (into [method] req))))
-
-(sth/rr rf/reg-event-fx ::get
-  [rf/trim-v]
-  (method-sync-fx :get))
-
-(sth/rr rf/reg-event-fx ::put
-  [rf/trim-v]
-  (method-sync-fx :put))
-
-(sth/rr rf/reg-event-fx ::post
-  [rf/trim-v]
-  (method-sync-fx :post))
-
-(sth/rr rf/reg-event-fx ::delete
-  [rf/trim-v]
-  (method-sync-fx :delete))
+(doseq [method [::get ::put ::post ::delete ::patch]]
+  (sth/rr rf/reg-event-fx method
+    sync-interceptors
+    (fn [cofx [req]]
+      (sync-event-fx cofx req))))
 
 ;;---------------
 ;; response helpers
