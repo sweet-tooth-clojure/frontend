@@ -30,6 +30,10 @@
   [db entity-key param-key]
   (paths/get-path db :entity entity-key (paths/get-path db :nav :route :params param-key)))
 
+(defn routed-entity-form
+  [db partial-form-path param-key]
+  (paths/get-path db :form partial-form-path (select-keys (paths/get-path db :nav :route :params) [param-key])))
+
 (defn initialize-form-with-routed-entity
   [db form-path entity-key param-key & [form-opts]]
   (let [ent (routed-entity db entity-key param-key)]
