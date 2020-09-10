@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.13.2] IN PROGRESS
+
+### Added
+
+- `sweet-tooth.frontend.nav.utils/routed-entity-form`, helper that returns form
+  for routed entity
+
+### Changed
+
+- Made sync behavior more modular with interceptors. Can add `:rules` to sync
+  options, including:
+  - `:once` only sync when there is no existing sync with a `:success` status
+  - `:merge-route-params` merges in route params
+  - `:when-not-active` only sync if there is not an existing, active sync
+    (prevents form double submit for example)
+
 ## [0.13.2] 2020-09-06
 
 ### Fixed
