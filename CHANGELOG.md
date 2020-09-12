@@ -15,6 +15,8 @@
   - `:merge-route-params` merges in route params
   - `:when-not-active` only sync if there is not an existing, active sync
     (prevents form double submit for example)
+- Added `:entity-path` key to sync options. When specified, will look up entity
+  at path and use it for `:route-params` and `:params` of a request.
 
 ## [0.13.2] 2020-09-06
 

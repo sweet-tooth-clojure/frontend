@@ -192,6 +192,10 @@
   [ctx]
   (get-in ctx [:coeffects :event 1]))
 
+(defn update-ctx-req-opts
+  [ctx f]
+  (update-in ctx [:coeffects :event 1 2] f))
+
 (defn sync-rule?
   [ctx rule]
   (contains? (get-in (ctx-req ctx) [2 :rules]) rule))
@@ -233,11 +237,24 @@
   {:id     ::sync-route-params
    :before (fn [ctx]
              (if (sync-rule? ctx :merge-route-params)
-               (update-in ctx
-                          [:coeffects :event 1 2]
-                          (fn [opts]
-                            (merge {:route-params (paths/get-path (ctx-db ctx) :nav [:route :params])}
-                                   opts)))
+               (update-ctx-req-opts ctx (fn [opts]
+                                          (merge {:route-params (paths/get-path (ctx-db ctx) :nav [:route :params])}
+                                                 opts)))
+               ctx))
+   :after  identity})
+
+;; Use the entity at given path to populate route-params and params of request
+(def sync-entity-path
+  {:id     ::sync-entity-path
+   :before (fn [ctx]
+             (if-let [entity-path (get-in (ctx-req ctx) [2 :entity-path])]
+               (if-let [ent (paths/get-path (ctx-db ctx) :entity entity-path)]
+                 (update-ctx-req-opts ctx (fn [opts]
+                                            (merge {:route-params ent
+                                                    :params       ent}
+                                                   opts)))
+                 (log/warn ::sync-entity-ent-not-found
+                           {:entity-path entity-path}))
                ctx))
    :after  identity})
 
@@ -260,6 +277,7 @@
 (def sync-interceptors
   [sync-method
    sync-route-params
+   sync-entity-path
    sync-once
    sync-when-not-active
    rf/trim-v])
