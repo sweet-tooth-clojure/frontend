@@ -331,21 +331,24 @@
   [partial-form-path & [submit-opts]]
   {:on-submit (on-submit-handler partial-form-path submit-opts)})
 
-(defn form-subs
+(defn form-sync-subs
   [partial-form-path]
-  {:form-path     partial-form-path
-   :form-state    (rf/subscribe [::stff/state partial-form-path])
-   :form-ui-state (rf/subscribe [::stff/ui-state partial-form-path])
-   :form-errors   (rf/subscribe [::stff/errors partial-form-path])
-   :form-buffer   (rf/subscribe [::stff/buffer partial-form-path])
-   :form-dirty?   (rf/subscribe [::stff/form-dirty? partial-form-path])
-
-   :state-success? (rf/subscribe [::stff/state-success? partial-form-path])
-
-   :sync-state    (rf/subscribe [::stff/sync-state partial-form-path])
+  {:sync-state    (rf/subscribe [::stff/sync-state partial-form-path])
    :sync-active?  (rf/subscribe [::stff/sync-active? partial-form-path])
    :sync-success? (rf/subscribe [::stff/sync-success? partial-form-path])
    :sync-fail?    (rf/subscribe [::stff/sync-fail? partial-form-path])})
+
+(defn form-subs
+  [partial-form-path]
+  (merge {:form-path     partial-form-path
+          :form-state    (rf/subscribe [::stff/state partial-form-path])
+          :form-ui-state (rf/subscribe [::stff/ui-state partial-form-path])
+          :form-errors   (rf/subscribe [::stff/errors partial-form-path])
+          :form-buffer   (rf/subscribe [::stff/buffer partial-form-path])
+          :form-dirty?   (rf/subscribe [::stff/form-dirty? partial-form-path])
+
+          :state-success? (rf/subscribe [::stff/state-success? partial-form-path])}
+         (form-sync-subs partial-form-path)))
 
 (defn form-components
   [partial-form-path & [formwide-input-opts]]

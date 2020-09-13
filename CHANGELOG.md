@@ -6,6 +6,10 @@
 
 - `sweet-tooth.frontend.nav.utils/routed-entity-form`, helper that returns form
   for routed entity
+- `:sweet-tooth.frontend.core.flow/remove-entity` handler
+- broke out form sync subs to
+  `sweet-tooth.frontend.form.components/form-sync-subs`
+- `sweet-tooth.frontend.sync.flow/sync-subs`
 
 ### Changed
 

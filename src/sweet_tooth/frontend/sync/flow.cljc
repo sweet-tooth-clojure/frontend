@@ -60,8 +60,14 @@
   \"identical\" requests being treated as separate, so we use
   `stfr/req-id` to select a subset of opts to distinguish reqs"
   [[method route opts]]
-  (or (::req-path opts)
-      [method route (or (::req-id opts) (stfr/req-id route opts))]))
+  (let [path (or (::req-path opts)
+                 [method route (or (::req-id opts) (stfr/req-id route opts))])]
+    (when (contains? (:debug opts) ::req-path)
+      (log/info ::req-path
+                {:opts-req-path (::req-path opts)
+                 :route-name    route
+                 :req-path      path})
+      path)))
 
 (defn track-new-request
   "Adds a request's state te the app-db and increments the active request
@@ -436,3 +442,13 @@
        (first)
        (vals)
        (first)))
+
+;;---------------
+;; sync subs
+;;---------------
+(defn sync-subs
+  [req-id]
+  {:sync-state    (rf/subscribe [::sync-state req-id])
+   :sync-active?  (rf/subscribe [::sync-state req-id :active])
+   :sync-success? (rf/subscribe [::sync-state req-id :success])
+   :sync-fail?    (rf/subscribe [::sync-state req-id :fail])})
