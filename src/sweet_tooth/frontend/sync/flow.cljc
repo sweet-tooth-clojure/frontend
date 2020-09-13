@@ -66,8 +66,8 @@
       (log/info ::req-path
                 {:opts-req-path (::req-path opts)
                  :route-name    route
-                 :req-path      path})
-      path)))
+                 :req-path      path}))
+    path))
 
 (defn track-new-request
   "Adds a request's state te the app-db and increments the active request
