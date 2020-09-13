@@ -9,7 +9,11 @@
 
 (defn on-no-path-default
   [name match route-params]
-  (log/warn "reitit could not generate path" name match route-params))
+  (log/warn "reitit could not generate path"
+            {:route-name   name
+             :route-params route-params
+             :required     (get match :required)
+             :match        (dissoc match :data)}))
 
 (defn on-no-route-default
   [path-or-name route-params query-params]
