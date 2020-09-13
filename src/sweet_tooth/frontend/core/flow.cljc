@@ -94,6 +94,11 @@
   (fn [db [path]]
     (u/dissoc-in db path)))
 
+(sth/rr rf/reg-event-db ::remove-entity
+  [rf/trim-v]
+  (fn [db [entity-type id]]
+    (update-in db [:entity entity-type] dissoc id)))
+
 ;; debounce dispatches
 ;; TODO i don't like this atom :(
 ;; TODO dispose of debouncer
