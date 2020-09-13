@@ -18,6 +18,7 @@
 - Added `:entity-path` key to sync options. When specified, will look up entity
   at path and use it for `:route-params` and `:params` of a request.
 - Made "reitit could not generate path" warning less noisy
+- allow `nil` sync responses
 
 
 ## [0.13.2] 2020-09-06

@@ -120,7 +120,7 @@
   [rf/trim-v]
   (fn [db [{{:keys [response-data]} :resp
             :keys [req]}]]
-    (if (vector? response-data)
+    (if (or (vector? response-data) (nil? response-data))
       (stcf/update-db db response-data)
       (do (log/warn "Sync response data was not a vector:" {:response-data response-data
                                                             :req           (into [] (take 2 req))})
