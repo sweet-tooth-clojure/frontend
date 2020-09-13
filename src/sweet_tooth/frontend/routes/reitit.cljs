@@ -15,8 +15,8 @@
                :route-params (select-keys route-params required)
                :required     required
                :match        (-> match
-                                 (dissoc :data :required)
-                                 (update :path-params select-keys required))})))
+                                     (dissoc :data :required)
+                                     (update :path-params select-keys required))})))
 
 (defn on-no-route-default
   [path-or-name route-params query-params]
