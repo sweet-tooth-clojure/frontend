@@ -120,11 +120,12 @@
   [rf/trim-v]
   (fn [db [{{:keys [response-data]} :resp
             :keys [req]}]]
-    (if (or (vector? response-data) (nil? response-data))
-      (stcf/update-db db response-data)
-      (do (log/warn "Sync response data was not a vector:" {:response-data response-data
-                                                            :req           (into [] (take 2 req))})
-          db))))
+    (let [response-data (if (nil? response-data) [] response-data)]
+      (if (vector? response-data)
+        (stcf/update-db db response-data)
+        (do (log/warn "Sync response data was not a vector:" {:response-data response-data
+                                                              :req           (into [] (take 2 req))})
+            db)))))
 
 (sth/rr rf/reg-event-fx ::default-sync-fail
   [rf/trim-v]

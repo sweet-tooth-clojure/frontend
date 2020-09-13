@@ -88,7 +88,8 @@
   [rf/trim-v]
   (fn [{:keys [db] :as cofx} [route route-params query-params]]
     (let [router (paths/get-path db :system ::handler :router)]
-      (navigate-handler cofx [(strp/path router route route-params query-params)]))))
+      (when-let [path (strp/path router route route-params query-params)]
+        (navigate-handler cofx [path])))))
 
 ;; ------
 ;; Route change handlers

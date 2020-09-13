@@ -38,7 +38,7 @@
   (strp/path
     [this name route-params query-params]
     (let [{{:keys [prefix]} :data :as match} (rc/match-by-name router name route-params)]
-      (if-not (:required match)
+      (if (and match (not (:required match)))
         (cond-> match
           true                     (rc/match->path)
           (not-empty query-params) (str "?" (u/params-to-str query-params))
