@@ -10,6 +10,7 @@
 - broke out form sync subs to
   `sweet-tooth.frontend.form.components/form-sync-subs`
 - `sweet-tooth.frontend.sync.flow/sync-subs`
+- `sweet-tooth.frontend.sync.flow/remove-req`
 
 ### Changed
 

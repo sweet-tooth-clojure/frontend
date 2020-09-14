@@ -77,6 +77,10 @@
       (assoc-in [::reqs (req-path req)] {:state :active})
       (update ::active-request-count (fnil inc 0))))
 
+(defn remove-req
+  [db req]
+  (update db ::reqs dissoc (req-path req)))
+
 ;;------
 ;; dispatch handler wrappers
 ;;------
