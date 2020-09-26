@@ -9,6 +9,17 @@
             [clojure.set :as set]))
 
 ;;------
+;; helpers
+;;------
+(defn assoc-in-form
+  [db partial-form-path ks v]
+  (assoc-in db (p/full-path :form partial-form-path ks) v))
+
+(defn update-in-form
+  [db partial-form-path ks f & args]
+  (apply update-in db (p/full-path :form partial-form-path ks) f args))
+
+;;------
 ;; Form subs
 ;;------
 
@@ -273,7 +284,7 @@
   [ent-type & [id-key]]
   (let [id-key (or id-key :id)]
     (fn [{:keys [db] :as cofx} [entity :as args]]
-      (merge ((stsf/sync-fx [:delete ent-type]) cofx args)
+      (merge ((stsf/sync-fx-handler [:delete ent-type]) cofx args)
              {:db (update-in db [:entity ent-type] dissoc (id-key entity))}))))
 
 ;;--------------------

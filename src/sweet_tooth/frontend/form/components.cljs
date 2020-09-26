@@ -133,7 +133,7 @@
         value        (format-read @attr-buffer)
         format-write (or format-write (constantly (not value)))]
     (-> (input-type-opts-default opts)
-        (merge {:default-checked (boolean value)
+        (merge {:checked         (boolean value)
                 :on-change       #(dispatch-input-event % (merge opts {:format-write format-write}) true)})
         (dissoc :value))))
 

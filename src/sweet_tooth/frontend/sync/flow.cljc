@@ -397,15 +397,21 @@
     (cond-> new-opts
       (not route-params) (assoc :route-params params))))
 
-;; TODO rename this to sync-fx-handler :(
-(defn sync-fx
-  "Returns an effect handler that dispatches a sync event"
-  [[method endpoint opts]]
-  (fn [_cofx [call-opts params]]
-    {:dispatch [::sync [method endpoint (build-opts opts call-opts params)]]}))
+(defn sync-req->sync-event
+  [[method endpoint opts] & [call-opts params]]
+  [::sync [method endpoint (build-opts opts call-opts params)]])
 
-;; TODO rename this to sync-once-fx-handler :(
-(defn sync-once-fx
+(defn sync-req->dispatch
+  [req & [call-opts params]]
+  {:dispatch (sync-req->sync-event req call-opts params)})
+
+(defn sync-fx-handler
+  "Returns an effect handler that dispatches a sync event"
+  [req]
+  (fn [_cofx [call-opts params]]
+    {:dispatch (sync-req->sync-event req call-opts params)}))
+
+(defn sync-once-fx-handler
   "Returns an effect handler that dispatches a sync event"
   [[method endpoint opts]]
   (fn [_cofx [call-opts params]]
