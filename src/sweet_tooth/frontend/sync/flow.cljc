@@ -468,27 +468,27 @@
 ;;---------------
 ;; sync req data handlers
 ;;---------------
-(defn remove-sync-reqs
+(defn remove-reqs
   [db key-filter value-filter]
   (let [key-filter   (or key-filter (constantly false))
         value-filter (or value-filter (constantly false))]
-      (update db (paths/prefix :reqs)
-              (fn [req-map]
-                (->> req-map
-                     (remove (fn [[k v]] (and (key-filter k) (value-filter v))))
-                     (into {}))))))
+    (update db (paths/prefix :reqs)
+            (fn [req-map]
+              (->> req-map
+                   (remove (fn [[k v]] (and (key-filter k) (value-filter v))))
+                   (into {}))))))
 
-(sth/rr rf/reg-event-db ::remove-sync-reqs
+(sth/rr rf/reg-event-db ::remove-reqs
   [rf/trim-v]
   (fn [db [key-filter value-filter]]
-    (remove-sync-reqs db key-filter value-filter)))
+    (remove-reqs db key-filter value-filter)))
 
 ;; remove all sync reqs dispatched while `route` was active
 ;; with a method found in set `methods`
-(sth/rr rf/reg-event-db ::remove-sync-reqs-by-route-and-method
+(sth/rr rf/reg-event-db ::remove-reqs-by-route-and-method
   [rf/trim-v]
   (fn [db [route methods]]
-    (remove-sync-reqs db
-                      #(methods (first %))
-                      #(= (:route-name route)
-                          (get-in % [:active-route :route-name])))))
+    (remove-reqs db
+                 #(methods (first %))
+                 #(= (:route-name route)
+                     (get-in % [:active-route :route-name])))))
