@@ -74,7 +74,8 @@
   count"
   [db req]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state :active})
+      (assoc-in [::reqs (req-path req)] {:state        :active
+                                         :active-route (paths/get-path db :nav :route)})
       (update ::active-request-count (fnil inc 0))))
 
 (defn remove-req
@@ -88,7 +89,7 @@
   "Update sync bookkeeping"
   [db [_ req resp]]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state (:status resp)})
+      (assoc-in [::reqs (req-path req) :state] (:status resp))
       (update ::active-request-count dec)))
 
 (sth/rr rf/reg-event-db ::sync-finished
@@ -462,3 +463,32 @@
    :sync-active?  (rf/subscribe [::sync-state req-id :active])
    :sync-success? (rf/subscribe [::sync-state req-id :success])
    :sync-fail?    (rf/subscribe [::sync-state req-id :fail])})
+
+
+;;---------------
+;; sync req data handlers
+;;---------------
+(defn remove-sync-reqs
+  [db key-filter value-filter]
+  (let [key-filter   (or key-filter (constantly false))
+        value-filter (or value-filter (constantly false))]
+      (update db (paths/prefix :reqs)
+              (fn [req-map]
+                (->> req-map
+                     (remove (fn [[k v]] (and (key-filter k) (value-filter v))))
+                     (into {}))))))
+
+(sth/rr rf/reg-event-db ::remove-sync-reqs
+  [rf/trim-v]
+  (fn [db [key-filter value-filter]]
+    (remove-sync-reqs db key-filter value-filter)))
+
+;; remove all sync reqs dispatched while `route` was active
+;; with a method found in set `methods`
+(sth/rr rf/reg-event-db ::remove-sync-reqs-by-route-and-method
+  [rf/trim-v]
+  (fn [db [route methods]]
+    (remove-sync-reqs db
+                      #(methods (first %))
+                      #(= (:route-name route)
+                          (get-in % [:active-route :route-name])))))

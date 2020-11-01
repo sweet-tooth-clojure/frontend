@@ -213,6 +213,14 @@
   (fn [db [partial-form-path keep-keys]]
     (update-in db (p/full-path :form partial-form-path) select-keys keep-keys)))
 
+(sth/rr rf/reg-event-db ::replace-with-response
+  [rf/trim-v]
+  (fn [db [{:keys [partial-form-path] :as ctx}]]
+    (let [data  (stsf/single-entity ctx)]
+      (-> db
+          (assoc-in (p/full-path :form partial-form-path :base) data)
+          (assoc-in (p/full-path :form partial-form-path :buffer) data)))))
+
 ;; TODO spec set of possible actions
 ;; TODO spec out form map, keys :buffer :state :ui-state etc
 (def form-states #{nil :submitting :success :sleeping})

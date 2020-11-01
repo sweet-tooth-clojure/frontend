@@ -10,6 +10,7 @@
          :entity  :entity
          :nav     :nav
          :failure :failure
+         :reqs    :sweet-tooth.frontend.sync.flow/reqs
          :system  :sweet-tooth/system}))
 
 (def partial-path (comp vec rest))
