@@ -12,7 +12,7 @@
 - `sweet-tooth.frontend.sync.flow/sync-subs`
 - `sweet-tooth.frontend.sync.flow/remove-req`
 - `sweet-tooth.frontend.sync.flow/remove-reqs` - filter many reqs by key and value
-- `::stsf/remove-reqs` calls above
+- `::stsf/remove-reqs` handler that calls above
 - `::stsf/remove-reqs-by-route-and-method` creates filters for above to remove
   reqs that match sets of methods and route names
 
