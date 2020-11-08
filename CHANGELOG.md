@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.13.3] IN PROGRESS
+## [0.13.3] 2020-11-08
 
 ### Added
 
