@@ -105,6 +105,14 @@
 ;; Errors
 ;;------
 
+;; TODO generalize this to handle whole form too
+#_(rf/reg-sub ::errors
+  (fn [[_ partial-form-path attr-path]]
+    [(rf/subscribe [::attr-errors partial-form-path attr-path])])
+  (fn [errors]
+    {:errors errors}))
+
+;; TODO get rid of this
 ;; returns attr errors only when the form or given input has received
 ;; one of the input events in `show-errors-on`
 (rf/reg-sub ::attr-visible-errors
@@ -120,22 +128,14 @@
 ;; Interacting with forms
 ;;------
 
-(defn validate-form
-  [form validate]
-  (cond-> form
-    validate (assoc :errors (validate (:buffer form)))))
-
 ;; Meant to handle all input events: focus, blur, change, etc
 (defn input-event
-  [db [{:keys [partial-form-path attr-path validate val event-type] :as opts}]]
-  (let [form-path     (partial p/full-path :form partial-form-path)
-        validation-fn (or validate (get-in db (form-path :validate)))]
-    (update-in db (p/full-path :form partial-form-path)
-               (fn [form]
-                 (cond-> form
-                   true                  (update-in (u/flatv :input-events attr-path) (fnil conj #{}) event-type)
-                   (contains? opts :val) (assoc-in (u/flatv :buffer attr-path) val)
-                   validation-fn         (validate-form validation-fn))))))
+  [db [{:keys [partial-form-path attr-path val event-type] :as opts}]]
+  (update-in db (p/full-path :form partial-form-path)
+             (fn [form]
+               (cond-> form
+                 true                  (update-in (u/flatv :input-events attr-path) (fnil conj #{}) event-type)
+                 (contains? opts :val) (assoc-in (u/flatv :buffer attr-path) val)))))
 
 (sth/rr rf/reg-event-db ::input-event
   [rf/trim-v]
@@ -156,12 +156,10 @@
   reset-form-buffer)
 
 (defn initialize-form
-  [db [partial-form-path {:keys [buffer validate] :as form}]]
+  [db [partial-form-path {:keys [buffer] :as form}]]
   (assoc-in db
             (p/full-path :form partial-form-path)
-            (-> form
-                (update :base #(or % buffer))
-                (validate-form validate))))
+            (update form :base #(or % buffer))))
 
 ;; Populate form initial state
 (sth/rr rf/reg-event-db ::initialize-form

@@ -3,15 +3,16 @@
             [clojure.string :as str]
             [cljs-time.format :as tf]
             [cljs-time.core :as ct]
+            [medley.core :as medley]
             [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.form.flow :as stff])
+            [sweet-tooth.frontend.form.flow :as stff]
+            [sweet-tooth.frontend.form.describe :as stfd])
   (:require-macros [sweet-tooth.frontend.form.components]))
 
 (defn dispatch-input-event
   [event {:keys [format-write] :as input-opts} & [update-val?]]
   (rf/dispatch-sync [::stff/input-event (cond-> (select-keys input-opts [:partial-form-path
-                                                                         :attr-path
-                                                                         :validate])
+                                                                         :attr-path])
                                           true        (merge {:event-type (u/go-get event ["type"])})
                                           update-val? (merge {:val (format-write (u/tv event))}))]))
 
@@ -56,14 +57,13 @@
 ;;~~~~~~~~~~~~~~~~~~
 
 ;; used in the field component below
-(def field-opts #{:tip :before-input :after-input :after-errors :label :no-label :show-errors-on})
+(def field-opts #{:tip :before-input :after-input :after-dscr :label :no-label})
 
 ;; react doesn't recognize these and hates them
-(def input-opts #{:attr-buffer :attr-path :attr-errors :attr-visible-errors :attr-input-events
+(def input-opts #{:attr-buffer :attr-path :attr-input-events :attr-dscr :dscr-sub
                   :label :no-label :options
                   :partial-form-path :input-type
-                  :format-read :format-write
-                  :validate})
+                  :format-read :format-write})
 
 (defn dissoc-input-opts
   [x]
@@ -73,32 +73,26 @@
   [x]
   (apply dissoc x field-opts))
 
-
 (defn framework-input-opts
-  [{:keys [partial-form-path attr-path show-errors-on] :as opts
-    :or   {show-errors-on #{"blur" "submit" "show-errors"}}}]
-  (merge {:attr-buffer         (rf/subscribe [::stff/attr-buffer partial-form-path attr-path])
-          :attr-errors         (rf/subscribe [::stff/attr-errors partial-form-path attr-path])
-          :attr-visible-errors (rf/subscribe [::stff/attr-visible-errors
-                                              partial-form-path
-                                              attr-path
-                                              show-errors-on])
-          :attr-input-events   (rf/subscribe [::stff/attr-input-events partial-form-path attr-path])}
+  [{:keys [partial-form-path attr-path dscr-sub] :as opts}]
+  (merge {:attr-buffer       (rf/subscribe [::stff/attr-buffer partial-form-path attr-path])
+          :attr-dscr         (rf/subscribe [(or dscr-sub ::stfd/stored-errors) partial-form-path attr-path])
+          :attr-input-events (rf/subscribe [::stff/attr-input-events partial-form-path attr-path])}
          opts))
 
 (defn input-type-opts-default
   [{:keys [form-id attr-path attr-buffer input-type]
     :as   opts}]
-  (let [{:keys [format-read] :as opts} (merge {:format-read identity
+  (let [{:keys [format-read] :as opts} (merge {:format-read  identity
                                                :format-write identity}
                                               opts)]
-    (merge {:type         (name (or input-type :text))
-            :value        (format-read @attr-buffer)
-            :id           (label-for form-id attr-path)
-            :on-change    #(dispatch-input-event % opts true)
-            :on-blur      #(dispatch-input-event % opts false)
-            :on-focus     #(dispatch-input-event % opts false)
-            :class        (str "input " (attr-path-str attr-path))}
+    (merge {:type      (name (or input-type :text))
+            :value     (format-read @attr-buffer)
+            :id        (label-for form-id attr-path)
+            :on-change #(dispatch-input-event % opts true)
+            :on-blur   #(dispatch-input-event % opts false)
+            :on-focus  #(dispatch-input-event % opts false)
+            :class     (str "input " (attr-path-str attr-path))}
            opts)))
 
 (defmulti input-type-opts
@@ -207,30 +201,46 @@
   [:input (dissoc-input-opts opts)])
 
 ;;~~~~~~~~~~~~~~~~~~
-;; 'field' interface, wraps inputs with error messagse and labels
+;; 'field' interface, wraps inputs with messages and labels
 ;;~~~~~~~~~~~~~~~~~~
 
-(defn error-class
-  [error-sub]
-  (when (seq @error-sub) " error"))
+(defn dscr-classes
+  [dscr]
+  (->> dscr
+       (medley/filter-vals seq)
+       keys
+       (map name)
+       (str/join " ")
+       (str " ")))
 
-(defn error-messages
-  "A list of error messages"
-  [error-sub]
-  (let [errors @error-sub]
-    (when (seq errors)
-      [:ul {:class "error-messages"}
-       (map (fn [x] ^{:key (str "error-" x)} [:li x]) errors)])))
+(defmulti format-attr-dscr (fn [k _v] k))
+(defmethod format-attr-dscr :errors
+  [_ errors]
+  [:ul {:class "error-messages"}
+   (map (fn [x] ^{:key (str "error-" x)} [:li x]) errors)])
+(defmethod format-attr-dscr :default [_ _] nil)
+
+(defn attr-description
+  [dscr]
+  (some->> dscr
+           (map (fn [[k v]] (format-attr-dscr k v)))
+           (filter identity)
+           seq
+           (into [:div.description])))
+
+(defn field-classes
+  [{:keys [attr-path attr-dscr]}]
+  (str (u/kebab (attr-path-str attr-path))
+       (dscr-classes @attr-dscr)))
 
 (defmulti field :input-type)
 
 (defmethod field :default
-  [{:keys [form-id attr-path attr-visible-errors
+  [{:keys [form-id attr-path attr-dscr
            tip required label no-label
-           before-input after-input after-errors]
+           before-input after-input after-dscr]
     :as opts}]
-  [:div.field {:class (str (u/kebab (attr-path-str attr-path))
-                           (error-class attr-visible-errors))}
+  [:div.field {:class (field-classes opts)}
    (when-not no-label
      [:label {:for (label-for form-id attr-path) :class "label"}
       (or label (label-text attr-path))
@@ -240,14 +250,13 @@
     before-input
     [input (dissoc-field-opts opts)]
     after-input
-    (error-messages attr-visible-errors)
-    after-errors]])
+    (attr-description @attr-dscr)
+    after-dscr]])
 
 (defn checkbox-field
-  [{:keys [tip required label no-label attr-path attr-visible-errors]
+  [{:keys [tip required label no-label attr-path attr-dscr]
     :as opts}]
-  [:div.field {:class (str (u/kebab (attr-path-str attr-path))
-                           (error-class attr-visible-errors))}
+  [:div.field {:class (field-classes opts)}
    [:div
     (if no-label
       [:span [input (apply dissoc opts field-opts)] [:i]]
@@ -257,7 +266,7 @@
        (or label (label-text attr-path))
        (when required [:span {:class "required"} "*"])])
     (when tip [:div.tip tip])
-    (error-messages attr-visible-errors)]])
+    (attr-description @attr-dscr)]])
 
 (defmethod field :checkbox
   [opts]
