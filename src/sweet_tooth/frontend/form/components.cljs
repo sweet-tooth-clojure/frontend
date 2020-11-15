@@ -6,7 +6,8 @@
             [medley.core :as medley]
             [sweet-tooth.frontend.core.utils :as u]
             [sweet-tooth.frontend.form.flow :as stff]
-            [sweet-tooth.frontend.form.describe :as stfd])
+            [sweet-tooth.frontend.form.describe :as stfd]
+            [taoensso.timbre :as log])
   (:require-macros [sweet-tooth.frontend.form.components]))
 
 (defn dispatch-input-event
@@ -206,18 +207,21 @@
 
 (defn dscr-classes
   [dscr]
-  (->> dscr
-       (medley/filter-vals seq)
-       keys
-       (map name)
-       (str/join " ")
-       (str " ")))
+  (if (or (nil? dscr) (map? dscr))
+    (->> dscr
+         (medley/filter-vals seq)
+         keys
+         (map name)
+         (str/join " ")
+         (str " "))
+    (log/warn ::invalid-type (str dscr "should be nil or a map"))))
 
 (defmulti format-attr-dscr (fn [k _v] k))
 (defmethod format-attr-dscr :errors
   [_ errors]
-  [:ul {:class "error-messages"}
-   (map (fn [x] ^{:key (str "error-" x)} [:li x]) errors)])
+  (->> errors
+       (map (fn [x] ^{:key (str "error-" x)} [:li x]))
+       (into [:ul {:class "error-messages"}])))
 (defmethod format-attr-dscr :default [_ _] nil)
 
 (defn attr-description
