@@ -105,13 +105,6 @@
 ;; Errors
 ;;------
 
-;; TODO generalize this to handle whole form too
-#_(rf/reg-sub ::errors
-  (fn [[_ partial-form-path attr-path]]
-    [(rf/subscribe [::attr-errors partial-form-path attr-path])])
-  (fn [errors]
-    {:errors errors}))
-
 ;; TODO get rid of this
 ;; returns attr errors only when the form or given input has received
 ;; one of the input events in `show-errors-on`

@@ -348,11 +348,12 @@
    :sync-fail?    (rf/subscribe [::stff/sync-fail? partial-form-path])})
 
 (defn form-subs
-  [partial-form-path]
+  [partial-form-path & [{:keys [dscr-sub]}]]
   (merge {:form-path     partial-form-path
           :form-state    (rf/subscribe [::stff/state partial-form-path])
           :form-ui-state (rf/subscribe [::stff/ui-state partial-form-path])
           :form-errors   (rf/subscribe [::stff/errors partial-form-path])
+          :form-dscr     (rf/subscribe [(or dscr-sub ::stfd/stored-errors) partial-form-path])
           :form-buffer   (rf/subscribe [::stff/buffer partial-form-path])
           :form-dirty?   (rf/subscribe [::stff/form-dirty? partial-form-path])
 
@@ -371,5 +372,5 @@
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"
   [partial-form-path & [formwide-input-opts]]
-  (merge (form-subs partial-form-path)
+  (merge (form-subs partial-form-path formwide-input-opts)
          (form-components partial-form-path formwide-input-opts)))

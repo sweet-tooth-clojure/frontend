@@ -8,6 +8,12 @@
     `(form-components ~path ~(first body))
     `(form-components ~path)))
 
+(defn form-subs-form
+  [path body]
+  (if (map? (first body))
+    `(form-subs ~path ~(first body))
+    `(form-subs ~path)))
+
 (defn- form-body
   "If the first element in the body is a map, that means it's form
   options we want to apply to every input"
@@ -23,6 +29,7 @@
            {:keys [~'form-path
                    ~'form-state
                    ~'form-ui-state
+                   ~'form-dscr
                    ~'form-errors
                    ~'form-buffer
                    ~'form-dirty?
@@ -34,7 +41,7 @@
                    ~'sync-success?
                    ~'sync-fail?]
             :as ~'form-subs}
-           (form-subs ~path)]
+           ~(form-subs-form path body)]
        (let [{:keys [~'on-submit
                      ~'on-submit-handler
                      ~'input-opts
