@@ -303,6 +303,12 @@
 ;;~~~~~~~~~~~~~~~~~~
 ;; interface fns
 ;;~~~~~~~~~~~~~~~~~~
+(defn submit-when-ready
+  [on-submit-handler form-dscr]
+  (fn [e]
+    (if-not (:prevent-submit? @form-dscr)
+      (on-submit-handler e)
+      (.preventDefault e))))
 
 (defn all-input-opts
   [partial-form-path formwide-input-opts input-type attr-path & [opts]]
@@ -338,7 +344,10 @@
 
 (defn on-submit-handler
   [partial-form-path & [submit-opts]]
-  (u/prevent-default #(rf/dispatch [::stff/submit-form partial-form-path submit-opts])))
+  (u/prevent-default
+   (fn [_]
+     (when-not (:prevent-submit? submit-opts)
+       (rf/dispatch [::stff/submit-form partial-form-path submit-opts])))))
 
 (defn on-submit
   [partial-form-path & [submit-opts]]
