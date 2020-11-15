@@ -134,6 +134,14 @@
   [rf/trim-v]
   input-event)
 
+(defn form-input-event
+  [db [{:keys [partial-form-path event-type]}]]
+  (update-in db (p/full-path :form partial-form-path :input-events ::form) (fnil conj #{}) event-type))
+
+(sth/rr rf/reg-event-db ::form-input-event
+  [rf/trim-v]
+  form-input-event)
+
 ;;------
 ;; Building and submitting forms
 ;;------
