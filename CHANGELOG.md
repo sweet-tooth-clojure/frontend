@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.14.0] in progress
+
+### Added
+
+- More sync interceptors:
+  - sync-form-path, use form buffer data for params and route params
+  - sync-data-path, performs get-in on db and merged in to params and route-params
+
+### Changed
+
+- New, simpler validation system. Form flow is now only responsible for
+  recording input events; it's not responsible for handling the logic of
+  validating and placing errors in the `:errors` key. Forms no longer take a
+  `:validate` key. Instead, they take a `:dscr-sub` key which should be a
+  subscription. The subscription should be multi-arity; when it receivs a form
+  path, it should describe the form as a whole. When it receives form path and
+  attr-path, it should describe the attr.
+  
+  The notion of "description" is a better separation of concerns: the
+  subscription is a view of the form, and it can be any function. It's more
+  flexible than just validation, because sometimes you want to describe the form
+  or attrs beyond just "has error". Sometimes it's "is valid", sometimes it's
+  "upload complete", sometimes it's "username available". 
+  
+  The form `field` component helper has been updated to display descriptions.
+  
+  A new namespace, `sweet-tooth.frontend.form.describe`, was added with a
+  default description sub, `::stored-errors`, which simply return any errors
+  stored in a form. It also includes `reg-describe-validation-sub`, which
+  creates a subscription that's meant to capture a common pattern of only
+  showing errors when a user attempts to submit a form. In the future, this ns
+  will include additional helpers, e.g. one that will display error messages for
+  an input when it receivs a blur.
+
 ## [0.13.3] 2020-11-08
 
 ### Added

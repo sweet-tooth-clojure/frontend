@@ -121,8 +121,8 @@
 ;; Interacting with forms
 ;;------
 
-;; Meant to handle all input events: focus, blur, change, etc
 (defn input-event
+  "Meant to handle all input events: focus, blur, change, etc"
   [db [{:keys [partial-form-path attr-path val event-type] :as opts}]]
   (update-in db (p/full-path :form partial-form-path)
              (fn [form]
@@ -135,12 +135,22 @@
   input-event)
 
 (defn form-input-event
+  "conj an event-type onto the form's `:input-events`"
   [db [{:keys [partial-form-path event-type]}]]
   (update-in db (p/full-path :form partial-form-path :input-events ::form) (fnil conj #{}) event-type))
 
 (sth/rr rf/reg-event-db ::form-input-event
   [rf/trim-v]
   form-input-event)
+
+(defn attr-input-event
+  "conj an event-type onto the attr's `:input-events`"
+  [db [{:keys [partial-form-path attr-path event-type]}]]
+  (update-in db (p/full-path :form partial-form-path :input-events attr-path) (fnil conj #{}) event-type))
+
+(sth/rr rf/reg-event-db ::attr-input-event
+  [rf/trim-v]
+  attr-input-event)
 
 ;;------
 ;; Building and submitting forms

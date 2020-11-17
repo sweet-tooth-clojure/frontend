@@ -36,6 +36,6 @@
       (let [errors (errors-map buffer rules)]
         (if attr-path
           (when (received-events? (::stff/form input-events)
-                                  (or show-errors-events #{"submit" "attempt-submit"}))
+                                  (or show-errors-events #{:submit :attempt-submit}))
             (get-in errors (u/flatv attr-path)))
           {:prevent-submit? (seq errors)})))))

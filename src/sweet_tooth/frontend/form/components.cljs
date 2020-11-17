@@ -10,11 +10,23 @@
             [taoensso.timbre :as log])
   (:require-macros [sweet-tooth.frontend.form.components]))
 
+(defn dispatch-form-input-event
+  [form-path event-type]
+  (rf/dispatch [::stff/form-input-event {:partial-form-path form-path
+                                         :event-type        event-type}]))
+
+(defn dispatch-attr-input-event
+  "an event without an associated value"
+  [form-path attr-path event-type]
+  (rf/dispatch [::stff/attr-input-event {:partial-form-path form-path
+                                         :attr-path         attr-path
+                                         :event-type        event-type}]))
+
 (defn dispatch-input-event
   [event {:keys [format-write] :as input-opts} & [update-val?]]
   (rf/dispatch-sync [::stff/input-event (cond-> (select-keys input-opts [:partial-form-path
                                                                          :attr-path])
-                                          true        (merge {:event-type (u/go-get event ["type"])})
+                                          true        (merge {:event-type (keyword (u/go-get event ["type"]))})
                                           update-val? (merge {:val (format-write (u/tv event))}))]))
 
 (defn dispatch-new-val
