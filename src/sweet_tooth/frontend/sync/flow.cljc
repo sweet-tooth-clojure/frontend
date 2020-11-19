@@ -255,45 +255,43 @@
                ctx))
    :after  identity})
 
+
+;;---
+;; populate sync with path data
+
 (defn merge-ent-params
   [opts ent]
   (merge {:route-params ent, :params ent}
          opts))
 
+(defn get-in-path
+  [ctx path-kw path-fn]
+  (if-let [path (get-in (ctx-req ctx) [2 path-kw])]
+    (if-let [ent (path-fn path)]
+      (update-ctx-req-opts ctx #(merge-ent-params % ent))
+      (log/warn ::sync-entity-ent-not-found {path-kw path}))
+    ctx))
+
 ;; Use the entity at given path to populate route-params and params of request
 (def sync-entity-path
   {:id     ::sync-entity-path
    :before (fn [ctx]
-             (if-let [entity-path (get-in (ctx-req ctx) [2 :entity-path])]
-               (if-let [ent (paths/get-path (ctx-db ctx) :entity entity-path)]
-                 (update-ctx-req-opts ctx #(merge-ent-params % ent))
-                 (log/warn ::sync-entity-ent-not-found
-                           {:entity-path entity-path}))
-               ctx))
+             (get-in-path ctx :entity-path #(paths/get-path (ctx-db ctx) :entity %)))
    :after  identity})
 
 ;; Use the form buffer at given path to populate route-params and params of request
 (def sync-form-path
   {:id     ::sync-form-path
    :before (fn [ctx]
-             (if-let [form-path (get-in (ctx-req ctx) [2 :form-path])]
-               (if-let [ent (paths/get-path (ctx-db ctx) :form form-path :buffer)]
-                 (update-ctx-req-opts ctx #(merge-ent-params % ent))
-                 (log/warn ::sync-form-buffer-not-found
-                           {:form-path form-path}))
-               ctx))
+             (get-in-path ctx :form-path #(paths/get-path (ctx-db ctx) :form % :buffer)))
    :after  identity})
 
 (def sync-data-path
   {:id     ::sync-data-path
    :before (fn [ctx]
-             (if-let [data-path (get-in (ctx-req ctx) [2 :data-path])]
-               (if-let [ent (get-in (ctx-db ctx) data-path)]
-                 (update-ctx-req-opts ctx #(merge-ent-params % ent))
-                 (log/warn ::sync-form-buffer-not-found
-                           {:data-path data-path}))
-               ctx))
+             (get-in-path ctx :data-path #(get-in (ctx-db ctx) %)))
    :after  identity})
+;; end populate sync with path data
 
 (def sync-methods
   {"get"    :get
