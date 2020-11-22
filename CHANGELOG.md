@@ -34,6 +34,11 @@
   will include additional helpers, e.g. one that will display error messages for
   an input when it receivs a blur.
 
+### Fixed
+
+- `:select` input component has a default `:format-read` that relaces `nil` with
+  `""`
+
 ## [0.13.3] 2020-11-08
 
 ### Added

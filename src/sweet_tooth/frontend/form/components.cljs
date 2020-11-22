@@ -124,7 +124,9 @@
 
 (defmethod input-type-opts :select
   [opts]
-  (-> (input-type-opts-default opts)
+  (-> opts
+      (update :format-read (fn [f] (or f #(or % ""))))
+      (input-type-opts-default)
       (dissoc :type)))
 
 (defmethod input-type-opts :radio
@@ -257,11 +259,13 @@
            before-input after-input after-dscr]
     :as opts}]
   [:div.field {:class (field-classes opts)}
-   (when-not no-label
-     [:label {:for (label-for form-id attr-path) :class "label"}
-      (or label (label-text attr-path))
-      (when required [:span {:class "required"} "*"])])
-   (when tip [:div.tip tip])
+   (when (or tip (not no-label))
+     [:div.field-label
+      (when-not no-label
+        [:label {:for (label-for form-id attr-path) :class "label"}
+         (or label (label-text attr-path))
+         (when required [:span {:class "required"} "*"])])
+      (when tip [:div.tip tip])])
    [:div
     before-input
     [input (dissoc-field-opts opts)]
