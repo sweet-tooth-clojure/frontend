@@ -246,6 +246,7 @@
    :after  identity})
 
 (def sync-route-params
+  "Merges frontend route params into API request's route-params"
   {:id     ::sync-route-params
    :before (fn [ctx]
              (if (sync-rule? ctx :merge-route-params)
