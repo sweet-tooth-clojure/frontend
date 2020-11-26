@@ -307,33 +307,6 @@
     (stsf/sync-state db (conj path-prefix (-> db nav :route :params)))))
 
 ;; ------
-;; sync dispatching with routes
-;; ------
-
-;; TODO remove these
-(defn- method-sync-fx
-  [method]
-  (fn [{:keys [db] :as cofx} [route-name opts]]
-    (stsf/sync-event-fx cofx [method route-name (merge {:route-params (get-in (nav db) [:route :params])}
-                                                       opts)])))
-
-(sth/rr rf/reg-event-fx ::get-with-route-params
-  [rf/trim-v]
-  (method-sync-fx :get))
-
-(sth/rr rf/reg-event-fx ::put-with-route-params
-  [rf/trim-v]
-  (method-sync-fx :put))
-
-(sth/rr rf/reg-event-fx ::post-with-route-params
-  [rf/trim-v]
-  (method-sync-fx :post))
-
-(sth/rr rf/reg-event-fx ::delete-with-route-params
-  [rf/trim-v]
-  (method-sync-fx :delete))
-
-;; ------
 ;; form interactions
 ;; ------
 

@@ -34,10 +34,19 @@
   will include additional helpers, e.g. one that will display error messages for
   an input when it receivs a blur.
 
+### Removed
+
+- removed `stnf/*-with-route-params`, which was used to add frontend route
+  params to a sync request. that functionality is now possible with `stsf/get
+  {:rules #{merge-route-params}}`. The removed handlers weren't compatible with
+  the rest of the sync interceptors, like `:once`
+
 ### Fixed
 
 - `:select` input component has a default `:format-read` that relaces `nil` with
   `""`
+
+
 
 ## [0.13.3] 2020-11-08
 
