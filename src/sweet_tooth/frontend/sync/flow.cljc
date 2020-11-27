@@ -182,6 +182,10 @@
                             opts
                             default-on))))
 
+(defn unsugar-handlers
+  [req]
+  (update req 2 stcu/move-keys #{:fail :success} [:on]))
+
 
 (defn adapt-req
   "Makes sure a path is findable from req and adds it"
@@ -336,6 +340,7 @@
   (let [{:keys [router sync-dispatch-fn]} (paths/get-path db :system ::sync)
         adapted-req                       (-> req
                                               (add-default-sync-response-handlers)
+                                              (unsugar-handlers)
                                               (reconcile-default-handlers)
                                               (adapt-req router))]
     (if adapted-req
@@ -438,12 +443,6 @@
   [req]
   (fn [_cofx [call-opts params]]
     {:dispatch (sync-req->sync-event req call-opts params)}))
-
-(defn sync-once-fx-handler
-  "Returns an effect handler that dispatches a sync event"
-  [[method endpoint opts]]
-  (fn [_cofx [call-opts params]]
-    {:dispatch [::sync-once [method endpoint (build-opts opts call-opts params)]]}))
 
 (defmethod ig/init-key ::sync
   [_ opts]
