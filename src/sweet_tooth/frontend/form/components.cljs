@@ -358,16 +358,29 @@
              input-type
              (all-input-opts-fn input-type attr-path input-opts))]))
 
-(defn on-submit-handler
+(defn sugar-submit-opts
+  "support a couple submit shorthands"
+  [submit-opts]
+  (cond (vector? submit-opts)
+        {:sync {:on {:success submit-opts}}}
+
+        (or (contains? submit-opts :success)
+            (contains? submit-opts :fail))
+        {:sync {:on submit-opts}}
+
+        :else submit-opts))
+
+(defn submit-fn
   [partial-form-path & [submit-opts]]
-  (u/prevent-default
-   (fn [_]
-     (when-not (:prevent-submit? submit-opts)
-       (rf/dispatch [::stff/submit-form partial-form-path submit-opts])))))
+  (let [submit-opts (sugar-submit-opts submit-opts)]
+    (u/prevent-default
+     (fn [_]
+       (when-not (:prevent-submit? submit-opts)
+         (rf/dispatch [::stff/submit-form partial-form-path submit-opts]))))))
 
 (defn on-submit
   [partial-form-path & [submit-opts]]
-  {:on-submit (on-submit-handler partial-form-path submit-opts)})
+  {:on-submit (submit-fn partial-form-path submit-opts)})
 
 (defn form-sync-subs
   [partial-form-path]
@@ -392,11 +405,11 @@
 (defn form-components
   [partial-form-path & [formwide-input-opts]]
   (let [input-opts-fn (partial all-input-opts partial-form-path formwide-input-opts)]
-    {:on-submit         (partial on-submit partial-form-path)
-     :on-submit-handler (partial on-submit-handler partial-form-path)
-     :input-opts        input-opts-fn
-     :input             (input-component input-opts-fn)
-     :field             (field-component input-opts-fn)}))
+    {:on-submit  (partial on-submit partial-form-path)
+     :submit-fn  (partial submit-fn partial-form-path)
+     :input-opts input-opts-fn
+     :input      (input-component input-opts-fn)
+     :field      (field-component input-opts-fn)}))
 
 (defn form
   "Returns an input builder function and subscriptions to all the form's keys"

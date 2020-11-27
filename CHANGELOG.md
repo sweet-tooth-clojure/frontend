@@ -33,6 +33,8 @@
   showing errors when a user attempts to submit a form. In the future, this ns
   will include additional helpers, e.g. one that will display error messages for
   an input when it receivs a blur.
+- renamed on-submit-handler to submit-fn for brevity, plus updated submit-fn to
+  allow for a couple sugared inputs
 
 ### Removed
 

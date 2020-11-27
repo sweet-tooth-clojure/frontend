@@ -18,7 +18,7 @@
                 sync-fail?
 
                 on-submit
-                on-submit-handler
+                submit-fn
                 input-opts
                 input
                 field

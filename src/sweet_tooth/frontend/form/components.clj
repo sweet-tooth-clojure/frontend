@@ -43,7 +43,7 @@
             :as ~'form-subs}
            ~(form-subs-form path body)]
        (let [{:keys [~'on-submit
-                     ~'on-submit-handler
+                     ~'submit-fn
                      ~'input-opts
                      ~'input
                      ~'field]
