@@ -39,3 +39,17 @@
                                   (or show-errors-events #{:submit :attempt-submit}))
             (get-in errors (u/flatv attr-path)))
           {:prevent-submit? (seq errors)})))))
+
+(defn reg-combined-validation-subs
+  "Given a seq of names of subs created with `reg-describe-validation-sub`,
+  create a sub that deep merges all values"
+  [sub-name validation-sub-names]
+  (rf/reg-sub sub-name
+    (fn [[_ partial-form-path attr-path]]
+      (reduce (fn [signals sub]
+                (conj signals (rf/subscribe (cond-> [sub partial-form-path]
+                                              attr-path (conj attr-path)))))
+              []
+              validation-sub-names))
+    (fn [signals]
+      (apply medley/deep-merge signals))))
