@@ -361,14 +361,10 @@
 (defn sugar-submit-opts
   "support a couple submit shorthands"
   [submit-opts]
-  (cond (vector? submit-opts)
+  (-> (if (vector? submit-opts)
         {:sync {:on {:success submit-opts}}}
-
-        (or (contains? submit-opts :success)
-            (contains? submit-opts :fail))
-        {:sync {:on submit-opts}}
-
-        :else submit-opts))
+        submit-opts)
+      (u/move-keys #{:success :fail} [:sync :on])))
 
 (defn submit-fn
   [partial-form-path & [submit-opts]]

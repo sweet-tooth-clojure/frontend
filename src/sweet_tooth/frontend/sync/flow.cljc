@@ -420,7 +420,8 @@
 (defn build-opts
   [opts call-opts params]
   (let [{:keys [route-params params] :as new-opts} (-> (meta-merge opts call-opts)
-                                                       (update :params meta-merge params))]
+                                                       (update :params meta-merge params)
+                                                       (stcu/move-keys #{:success :fail} [:on]))]
     (cond-> new-opts
       (not route-params) (assoc :route-params params))))
 

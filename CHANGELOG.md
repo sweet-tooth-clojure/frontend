@@ -5,8 +5,10 @@
 ### Added
 
 - More sync interceptors:
-  - sync-form-path, use form buffer data for params and route params
-  - sync-data-path, performs get-in on db and merged in to params and route-params
+  - `sync-form-path`, use form buffer data for params and route params
+  - `sync-data-path`, performs get-in on db and merged in to params and
+    route-params
+- `stcu/move-keys` for smuggling top-level keys into a nested map
 
 ### Changed
 

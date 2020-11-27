@@ -188,3 +188,15 @@
                             x))
                         diff)
          (every? nil?))))>
+
+(defn move-keys
+  "if keys are present at top level, place them in a nested map"
+  [m ks path]
+  (reduce (fn [m k]
+            (if (contains? m k)
+              (-> m
+                  (assoc-in (conj path k) (get m k))
+                  (dissoc k))
+              m))
+          m
+          ks))
