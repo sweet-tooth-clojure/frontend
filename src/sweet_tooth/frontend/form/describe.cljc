@@ -33,16 +33,21 @@
     (fn [[_ partial-form-path]]
       (rf/subscribe [::stff/form partial-form-path]))
     (fn [{:keys [buffer input-events]} [_ _ attr-path]]
-      (let [errors (errors-map buffer rules)]
+      (let [errors            (errors-map buffer rules)
+            submit-attempted? (received-events? (::stff/form input-events)
+                                                (or show-errors-events #{:submit :attempt-submit}))]
         (if attr-path
-          (when (received-events? (::stff/form input-events)
-                                  (or show-errors-events #{:submit :attempt-submit}))
+          ;; error messages for a specific attributes
+          (when submit-attempted?
             (get-in errors (u/flatv attr-path)))
-          {:prevent-submit? (seq errors)})))))
+          ;; validation description for form as a whole
+          (let [errors-seq (seq errors)]
+            {:prevent-submit?   errors-seq
+             :submit-prevented? (and errors-seq submit-attempted?)}))))))
 
 (defn reg-combined-validation-subs
   "Given a seq of names of subs created with `reg-describe-validation-sub`,
-  create a sub that deep merges all values"
+  create a sub that deep merges all values."
   [sub-name validation-sub-names]
   (rf/reg-sub sub-name
     (fn [[_ partial-form-path attr-path]]
