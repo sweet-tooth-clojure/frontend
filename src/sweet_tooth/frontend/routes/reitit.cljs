@@ -10,7 +10,7 @@
 (defn on-no-path-default
   [name match route-params]
   (let [required (get match :required)]
-    (log/warn "reitit could not generate path"
+    (log/warn "reitit could not generate path. route might not exist, or might not have required params"
               {:route-name   name
                :route-params (select-keys route-params required)
                :required     required

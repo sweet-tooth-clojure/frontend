@@ -2,6 +2,7 @@
   "Takes sync request and dispatch AJAX requests"
   (:require [taoensso.timbre :as timbre]
             [ajax.core :refer [GET HEAD POST PUT DELETE OPTIONS TRACE PATCH PURGE]]
+            [ajax.transit :as at]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [integrant.core :as ig]
             [clojure.set :as set]
@@ -18,7 +19,13 @@
    :options OPTIONS
    :trace   TRACE
    :patch   PATCH
-   :purce   PURGE})
+   :purge   PURGE
+   :head    HEAD})
+
+(def segments-response-format
+  {:read (at/transit-read-fn {})
+   :description "Segments over Transit"
+   :content-type ["application/segments+json"]})
 
 (def fails
   {400 ::anom/incorrect
@@ -63,8 +70,8 @@
 
       ((get request-methods method)
        uri
-       (-> global-opts
-           (merge opts)
+       (-> {:response-format segments-response-format}
+           (merge global-opts opts)
            (assoc :handler       (fn [resp]
                                    ((stsf/sync-response-handler req)
                                     {:status        :success

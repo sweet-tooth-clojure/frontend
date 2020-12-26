@@ -67,6 +67,9 @@
 - `::stsf/remove-reqs` handler that calls above
 - `::stsf/remove-reqs-by-route-and-method` creates filters for above to remove
   reqs that match sets of methods and route names
+- added `stsf/sync-req->sync-event` to avoid awkward composition of generating a
+  function and immediately applying it, which was necessary with `stsf/sync-fx`
+- added `stsf/sync-req->dispatch`
 
 ### Changed
 
@@ -80,13 +83,15 @@
   at path and use it for `:route-params` and `:params` of a request.
 - Made "reitit could not generate path" warning less noisy
 - allow `nil` sync responses
-
+- renamed `stsf/sync-fx` to `stsf/sync-fx-handler`
+- renamed `stsf/sync-once-fx` to `stsf/sync-once-fx-handler`
 
 ## [0.13.2] 2020-09-06
 
 ### Fixed
 
 - Fixed `:$ctx` reference in sync flow success
+- checkbox input uses `:checked` instead of `:default-checked` so its controlled
 
 
 ## [0.13.1] 2020-07-03
