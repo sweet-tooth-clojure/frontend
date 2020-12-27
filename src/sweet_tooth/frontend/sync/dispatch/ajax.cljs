@@ -25,7 +25,7 @@
 (def segments-response-format
   {:read (at/transit-read-fn {})
    :description "Segments over Transit"
-   :content-type ["application/segments+json"]})
+   :content-type ["application/st-segments+json"]})
 
 (def fails
   {400 ::anom/incorrect
