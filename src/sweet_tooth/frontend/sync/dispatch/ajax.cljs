@@ -9,12 +9,9 @@
             [cognitect.anomalies :as anom]))
 
 (def request-methods
-  {:query   GET
-   :get     GET
+  {:get     GET
    :put     PUT
-   :update  PUT
    :post    POST
-   :create  POST
    :delete  DELETE
    :options OPTIONS
    :trace   TRACE

@@ -239,9 +239,9 @@
 
   `form-handle`, the first element in a partial form path, is usually
   the route name. however, say you want to display two
-  `[:todos :create]` forms. You don't want them to store their form
+  `[:todos :post]` forms. You don't want them to store their form
   data in the same place, so for one you use the partial form path
-  `[:todos-a :create]` and for the other you use `[:todos-b :create]`.
+  `[:todos-a :post]` and for the other you use `[:todos-b :post]`.
 
   You would then need to include `:route-name` in the `sync` opts.
 

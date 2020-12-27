@@ -6,8 +6,8 @@
 
 (deftest test-update-in-form
   (testing "applies update on a form attr"
-    (is (= {:form {:create {:todos {:buffer {:todo/title "HI!"}}}}}
-           (sut/update-in-form {:form {:create {:todos {:buffer {:todo/title "hi!"}}}}}
-                               [:create :todos]
+    (is (= {:form {:post {:todos {:buffer {:todo/title "HI!"}}}}}
+           (sut/update-in-form {:form {:post {:todos {:buffer {:todo/title "hi!"}}}}}
+                               [:post :todos]
                                :todo/title
                                str/upper-case)))))

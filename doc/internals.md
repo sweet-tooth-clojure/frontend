@@ -50,7 +50,7 @@ A request is a vector of
 [method resource-name opts]
 ```
 
-* `method` is one of `#{:get :query :put :update :post :create :delete}`
+* `method` is one of `#{:get :put :post :delete}`
 * `resource-name` will correspond to a route
 * `opts` can include
   * `:on-success`

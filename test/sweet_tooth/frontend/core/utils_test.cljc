@@ -27,8 +27,8 @@
          :bar)))
 
 (deftest flatv
-  (is (= (u/flatv :forms [:topic :create])
-         [:forms :topic :create])))
+  (is (= (u/flatv :forms [:topic :post])
+         [:forms :topic :post])))
 
 
 (deftest slugify
