@@ -84,7 +84,7 @@
 
 ;; sync states
 (defn sync-state
-  [db [_ [form-handle method entity]]]
+  [db [_ [method form-handle entity]]]
   (stsf/sync-state db [method form-handle {:route-params entity}]))
 
 (rf/reg-sub ::sync-state sync-state)
@@ -249,7 +249,7 @@
   - `form-spec` is a way to pass on whatevs data to the request
     completion handler.
   - the `:sync` key of form spec can customize the sync request"
-  [[form-handle method route-params :as partial-form-path], data, {:keys [sync] :as form-spec}]
+  [[method form-handle route-params :as partial-form-path], data, {:keys [sync] :as form-spec}]
   (let [route-name (get sync :route-name form-handle)
         method     (get sync :method method)
 
