@@ -1,4 +1,5 @@
 (ns sweet-tooth.frontend.failure.flow
+  "experimental handlers for temporarily showing failures"
   (:require [re-frame.core :as rf]
             [sweet-tooth.frontend.handlers :as sth]
             [sweet-tooth.frontend.paths :as p]))

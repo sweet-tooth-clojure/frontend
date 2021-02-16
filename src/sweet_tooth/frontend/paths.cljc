@@ -13,6 +13,7 @@
          :reqs    :sweet-tooth.frontend.sync.flow/reqs
          :system  :sweet-tooth/system}))
 
+;; TODO delete this?
 (def partial-path (comp vec rest))
 
 (defn prefix

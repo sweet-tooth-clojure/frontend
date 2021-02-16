@@ -7,7 +7,9 @@
   [sync-state-sub loading-component empty-component loaded-component]
   (let [sync-state @(rf/subscribe sync-state-sub)
         nav-state  @(rf/subscribe [::stnf/nav-state])]
-    (cond (or (= :loading nav-state) (= :active sync-state))
+    (cond (or (and (= :loading nav-state)
+                   (not= :success sync-state))
+              (= :active sync-state))
           ^{:key "loading"} loading-component
 
           (not loaded-component)

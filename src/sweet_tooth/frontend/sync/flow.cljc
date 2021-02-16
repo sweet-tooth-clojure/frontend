@@ -20,6 +20,14 @@
             [clojure.spec.alpha :as s]
             [cognitect.anomalies :as anom]))
 
+(doseq [t [::anom/incorrect
+           ::anom/forbidden
+           ::anom/not-found
+           ::anom/unsupported
+           ::anom/fault
+           ::anom/unavailable
+           :fail]]
+  (derive t ::fail))
 
 ;;--------------------
 ;; specs
@@ -50,7 +58,7 @@
 (defn req-path
   "returns a 'normalized' req path for a request.
 
-  normalized in the sense that when it comes to distinguishing requess
+  normalized in the sense that when it comes to distinguishing requests
   in order to track them, some of the variations between requests are
   significant, and some aren't.
 
@@ -61,7 +69,10 @@
   `stfr/req-id` to select a subset of opts to distinguish reqs"
   [[method route opts]]
   (let [path (or (::req-path opts)
-                 [method route (or (::req-id opts) (stfr/req-id route opts))])]
+                 (let [req-id (or (::req-id opts) (stfr/req-id route opts))]
+                   (if (empty? req-id)
+                     [method route]
+                     [method route req-id])))]
     (when (contains? (:debug opts) ::req-path)
       (log/info ::req-path
                 {:opts-req-path (::req-path opts)
@@ -120,7 +131,10 @@
 (rf/reg-sub ::sync-state
   (fn [db [_ req comparison]]
     (let [state (sync-state db req)]
-      (if comparison (= state comparison) state))))
+      (if comparison
+        (or (= state comparison)
+            (isa? state comparison))
+        state))))
 
 ;; Used to find, e.g. all requests like [:get :topic] or [:post :host]
 (rf/reg-sub ::sync-state-q
@@ -347,7 +361,8 @@
       {:db             (track-new-request db adapted-req)
        ::dispatch-sync {:dispatch-fn sync-dispatch-fn
                         :req         adapted-req}}
-      (do (log/warn "sync router could not match req" {:req req})
+      (do (log/warn "sync router could not match req"
+                    {:req (update req 2 select-keys [:params :route-params :query-params :data])})
           {:db db}))))
 
 (s/fdef sync-event-fx

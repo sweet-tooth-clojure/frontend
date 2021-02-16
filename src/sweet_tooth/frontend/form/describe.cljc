@@ -13,7 +13,7 @@
     (if attr-path
       (rf/subscribe [::stff/attr-errors partial-form-path attr-path])
       (rf/subscribe [::stff/errors partial-form-path])))
-  (fn [errors]
+  (fn [errors _]
     {:errors errors}))
 
 (defn errors-map
