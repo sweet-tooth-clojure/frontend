@@ -37,6 +37,9 @@
   an input when it receivs a blur.
 - renamed on-submit-handler to submit-fn for brevity, plus updated submit-fn to
   allow for a couple sugared inputs
+- update signature of route lifecycle guards (`:can-exit?` etc) to `[db
+  existing-route new-route]`
+
 
 ### Removed
 
@@ -49,7 +52,8 @@
 
 - `:select` input component has a default `:format-read` that relaces `nil` with
   `""`
-
+- nav flow lifecycle correctly now only calls `:can-exit?` on existing route and
+  `:can-enter?` on new route
 
 
 ## [0.13.3] 2020-11-08

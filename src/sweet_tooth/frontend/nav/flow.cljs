@@ -95,14 +95,17 @@
 ;; Route change handlers
 ;; ------
 (defn can-change-route?
-  [db scope existing-route-lifecycle new-route-lifecycle]
+  [db scope existing-route new-route]
   ;; are we changing the entire route or just the params?
-  (let [route-change-checks (-> (merge existing-route-lifecycle new-route-lifecycle)
+  (let [route-change-checks (-> (merge (select-keys (:lifecycle existing-route) [:can-change-params? :can-exit?])
+                                       (select-keys (:lifecycle new-route) [:can-enter?]))
                                 (select-keys (case scope
                                                :route  [:can-change-params? :can-exit? :can-enter?]
                                                :params [:can-change-params?])))
         check-failures      (medley/filter-vals (fn [lifecycle-fn]
-                                                  (and lifecycle-fn (not (lifecycle-fn db))))
+                                                  (and lifecycle-fn (not (lifecycle-fn db
+                                                                                       existing-route
+                                                                                       new-route))))
                                                 route-change-checks)]
     (or (empty? check-failures)
         (log/debug ::prevented-route-change {:check-failures (set (keys check-failures))}))))
@@ -120,12 +123,9 @@
                    existing-route   (paths/get-path db :nav :route)
                    scope            (if (= (:route-name new-route) (:route-name existing-route))
                                       :params
-                                      :route)
-
-                   new-route-lifecycle      (:lifecycle new-route)
-                   existing-route-lifecycle (when existing-route (:lifecycle existing-route))]
+                                      :route)]
                (assoc-in ctx [:coeffects ::route-change]
-                         {:can-change-route? (can-change-route? db scope existing-route-lifecycle new-route-lifecycle)
+                         {:can-change-route? (can-change-route? db scope existing-route new-route)
                           :scope             scope
                           :old-route         existing-route
                           :new-route         new-route
