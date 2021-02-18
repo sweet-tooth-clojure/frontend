@@ -93,20 +93,32 @@
           :attr-input-events (rf/subscribe [::stff/attr-input-events partial-form-path attr-path])}
          opts))
 
+(defn default-event-handlers
+  [opts]
+  {:on-change #(dispatch-input-event % opts true)
+   :on-blur   #(dispatch-input-event % opts false)
+   :on-focus  #(dispatch-input-event % opts false)})
+
+(defn merge-event-handlers
+  [opts]
+  (merge-with (fn [framework-handler custom-handler]
+                (fn [e]
+                  (custom-handler e framework-handler opts)))
+              (default-event-handlers opts)
+              opts))
+
 (defn input-type-opts-default
   [{:keys [form-id attr-path attr-buffer input-type]
     :as   opts}]
   (let [{:keys [format-read] :as opts} (merge {:format-read  identity
                                                :format-write identity}
                                               opts)]
-    (merge {:type      (name (or input-type :text))
-            :value     (format-read @attr-buffer)
-            :id        (label-for form-id attr-path)
-            :on-change #(dispatch-input-event % opts true)
-            :on-blur   #(dispatch-input-event % opts false)
-            :on-focus  #(dispatch-input-event % opts false)
-            :class     (str "input " (attr-path-str attr-path))}
-           opts)))
+    (-> {:type      (name (or input-type :text))
+         :value     (format-read @attr-buffer)
+         :id        (label-for form-id attr-path)
+         :class     (str "input " (attr-path-str attr-path))}
+        (merge opts)
+        (merge-event-handlers))))
 
 (defmulti input-type-opts
   "Different input types expect different options. For example, a radio

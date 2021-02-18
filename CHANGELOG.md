@@ -39,6 +39,9 @@
   allow for a couple sugared inputs
 - update signature of route lifecycle guards (`:can-exit?` etc) to `[db
   existing-route new-route]`
+- event handler merging for form components. If you supply a handler that has a
+  framework default, like `:on-changed`, the handler default will be passed in
+  as the second argument and the input's opts as the third
 
 
 ### Removed
