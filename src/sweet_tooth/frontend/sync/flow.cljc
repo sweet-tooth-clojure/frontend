@@ -173,16 +173,17 @@
 ;;-----------------------
 
 (def default-handlers
-  {:default-on {:success           [[::default-sync-success :$ctx]]
-                :fail              [[::default-sync-fail :$ctx]]
-                ::anom/unavailable [[::default-sync-unavailable :$ctx]]}})
+  {:default-on {:success           ^:displace [[::default-sync-success :$ctx]]
+                :fail              ^:displace [[::default-sync-fail :$ctx]]
+                ::anom/unavailable ^:displace [[::default-sync-unavailable :$ctx]]}})
 
 ;;---
 ;; helpers
 
 (defn add-default-sync-response-handlers
   [req]
-  (update req 2 #(meta-merge default-handlers {:$ctx {:req req}} %)))
+  (update req 2 #(meta-merge default-handlers
+                             {:$ctx {:req req}} %)))
 
 (defn reconcile-default-handlers
   "Adds default handlers"
