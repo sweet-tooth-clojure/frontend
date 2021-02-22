@@ -208,9 +208,12 @@
 
 (defn clear-selected-keys
   [db partial-form-path clear]
-  (update-in db (p/full-path :form partial-form-path) select-keys (if (= :all clear)
-                                                                    #{}
-                                                                    (set/difference form-keys (set clear)))))
+  (update-in db
+             (p/full-path :form partial-form-path)
+             select-keys
+             (if (= :all clear)
+               #{}
+               (set/difference form-keys (set clear)))))
 
 (sth/rr rf/reg-event-db ::clear
   [rf/trim-v]

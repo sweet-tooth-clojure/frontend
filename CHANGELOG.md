@@ -9,6 +9,7 @@
   - `sync-data-path`, performs get-in on db and merged in to params and
     route-params
 - `stcu/move-keys` for smuggling top-level keys into a nested map
+- `stnu/route`, `stnu/params`, `stnu/route-name` route helpers
 
 ### Changed
 

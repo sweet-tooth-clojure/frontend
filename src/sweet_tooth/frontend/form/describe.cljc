@@ -1,4 +1,6 @@
 (ns sweet-tooth.frontend.form.describe
+  "Create subscription views for forms using the sweet-tooth.describe library.
+  Very alpha."
   (:require [re-frame.core :as rf]
             [medley.core :as medley]
             [sweet-tooth.describe :as d]
@@ -26,19 +28,25 @@
   [input-events pred-events]
   (seq (set/intersection input-events pred-events)))
 
+(defn show-attr-on-blur
+  [{:keys [input-events]} attr-path]
+  (received-events? (get-in input-events (u/flatv attr-path))
+                    #{:blur}))
+
 (defn reg-describe-validation-sub
   "Create a basic subscription that only shows errors when a submit is attempted"
-  [sub-name rules & [show-errors-events]]
+  [sub-name rules & [{:keys [submit-events show-attr]}]]
   (rf/reg-sub sub-name
     (fn [[_ partial-form-path]]
       (rf/subscribe [::stff/form partial-form-path]))
-    (fn [{:keys [buffer input-events]} [_ _ attr-path]]
+    (fn [{:keys [buffer input-events] :as form} [_ _ attr-path]]
       (let [errors            (errors-map buffer rules)
             submit-attempted? (received-events? (::stff/form input-events)
-                                                (or show-errors-events #{:submit :attempt-submit}))]
+                                                (or submit-events #{:submit :attempt-submit}))
+            show-attr         (or show-attr (constantly submit-attempted?))]
         (if attr-path
-          ;; error messages for a specific attributes
-          (when submit-attempted?
+          ;; error messages for a specific attribute
+          (when (show-attr form attr-path)
             (get-in errors (u/flatv attr-path)))
           ;; validation description for form as a whole
           (let [errors-seq (seq errors)]

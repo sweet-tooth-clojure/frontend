@@ -38,3 +38,15 @@
   [db form-path entity-key param-key & [form-opts]]
   (let [ent (routed-entity db entity-key param-key)]
     (stff/initialize-form db [(conj form-path (select-keys ent [param-key])) (merge {:buffer ent} form-opts)])))
+
+(defn route
+  [db]
+  (paths/get-path db :nav :route))
+
+(defn params
+  [db]
+  (-> db route :params))
+
+(defn route-name
+  [db]
+  (-> db route :route-name))
