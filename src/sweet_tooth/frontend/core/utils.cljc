@@ -200,3 +200,7 @@
               m))
           m
           ks))
+
+(defn key-by
+  [k xs]
+  (into {} (map (juxt k identity) xs)))

@@ -40,7 +40,10 @@
 
 (defn attr-path-str
   [attr-path]
-  (name (if (vector? attr-path) (last attr-path) attr-path)))
+  (some-> (if (vector? attr-path)
+            (last attr-path)
+            attr-path)
+          name))
 
 (defn label-text [attr]
   (u/kw-str (attr-path-str attr)))

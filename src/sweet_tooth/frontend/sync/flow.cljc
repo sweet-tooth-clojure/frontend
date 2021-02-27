@@ -85,8 +85,8 @@
   count"
   [db req]
   (-> db
-      (assoc-in [::reqs (req-path req)] {:state        :active
-                                         :active-route (paths/get-path db :nav :route)})
+      (update-in [::reqs (req-path req)] merge {:state        :active
+                                                :active-route (paths/get-path db :nav :route)})
       (update ::active-request-count (fnil inc 0))))
 
 (defn remove-req
@@ -127,6 +127,10 @@
 (defn sync-state
   [db req]
   (get-in db [::reqs (req-path req) :state]))
+
+(rf/reg-sub ::req
+  (fn [db [_ req]]
+    (get-in db [::reqs (req-path req)])))
 
 (rf/reg-sub ::sync-state
   (fn [db [_ req comparison]]
