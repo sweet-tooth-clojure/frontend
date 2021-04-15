@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.14.0] in progress
+## [0.14.0] 2021-04-15
 
 ### Added
 
