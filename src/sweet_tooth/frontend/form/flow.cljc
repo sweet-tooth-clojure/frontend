@@ -124,10 +124,11 @@
 (defn input-event
   "Meant to handle all input events: focus, blur, change, etc"
   [db [{:keys [partial-form-path attr-path val event-type] :as opts}]]
-  (update-in db (p/full-path :form partial-form-path)
+  (update-in db
+             (p/full-path :form partial-form-path)
              (fn [form]
                (cond-> form
-                 true                  (update-in (u/flatv :input-events attr-path) (fnil conj #{}) event-type)
+                 event-type            (update-in (u/flatv :input-events attr-path) (fnil conj #{}) event-type)
                  (contains? opts :val) (assoc-in (u/flatv :buffer attr-path) val)))))
 
 (sth/rr rf/reg-event-db ::input-event
@@ -137,7 +138,10 @@
 (defn form-input-event
   "conj an event-type onto the form's `:input-events`"
   [db [{:keys [partial-form-path event-type]}]]
-  (update-in db (p/full-path :form partial-form-path :input-events ::form) (fnil conj #{}) event-type))
+  (update-in db
+             (p/full-path :form partial-form-path :input-events ::form)
+             (fnil conj #{})
+             event-type))
 
 (sth/rr rf/reg-event-db ::form-input-event
   [rf/trim-v]
@@ -146,7 +150,10 @@
 (defn attr-input-event
   "conj an event-type onto the attr's `:input-events`"
   [db [{:keys [partial-form-path attr-path event-type]}]]
-  (update-in db (p/full-path :form partial-form-path :input-events attr-path) (fnil conj #{}) event-type))
+  (update-in db
+             (p/full-path :form partial-form-path :input-events attr-path)
+             (fnil conj #{})
+             event-type))
 
 (sth/rr rf/reg-event-db ::attr-input-event
   [rf/trim-v]

@@ -58,6 +58,7 @@
   `""`
 - nav flow lifecycle correctly now only calls `:can-exit?` on existing route and
   `:can-enter?` on new route
+- fixed bug with recording input events for nested attr paths
 
 
 ## [0.13.3] 2020-11-08
