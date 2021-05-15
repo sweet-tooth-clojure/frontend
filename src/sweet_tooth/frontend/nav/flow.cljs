@@ -16,7 +16,8 @@
             [sweet-tooth.frontend.nav.utils :as stnu]
             [sweet-tooth.frontend.sync.flow :as stsf]
             [sweet-tooth.frontend.routes :as stfr]
-            [sweet-tooth.frontend.routes.protocol :as strp]))
+            [sweet-tooth.frontend.routes.protocol :as strp])
+  (:import [goog.history Html5History]))
 
 (defn- handle-unloading
   []
@@ -52,7 +53,7 @@
   Undoes all of the stateful changes, including unlistening to events,
   that are setup when init'd"
   [handler]
-  (.dispose (:history handler))
+  (.dispose ^Html5History (:history handler))
   (doseq [key (vals (select-keys (:listeners handler) [:document-click :navigate]))]
     (events/unlistenByKey key))
   (when-let [before-unload (get-in handler [:listeners :before-unload])]

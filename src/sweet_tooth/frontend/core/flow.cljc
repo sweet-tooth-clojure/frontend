@@ -114,7 +114,7 @@
     (doseq [{:keys [ms id dispatch] :as effect} (remove nil? value)]
       (if (or (empty? dispatch) (not (number? ms)))
         (rfl/console :error "re-frame: ignoring bad :sweet-tooth.frontend.core.flow/debounce-dispatch value:" effect)
-        (if-let [debouncer (get @debouncers id)]
+        (if-let [debouncer ^Debouncer (get @debouncers id)]
           (.fire debouncer dispatch)
           (swap! debouncers assoc id (new-debouncer ms dispatch)))))))
 
