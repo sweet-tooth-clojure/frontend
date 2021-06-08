@@ -1,9 +1,9 @@
-(defproject sweet-tooth/frontend "0.14.0"
+(defproject sweet-tooth/frontend "0.14.1-SNAPSHOT"
   :description "Some opinions on top of re-frame"
-  :url         "https://github.com/sweet-tooth-clojure/frontend"
-  :scm         {:url "https://github.com/sweet-tooth-clojure/frontend"}
-  :license     {:name "MIT"
-                :url  "https://opensource.org/licenses/MIT"}
+  :url "https://github.com/sweet-tooth-clojure/frontend"
+  :scm {:url "https://github.com/sweet-tooth-clojure/frontend"}
+  :license {:name "MIT"
+            :url  "https://opensource.org/licenses/MIT"}
 
   :plugins [[lein-tools-deps "0.4.5"]
             [lein-doo "0.1.10"]]
@@ -16,10 +16,10 @@
 
   :cljsbuild {:builds [{:id           "test"
                         :source-paths ["src" "test"]
-                        :compiler     {:output-to     "target/testable.js"
-                                       :main          sweet-tooth.cljs-test-runner
+                        :compiler     {:output-to "target/testable.js"
+                                       :main sweet-tooth.cljs-test-runner
                                        :optimizations :none
-                                       :target        :nodejs}}]}
+                                       :target :nodejs}}]}
 
   :doo {:build "test"
         :alias {:default [:node]}})
