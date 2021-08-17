@@ -3,10 +3,11 @@
   Accountant is licensed under the EPL v1.0."
   (:require [goog.events :as events]
             [goog.events.EventType]
-            [goog.history.EventType :as EventType])
+            [goog.history.EventType :as EventType]
+            [sweet-tooth.frontend.core.utils :as stcu])
   (:import goog.history.Event
            goog.history.Html5History
-           goog.Uri))
+           [goog Uri]))
 
 
 (def app-updated-token? (atom false))
@@ -36,7 +37,7 @@
     EventType/NAVIGATE
     (fn [e]
       (if-not @app-updated-token?
-        (let [token (.-token e)]
+        (let [token (stcu/go-get e ["token"])]
           (nav-handler token))
         (reset! app-updated-token? false)))))
 
@@ -61,12 +62,12 @@
       (when-let [parent (.-parentNode e)]
         (recur parent)))))
 
-(defn- uri->query [uri]
+(defn- uri->query [^Uri uri]
   (let [query (.getQuery uri)]
     (when-not (empty? query)
       (str "?" query))))
 
-(defn- uri->fragment [uri]
+(defn- uri->fragment [^Uri uri]
   (let [fragment (.getFragment uri)]
     (when-not (empty? fragment)
       (str "#" fragment))))
@@ -88,7 +89,7 @@
             href-node (find-href-node target)
             href (when href-node (.-href href-node))
             link-target (when href-node (.-target href-node))
-            uri (.parse Uri href)
+            uri ^Uri (.parse Uri href)
             path (.getPath uri)
             query (uri->query uri)
             fragment (uri->fragment uri)
