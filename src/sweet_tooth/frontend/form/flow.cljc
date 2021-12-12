@@ -263,7 +263,8 @@
   (let [route-name (get sync :route-name form-handle)
         method     (get sync :method method)
 
-        sync-opts (meta-merge {:default-on   {:success [[::submit-form-success :$ctx]]
+        sync-opts (meta-merge {:default-on   {:success [[::submit-form-success :$ctx]
+                                                        [::stsf/default-sync-success :$ctx]]
                                               :fail    [[::submit-form-fail :$ctx]]}
                                :$ctx         {:full-form-path    (p/full-path :form partial-form-path)
                                               :partial-form-path partial-form-path

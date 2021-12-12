@@ -51,7 +51,7 @@
           ;; validation description for form as a whole
           (let [errors-seq (seq errors)]
             {:prevent-submit?   errors-seq
-             :submit-prevented? (and errors-seq submit-attempted?)}))))))
+             :submit-prevented? (and submit-attempted? errors-seq)}))))))
 
 (defn reg-combined-validation-subs
   "Given a seq of names of subs created with `reg-describe-validation-sub`,
