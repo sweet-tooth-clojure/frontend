@@ -1,18 +1,22 @@
 (ns sweet-tooth.frontend.core.flow
-  (:require [re-frame.core  :as rf]
-            [re-frame.db :as rfdb]
-            [re-frame.loggers :as rfl]
-            [sweet-tooth.frontend.core.utils :as u]
-            [sweet-tooth.frontend.paths :as paths]
-            [sweet-tooth.frontend.handlers :as sth]
-            [integrant.core :as ig])
-  (:import #?(:cljs [goog.async Debouncer])))
+  (:require
+   [re-frame.core :as rf]
+   [re-frame.db :as rfdb]
+   [re-frame.loggers :as rfl]
+   [sweet-tooth.frontend.core.utils :as u]
+   [sweet-tooth.frontend.paths :as paths]
+   [sweet-tooth.frontend.handlers :as sth]
+   [integrant.core :as ig])
+  (:import
+   #?(:cljs [goog.async Debouncer])))
 
-(sth/rr rf/reg-event-db ::assoc-in
+(sth/rr rf/reg-event-db
+  ::assoc-in
   [rf/trim-v]
   (fn [db [path val]] (assoc-in db path val)))
 
-(sth/rr rf/reg-event-db ::merge
+(sth/rr rf/reg-event-db
+  ::merge
   [rf/trim-v]
   (fn [db [m & [path]]]
     (if path
@@ -29,7 +33,8 @@
   [db [m]]
   (u/deep-merge db m))
 
-(sth/rr rf/reg-event-db ::deep-merge
+(sth/rr rf/reg-event-db
+  ::deep-merge
   [rf/trim-v]
   deep-merge)
 
@@ -37,14 +42,17 @@
   "whereas deep merge will merge new entities with old, this replaces
   old entities with new."
   [db patches]
-  (->> patches
-       (filter #(= :entity (first %)))
-       (map second)
-       (reduce (fn [db patch]
-                 (update-in db (paths/full-path :entity) (partial merge-with merge) patch))
-               db)))
+  (->>
+   patches
+   (filter #(= :entity (first %)))
+   (map second)
+   (reduce
+    (fn [db patch]
+      (update-in db (paths/full-path :entity) (partial merge-with merge) patch))
+    db)))
 
-(sth/rr rf/reg-event-db ::replace-entities
+(sth/rr rf/reg-event-db
+  ::replace-entities
   [rf/trim-v]
   (fn [db [patches]]
     (replace-entities db patches)))
@@ -60,11 +68,15 @@
     (reduce (fn [db [patch-key patch-val]]
               (if-let [updater (get updaters patch-key (get updaters :default))]
                 (updater db patch-val)
-                (throw (ex-info "no updater for patch" {:patch-key patch-key :patch-val patch-val :db-patches db-patches}))))
-            db
-            db-patches)))
+                (throw (ex-info "no updater for patch"
+                                {:patch-key  patch-key
+                                 :patch-val  patch-val
+                                 :db-patches db-patches}))))
+     db
+     db-patches)))
 
-(sth/rr rf/reg-event-db ::update-db
+(sth/rr rf/reg-event-db
+  ::update-db
   [rf/trim-v]
   (fn [db [db-patches]]
     (update-db db db-patches)))
@@ -74,27 +86,32 @@
   (let [entity-prefix (paths/prefix :entity)]
     (update db entity-prefix u/deep-merge db-patch)))
 
-(sth/rr rf/reg-event-db ::toggle
+(sth/rr rf/reg-event-db
+  ::toggle
   [rf/trim-v]
   (fn [db [path]] (update-in db path not)))
 
-(sth/rr rf/reg-event-db ::toggle-val
+(sth/rr rf/reg-event-db
+  ::toggle-val
   [rf/trim-v]
   (fn [db [path val]]
     (update-in db path #(if % nil val))))
 
 ;; Toggles set inclusion/exclusion from set
-(sth/rr rf/reg-event-db ::set-toggle
+(sth/rr rf/reg-event-db
+  ::set-toggle
   [rf/trim-v]
   (fn [db [path val]]
     (update-in db path u/set-toggle val)))
 
-(sth/rr rf/reg-event-db ::dissoc-in
+(sth/rr rf/reg-event-db
+  ::dissoc-in
   [rf/trim-v]
   (fn [db [path]]
     (u/dissoc-in db path)))
 
-(sth/rr rf/reg-event-db ::remove-entity
+(sth/rr rf/reg-event-db
+  ::remove-entity
   [rf/trim-v]
   (fn [db [entity-type id]]
     (update-in db [:entity entity-type] dissoc id)))
@@ -109,12 +126,16 @@
   #?(:cljs (doto (Debouncer. rf/dispatch interval)
              (.fire dispatch))))
 
-(sth/rr rf/reg-fx ::debounce-dispatch
+(sth/rr rf/reg-fx
+  ::debounce-dispatch
   (fn [value]
     (doseq [{:keys [ms id dispatch] :as effect} (remove nil? value)]
       (if (or (empty? dispatch) (not (number? ms)))
-        (rfl/console :error "re-frame: ignoring bad :sweet-tooth.frontend.core.flow/debounce-dispatch value:" effect)
-        (if-let [^Debouncer debouncer (get @debouncers id)]
+        (rfl/console
+         :error
+         "re-frame: ignoring bad :sweet-tooth.frontend.core.flow/debounce-dispatch value:"
+         effect)
+        (if-let [debouncer ^Debouncer (get @debouncers id)]
           (.fire debouncer dispatch)
           (swap! debouncers assoc id (new-debouncer ms dispatch)))))))
 
