@@ -1,4 +1,4 @@
-(defproject sweet-tooth/frontend "0.14.1-SNAPSHOT"
+(defproject sweet-tooth/frontend "0.14.1"
   :description "Some opinions on top of re-frame"
   :url "https://github.com/sweet-tooth-clojure/frontend"
   :scm {:url "https://github.com/sweet-tooth-clojure/frontend"}
