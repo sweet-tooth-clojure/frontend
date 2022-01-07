@@ -3,8 +3,7 @@
   Accountant is licensed under the EPL v1.0."
   (:require [goog.events :as events]
             [goog.events.EventType]
-            [goog.history.EventType :as EventType]
-            [sweet-tooth.frontend.core.utils :as stcu])
+            [goog.history.EventType :as EventType])
   (:import goog.history.Event
            goog.history.Html5History
            [goog Uri]))
@@ -37,7 +36,7 @@
     EventType/NAVIGATE
     (fn [e]
       (if-not @app-updated-token?
-        (let [token (stcu/go-get e ["token"])]
+        (let [token (.-token e)]
           (nav-handler token))
         (reset! app-updated-token? false)))))
 
