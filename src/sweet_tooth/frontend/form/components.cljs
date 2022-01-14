@@ -263,8 +263,9 @@
 
 (defn field-classes
   [{:keys [attr-path attr-dscr]}]
-  (str (u/kebab (attr-path-str attr-path))
-       (dscr-classes @attr-dscr)))
+  (cond->> [(u/kebab (attr-path-str attr-path))]
+    attr-dscr (into [(dscr-classes @attr-dscr)])
+    true      (str/join " ")))
 
 (defmulti field :input-type)
 
@@ -285,7 +286,7 @@
     before-input
     [input (dissoc-field-opts opts)]
     after-input
-    (attr-description @attr-dscr)
+    (when attr-dscr (attr-description @attr-dscr))
     after-dscr]])
 
 (defn checkbox-field
@@ -301,7 +302,7 @@
        (or label (label-text attr-path))
        (when required [:span {:class "required"} "*"])])
     (when tip [:div.tip tip])
-    (attr-description @attr-dscr)]])
+    (when attr-dscr (attr-description @attr-dscr))]])
 
 (defmethod field :checkbox
   [opts]
